@@ -96,3 +96,42 @@ class MatchScore(BaseModel):
     @property
     def matched_skills(self) -> list[dict]:
         return [match for match in self.skill_matches if match.get("score", 0) >= 0.5]
+
+
+class InterviewQuestion(BaseModel):
+    """Question d'entretien ancree dans une affirmation du CV.
+
+    `cv_claim` porte l'affirmation visee : c'est ce qui distingue une question
+    preparee d'un questionnaire generique, et ce qui permet au recruteur de
+    verifier que la question porte bien sur ce candidat-la.
+    """
+
+    class Intent(models.TextChoices):
+        VERIFICATION = "verification", "Verifier un acquis annonce"
+        EXPLORATION = "exploration", "Sonder un ecart avec l'offre"
+        SITUATION = "mise_en_situation", "Mise en situation"
+
+    application = models.ForeignKey(
+        Application, on_delete=models.CASCADE, related_name="interview_questions"
+    )
+    position = models.PositiveSmallIntegerField(default=0)
+    theme = models.CharField("sujet", max_length=120, blank=True)
+    intent = models.CharField(
+        "intention", max_length=20, choices=Intent.choices, default=Intent.VERIFICATION
+    )
+    cv_claim = models.TextField("affirmation visee", blank=True)
+    question = models.TextField()
+    expected_signals = models.TextField("ce qu'une bonne reponse contient", blank=True)
+
+    prompt_id = models.CharField(max_length=64, blank=True)
+    prompt_version = models.CharField(max_length=16, blank=True)
+    model = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = "question d'entretien"
+        verbose_name_plural = "questions d'entretien"
+        ordering = ("position",)
+        indexes = [models.Index(fields=["application", "position"])]
+
+    def __str__(self) -> str:
+        return self.question[:80]

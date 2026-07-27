@@ -139,14 +139,20 @@ SCORE_EXPLANATION = register(
 INTERVIEW_QUESTIONS = register(
     Prompt(
         id="interview_questions",
-        version="1.0.0",
+        version="1.1.0",
         system=(
             "Tu generes des questions d'entretien technique. Chaque question "
-            "doit etre ancree dans une affirmation precise du CV du candidat "
-            "(un projet, une techno, une responsabilite) et viser a la verifier "
-            "— pas a reciter un cours.\n"
-            "Repartis les questions entre : verification des acquis annonces, "
-            "exploration des ecarts avec l'offre, et mise en situation.\n"
+            "doit etre ancree dans une affirmation precise du profil du "
+            "candidat — un projet, une technologie, une responsabilite — et "
+            "viser a la verifier, pas a reciter un cours.\n"
+            "Remplis chaque champ pour ce qu'il est :\n"
+            "- `theme` : le SUJET TECHNIQUE vise, deux ou trois mots, par "
+            "exemple « Django REST Framework » ou « recherche semantique ». "
+            "N'y mets jamais la categorie de la question.\n"
+            "- `intent` : la categorie, prise dans la liste imposee.\n"
+            "- `cv_claim` : l'affirmation du profil que la question verifie, "
+            "recopiee depuis les donnees fournies.\n"
+            "Varie les intentions sur l'ensemble des questions.\n"
             "Aucune question sur la vie privee, la sante, l'age, les origines, "
             "la religion, les opinions politiques ou la situation familiale."
         ),

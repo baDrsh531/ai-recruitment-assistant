@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import MatchScore
+from .models import InterviewQuestion, MatchScore
+
+
+@admin.register(InterviewQuestion)
+class InterviewQuestionAdmin(admin.ModelAdmin):
+    list_display = ("application", "position", "theme", "intent", "prompt_version")
+    list_filter = ("intent", "prompt_version")
+    search_fields = ("question", "theme", "application__candidate__full_name")
+    readonly_fields = ("prompt_id", "prompt_version", "model")
 
 
 @admin.register(MatchScore)

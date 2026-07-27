@@ -296,7 +296,11 @@ def _image_count(payload: dict) -> int:
 
 
 # --- Fabrication d'une instance conforme au schema --------------------------
-def _instance_from_schema(schema: dict, context: str) -> Any:
+# Nombre d'elements produits pour un tableau dont la taille n'est pas imposee.
+ARRAY_LENGTH = 3
+
+
+def _instance_from_schema(schema: dict, context: str, name: str = "") -> Any:
     kind = schema.get("type")
 
     if kind == "object":
@@ -304,13 +308,15 @@ def _instance_from_schema(schema: dict, context: str) -> Any:
         if {"identity", "skills"} <= set(properties):
             return _cv_instance(schema, context)
         return {
-            name: _instance_from_schema(sub, context)
-            for name, sub in properties.items()
+            cle: _instance_from_schema(sous_schema, context, cle)
+            for cle, sous_schema in properties.items()
         }
 
     if kind == "array":
         item = schema.get("items", {"type": "string"})
-        return [_instance_from_schema(item, context) for _ in range(2)]
+        return [
+            _instance_from_schema(item, context, name) for _ in range(ARRAY_LENGTH)
+        ]
 
     if kind == "integer":
         return 0
@@ -321,7 +327,13 @@ def _instance_from_schema(schema: dict, context: str) -> Any:
 
     if "enum" in schema:
         return schema["enum"][0]
-    return _quote(context) if "evidence" in (schema.get("description") or "") else ""
+
+    # Les chaines doivent etre non vides : un appelant a le droit de rejeter
+    # un champ vide, et un banc d'essai qui n'en produit que des vides ne
+    # permet alors de tester aucun chemin nominal.
+    if "evidence" in (schema.get("description") or ""):
+        return _quote(context)
+    return f"{name or 'valeur'} produit par le banc d'essai"
 
 
 def _cv_instance(schema: dict, context: str) -> dict:

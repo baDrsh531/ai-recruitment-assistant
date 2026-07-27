@@ -8,6 +8,12 @@
   </p>
 {% endblock %}
 {% block actions %}
+  <form method="post" action="{% url 'matching:generate_questions' application.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--primary">
+      {% if questions %}Regenerer{% else %}Generer{% endif %} les questions d'entretien
+    </button>
+  </form>
   <a class="btn" href="{{ application.candidate.get_absolute_url }}">Fiche candidat</a>
   <a class="btn" href="{% url 'matching:ranking' application.offer.slug %}">Classement</a>
 {% endblock %}
@@ -159,4 +165,45 @@
   {% include "partials/empty.html" with title="Candidature non scoree" text="Lancez le calcul depuis le classement de l'offre." %}
 </section>
 {% endif %}
+
+{# Les questions d'entretien ne dependent pas du score : elles s'affichent
+   qu'il ait ete calcule ou non. #}
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Questions d'entretien</h2>
+    {% if questions %}<span class="badge">{{ questions|length }} question(s)</span>{% endif %}
+  </div>
+  {% if questions %}
+    <div class="card__body stack">
+      {% for item in questions %}
+        <div class="timeline__item">
+          <p class="row" style="justify-content: space-between;">
+            <span>
+              <strong>{{ item.theme }}</strong>
+              <span class="badge{% if item.intent == 'exploration' %} badge--warn{% elif item.intent == 'mise_en_situation' %} badge--brand{% endif %}">
+                {{ item.get_intent_display }}
+              </span>
+            </span>
+            <span class="small subtle">{{ forloop.counter }}/{{ questions|length }}</span>
+          </p>
+          <p class="mt-4">{{ item.question }}</p>
+          {% if item.cv_claim %}
+            <p class="timeline__quote">ancree sur : « {{ item.cv_claim|truncatechars:160 }} »</p>
+          {% endif %}
+          {% if item.expected_signals %}
+            <p class="small muted">Une bonne reponse : {{ item.expected_signals }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <p class="card__note">
+      Chaque question vise une affirmation precise du profil : c'est ce qui la
+      distingue d'un questionnaire generique, et ce qui permet de verifier
+      qu'elle porte bien sur ce candidat. Genere par {{ questions.0.model }},
+      prompt {{ questions.0.prompt_id }} v{{ questions.0.prompt_version }}.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune question generee" text="Utilisez le bouton en haut de page. Un serveur d'inference joignable est necessaire." %}
+  {% endif %}
+</section>
 {% endblock %}

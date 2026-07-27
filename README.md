@@ -311,6 +311,32 @@ une mise en page ou les competences sont dans des cellules, le modele en
 manque trois et range les langues parmi les competences. Retirer ce cas du jeu
 ferait remonter la moyenne sans rien ameliorer.
 
+### Questions d'entretien ancrees dans le CV
+
+Depuis la page d'une candidature, un bouton genere un jeu de questions. La
+regle : **chaque question vise une affirmation precise du profil**, et le
+champ `cv_claim` la conserve — c'est ce qui distingue une question preparee
+d'un questionnaire qu'on peut reciter.
+
+```
+1. [Verifier un acquis annonce] Integration LLM
+   Dans le cadre de l'integration des LLM pour le traitement documentaire,
+   comment avez-vous gere la latence et les erreurs lors des appels API ?
+   ancree sur : Integration de modeles de langage pour l'automatisation
+                du traitement documentaire
+   bonne reponse : gestion des timeouts, retry, validation des sorties,
+                   fallback, suivi des couts
+```
+
+Comme pour l'analyse du score, le modele ne recoit **jamais le CV brut** : il
+travaille sur le profil deja extrait et les ecarts deja calcules. Le nom du
+candidat ne lui est pas transmis. Chaque question conserve la version du
+prompt et le modele qui l'a produite.
+
+Limite constatee : le modele varie peu les intentions et produit surtout des
+questions de verification, malgre la consigne. Les mises en situation
+demandent d'insister.
+
 ### Auditer les biais
 
 ```powershell
@@ -473,9 +499,11 @@ tests/             suite pytest
 - [x] Harnais d'evaluation : jeu annote, nDCG@5, non-regression en CI
 - [x] Interface : systeme de design sans dependance externe, theme clair et sombre
 - [ ] Comparaison cote a cote de plusieurs candidats
+- [ ] Tableau de bord de cout et de latence des appels modele
 - [x] Audit de biais par contrefactuels, ratio d'impact, page de transparence
 - [x] Screening a l'aveugle agissant sur le score, avec mesure de son effet
 - [x] Harnais d'evaluation de l'extraction, a verite terrain generee
+- [x] Generation de questions d'entretien ancrees dans le CV
 - [ ] Recherche hybride BM25 + vectorielle, recherche en langage naturel
 - [ ] Generation de questions d'entretien ancrees dans le CV
 - [ ] Rapport d'evaluation exportable en PDF

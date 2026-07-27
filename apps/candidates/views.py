@@ -69,4 +69,5 @@ class ApplicationDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # L'historique des scores est conserve : on affiche le plus recent.
         context["score"] = self.object.scores.order_by("-created_at").first()
+        context["questions"] = list(self.object.interview_questions.all())
         return context

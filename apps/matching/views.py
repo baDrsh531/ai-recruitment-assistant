@@ -5,8 +5,10 @@ from django.views import View
 from django.views.generic import DetailView
 
 from apps.ai.client import InferenceError
+from apps.candidates.models import Application
 from apps.jobs.models import JobOffer
 
+from . import engine, interview
 from .services import latest_scores, score_offer
 
 
@@ -54,3 +56,23 @@ class ScoreOfferView(LoginRequiredMixin, View):
             messages.success(request, f"{len(scores)} candidature(s) scoree(s).")
 
         return redirect("matching:ranking", slug=offer.slug)
+
+
+class GenerateQuestionsView(LoginRequiredMixin, View):
+    """Genere les questions d'entretien d'une candidature."""
+
+    def post(self, request, pk):
+        application = get_object_or_404(
+            Application.objects.select_related("candidate", "offer"), pk=pk
+        )
+        result = engine.score(application.candidate, application.offer)
+
+        try:
+            questions = interview.generate(application, result, actor=request.user)
+        except InferenceError as exc:
+            messages.error(request, f"Generation impossible : {exc}")
+        else:
+            messages.success(
+                request, f"{len(questions)} question(s) d'entretien generees."
+            )
+        return redirect("candidates:application_detail", pk=application.pk)
