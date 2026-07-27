@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.full_name }}{% endblock %}
+{% block heading %}{{ candidate.full_name }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ candidate.headline|default:"Titre non precise" }}
+    · {{ candidate.total_experience_years|floatformat:1 }} ans d'experience
+    · {{ candidate.get_highest_education_display }}
+  </p>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid--main">
+  <div class="stack">
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Experiences</h2></div>
+      {% if candidate.experiences.all %}
+        <div class="card__body">
+          <div class="timeline">
+            {% for exp in candidate.experiences.all %}
+              <div class="timeline__item">
+                <p class="timeline__title">{{ exp.title }}</p>
+                <p class="muted">{{ exp.company }}</p>
+                <p class="timeline__meta">
+                  {{ exp.start_date|date:"m/Y"|default:"?" }} –
+                  {% if exp.is_current %}en cours{% else %}{{ exp.end_date|date:"m/Y"|default:"?" }}{% endif %}
+                  · {{ exp.duration_years|floatformat:1 }} ans
+                </p>
+                {% if exp.evidence %}
+                  <p class="timeline__quote">
+                    « {{ exp.evidence.text|truncatechars:130 }} » — page {{ exp.evidence.page }}
+                    {% if not exp.evidence.verified %}
+                      {% if exp.evidence.document.evidence_verifiable %}
+                        <span class="badge badge--danger">non etayee</span>
+                      {% else %}
+                        <span class="badge badge--warn">inverifiable — document scanne</span>
+                      {% endif %}
+                    {% endif %}
+                  </p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <p class="card__note">
+          Chaque experience cite le passage du CV qui la justifie. Une citation
+          introuvable dans le document est signalee comme non etayee plutot que
+          d'etre presentee comme un fait. Sur un CV scanne, il n'existe aucune
+          couche texte a confronter : la donnee est alors dite inverifiable, ce
+          qui n'est pas la meme chose que contredite.
+        </p>
+      {% else %}
+        {% include "partials/empty.html" with title="Aucune experience extraite" %}
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Formation</h2></div>
+      {% if candidate.education.all %}
+        <div class="card__body">
+          <div class="kv">
+            {% for edu in candidate.education.all %}
+              <div class="kv__row">
+                <span>
+                  {{ edu.degree }}
+                  <span class="muted">— {{ edu.institution }}</span>
+                </span>
+                <span class="kv__value">{{ edu.graduation_year|default:"—" }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        {% include "partials/empty.html" with title="Aucune formation extraite" %}
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Contact</h2></div>
+      <div class="card__body stack">
+        {% if candidate.email %}<span>{{ candidate.email }}</span>{% endif %}
+        {% if candidate.phone %}<span class="muted">{{ candidate.phone }}</span>{% endif %}
+        {% if candidate.location %}<span class="muted">{{ candidate.location }}</span>{% endif %}
+        <div class="row">
+          {% if candidate.linkedin_url %}<a class="btn btn--sm" href="{{ candidate.linkedin_url }}">LinkedIn</a>{% endif %}
+          {% if candidate.github_url %}<a class="btn btn--sm" href="{{ candidate.github_url }}">GitHub</a>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Competences</h2></div>
+      <div class="card__body">
+        <div class="chips">
+          {% for skill in candidate.skills.all %}
+            <span class="chip{% if skill.confidence < 1 %}{% else %} chip--brand{% endif %}"
+                  title="{{ skill.get_source_display }} · confiance {{ skill.confidence|floatformat:2 }}">
+              {{ skill.name }}
+              {% if skill.years %}<span class="chip__meta">{{ skill.years|floatformat:0 }} ans</span>{% endif %}
+            </span>
+          {% empty %}
+            <span class="subtle small">Aucune competence extraite.</span>
+          {% endfor %}
+        </div>
+      </div>
+      <p class="card__note">
+        Une pastille grisee signale une competence dont la citation n'a pas ete
+        retrouvee dans le document.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Langues</h2></div>
+      <div class="card__body">
+        <div class="kv">
+          {% for lang in candidate.languages.all %}
+            <div class="kv__row">
+              <span class="kv__key">{{ lang.language }}</span>
+              <span class="kv__value">{{ lang.get_level_display }}</span>
+            </div>
+          {% empty %}
+            <span class="subtle small">Non renseigne.</span>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    {% if candidate.applications.all %}
+      <section class="card">
+        <div class="card__head"><h2 class="card__title">Candidatures</h2></div>
+        <div class="card__body">
+          <div class="kv">
+            {% for application in candidate.applications.all %}
+              <div class="kv__row">
+                <a href="{{ application.get_absolute_url }}">{{ application.offer.title }}</a>
+                <span class="badge">{{ application.get_stage_display }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

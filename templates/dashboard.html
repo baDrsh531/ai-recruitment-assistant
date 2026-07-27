@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block heading %}Tableau de bord{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">Vue d'ensemble du pipeline de recrutement.</p>
+{% endblock %}
+{% block actions %}
+  <a class="btn btn--primary" href="{% url 'parsing:upload' %}">Deposer un CV</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid">
+  {% include "partials/stat_tile.html" with label="Candidats" value=stats.candidates %}
+  {% include "partials/stat_tile.html" with label="Offres ouvertes" value=stats.open_offers %}
+  {% include "partials/stat_tile.html" with label="Candidatures" value=stats.applications %}
+  {% include "partials/stat_tile.html" with label="CV en traitement" value=stats.documents_pending %}
+</div>
+
+<div class="grid">
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Pipeline de recrutement</h2></div>
+    {% if stages %}
+      <div class="card__body">
+        <div class="kv">
+          {% for row in stages %}
+            <div class="kv__row">
+              <span class="kv__key">{{ row.stage }}</span>
+              <span class="kv__value">{{ row.total }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      {% include "partials/empty.html" with title="Aucune candidature" text="Deposez un CV pour demarrer." %}
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Couche IA</h2></div>
+    <div class="card__body">
+      <div class="kv">
+        <div class="kv__row">
+          <span class="kv__key">Appels modele</span>
+          <span class="kv__value">{{ ai.calls|default:0 }}</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">Latence moyenne</span>
+          <span class="kv__value">{{ ai.avg_latency|floatformat:0|default:"—" }} ms</span>
+        </div>
+      </div>
+    </div>
+    <p class="card__note">
+      Chaque appel est journalise : modele, version de prompt, tokens, latence.
+      Detail dans <a href="/admin/ai/aiinvocation/">l'administration</a>.
+    </p>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Dernieres offres</h2>
+    <a class="btn btn--sm" href="{% url 'jobs:list' %}">Tout voir</a>
+  </div>
+  {% if recent_offers %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Intitule</th><th>Departement</th><th>Statut</th><th></th></tr>
+        </thead>
+        <tbody>
+          {% for offer in recent_offers %}
+            <tr>
+              <td><a href="{{ offer.get_absolute_url }}">{{ offer.title }}</a></td>
+              <td class="muted">{{ offer.department|default:"—" }}</td>
+              <td><span class="badge">{{ offer.get_status_display }}</span></td>
+              <td class="num">
+                <a class="btn btn--sm" href="{% url 'matching:ranking' offer.slug %}">Classement</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune offre" text="Creez-en une depuis l'administration." %}
+  {% endif %}
+</section>
+{% endblock %}

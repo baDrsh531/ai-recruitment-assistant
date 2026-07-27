@@ -1,0 +1,16 @@
+# Normalise les fins de ligne : LF dans le depot, quelle que soit la plateforme
+# de travail. Sans cela, un aller-retour Windows / Linux produit des diffs
+# entiers sur des fichiers dont rien n'a change.
+* text=auto eol=lf
+
+# Fichiers devant conserver des fins de ligne Windows pour rester executables.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binaires : jamais de conversion.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.docx binary
+*.ico binary
+*.gguf binary

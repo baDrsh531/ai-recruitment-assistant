@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Deposer un CV{% endblock %}
+{% block heading %}Deposer un CV{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">PDF ou DOCX, 10 Mo maximum.</p>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid--main">
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Fichier</h2></div>
+    <form method="post" enctype="multipart/form-data">
+      <div class="card__body">
+        {% csrf_token %}
+
+        <div class="field">
+          <label class="label" for="{{ form.file.id_for_label }}">CV</label>
+          <input type="file" name="file" id="{{ form.file.id_for_label }}" accept=".pdf,.docx" required>
+          {% if form.file.errors %}<p class="error">{{ form.file.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="field">
+          <label class="label" for="{{ form.offer.id_for_label }}">Rattacher a une offre</label>
+          <select class="select" name="offer" id="{{ form.offer.id_for_label }}">
+            <option value="">Aucune</option>
+            {% for choice in form.offer.field.queryset %}
+              <option value="{{ choice.pk }}">{{ choice.title }}</option>
+            {% endfor %}
+          </select>
+          <p class="hint">Le rattachement cree une candidature des l'extraction terminee.</p>
+        </div>
+
+        <button type="submit" class="btn btn--primary mt-4">Lancer l'extraction</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Ce qui se passe ensuite</h2></div>
+    <div class="card__body">
+      <div class="kv">
+        <div class="kv__row">
+          <span class="kv__key">1. Extraction</span>
+          <span class="small">texte et position de chaque mot</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">2. Diagnostic</span>
+          <span class="small">document scanne ? multi-colonnes ?</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">3. Structuration</span>
+          <span class="small">modele texte, ou vision si la mise en page l'exige</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">4. Verification</span>
+          <span class="small">chaque donnee doit citer le document</span>
+        </div>
+      </div>
+    </div>
+    <p class="card__note">
+      Une donnee dont la citation n'existe pas dans le CV est conservee mais
+      marquee non etayee : elle reste visible, sans etre presentee comme un fait.
+    </p>
+  </section>
+</div>
+{% endblock %}

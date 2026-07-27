@@ -1,0 +1,214 @@
+{
+  "name": "extraction_v1",
+  "kind": "extraction",
+  "version": "1.0.0",
+  "description": "Jeu d'evaluation de l'extraction des CV. Chaque cas part d'un profil structure, mis en page par apps/evaluation/cv_factory.py : la verite terrain est exacte par construction, sans annotation manuelle. Les quatre mises en page eprouvent des voies differentes du pipeline - texte natif, detection multi-colonnes, extraction depuis un tableau, et bascule vers le modele vision sur un document sans couche texte. Limite assumee : ces CV sont plus propres que les vrais, les scores obtenus sont donc optimistes.",
+  "cases": [
+    {
+      "id": "backend_python",
+      "layout": "simple",
+      "expected_years": 6.0,
+      "profile": {
+        "full_name": "Karim Benjelloun",
+        "headline": "Ingenieur logiciel backend",
+        "email": "karim.benjelloun@example.com",
+        "phone": "+212 661 234 567",
+        "location": "Casablanca",
+        "linkedin": "linkedin.com/in/karimbenjelloun",
+        "github": "github.com/kbenjelloun",
+        "skills": ["Python", "Django", "PostgreSQL", "Docker", "Redis", "Git"],
+        "languages": [
+          {"language": "Francais", "level": "NAT"},
+          {"language": "Anglais", "level": "C1"},
+          {"language": "Arabe", "level": "NAT"}
+        ],
+        "experiences": [
+          {
+            "title": "Ingenieur backend senior",
+            "company": "Atlas Software",
+            "location": "Casablanca",
+            "start": "2022-03",
+            "end": "",
+            "description": "Conception et exploitation d'APIs REST avec Django et Django REST Framework. Optimisation des requetes PostgreSQL et mise en cache Redis."
+          },
+          {
+            "title": "Developpeur Python",
+            "company": "Medina Digital",
+            "location": "Rabat",
+            "start": "2020-01",
+            "end": "2022-02",
+            "description": "Developpement de services backend et industrialisation du deploiement avec Docker."
+          }
+        ],
+        "education": [
+          {"degree": "Master en genie logiciel", "institution": "Universite Hassan II", "year": 2019, "level": 5}
+        ]
+      }
+    },
+
+    {
+      "id": "data_engineer_colonnes",
+      "layout": "deux_colonnes",
+      "expected_years": 5.0,
+      "profile": {
+        "full_name": "Leila Fassi",
+        "headline": "Data engineer",
+        "email": "leila.fassi@example.com",
+        "phone": "+212 662 111 222",
+        "location": "Rabat",
+        "linkedin": "linkedin.com/in/leilafassi",
+        "github": "",
+        "skills": ["Python", "SQL", "Airflow", "Spark", "dbt", "PostgreSQL"],
+        "languages": [
+          {"language": "Francais", "level": "C2"},
+          {"language": "Anglais", "level": "B2"}
+        ],
+        "experiences": [
+          {
+            "title": "Data engineer",
+            "company": "Numerica",
+            "location": "Rabat",
+            "start": "2021-06",
+            "end": "",
+            "description": "Construction de pipelines de donnees avec Airflow et dbt. Modelisation analytique sur PostgreSQL."
+          },
+          {
+            "title": "Analyste de donnees",
+            "company": "Cabinet Sud",
+            "location": "Rabat",
+            "start": "2019-09",
+            "end": "2021-05",
+            "description": "Requetes SQL, tableaux de bord et fiabilisation de la qualite des donnees."
+          }
+        ],
+        "education": [
+          {"degree": "Master en science des donnees", "institution": "ENSIAS", "year": 2019, "level": 5}
+        ]
+      }
+    },
+
+    {
+      "id": "frontend_tableau",
+      "layout": "tableau",
+      "expected_years": 4.5,
+      "profile": {
+        "full_name": "Youssef Alaoui",
+        "headline": "Developpeur frontend",
+        "email": "youssef.alaoui@example.com",
+        "phone": "+212 663 987 654",
+        "location": "Marrakech",
+        "linkedin": "",
+        "github": "github.com/yalaoui",
+        "skills": ["JavaScript", "TypeScript", "React", "Next.js", "CSS", "Git"],
+        "languages": [
+          {"language": "Francais", "level": "NAT"},
+          {"language": "Anglais", "level": "B2"},
+          {"language": "Espagnol", "level": "B1"}
+        ],
+        "experiences": [
+          {
+            "title": "Developpeur frontend",
+            "company": "Studio Medina",
+            "location": "Marrakech",
+            "start": "2021-11",
+            "end": "",
+            "description": "Interfaces React et Next.js, integration d'un systeme de design et tests automatises."
+          },
+          {
+            "title": "Integrateur web",
+            "company": "Agence Kasbah",
+            "location": "Marrakech",
+            "start": "2020-05",
+            "end": "2021-10",
+            "description": "Integration HTML et CSS, animations et optimisation des performances."
+          }
+        ],
+        "education": [
+          {"degree": "Licence en informatique", "institution": "Universite Cadi Ayyad", "year": 2020, "level": 3}
+        ]
+      }
+    },
+
+    {
+      "id": "ml_engineer_scanne",
+      "layout": "scanne",
+      "expected_years": 5.0,
+      "profile": {
+        "full_name": "Sanaa Idrissi",
+        "headline": "Ingenieure machine learning",
+        "email": "sanaa.idrissi@example.com",
+        "phone": "+212 664 555 333",
+        "location": "Casablanca",
+        "linkedin": "linkedin.com/in/sanaaidrissi",
+        "github": "",
+        "skills": ["Python", "PyTorch", "Transformers", "LLM", "RAG", "Docker"],
+        "languages": [
+          {"language": "Francais", "level": "NAT"},
+          {"language": "Anglais", "level": "C1"}
+        ],
+        "experiences": [
+          {
+            "title": "Ingenieure machine learning",
+            "company": "Institut de recherche applique",
+            "location": "Casablanca",
+            "start": "2021-04",
+            "end": "",
+            "description": "Mise en production de modeles de langage, recherche semantique et architectures RAG."
+          },
+          {
+            "title": "Ingenieure d'etudes",
+            "company": "Laboratoire Nord",
+            "location": "Tanger",
+            "start": "2020-01",
+            "end": "2021-03",
+            "description": "Entrainement de modeles de vision avec PyTorch et industrialisation des experimentations."
+          }
+        ],
+        "education": [
+          {"degree": "Doctorat en informatique", "institution": "Universite Mohammed V", "year": 2019, "level": 8}
+        ]
+      }
+    },
+
+    {
+      "id": "devops_colonnes",
+      "layout": "deux_colonnes",
+      "expected_years": 7.0,
+      "profile": {
+        "full_name": "Omar Tazi",
+        "headline": "Ingenieur DevOps",
+        "email": "omar.tazi@example.com",
+        "phone": "+212 665 777 888",
+        "location": "Tanger",
+        "linkedin": "linkedin.com/in/omartazi",
+        "github": "github.com/otazi",
+        "skills": ["Kubernetes", "Docker", "Terraform", "Ansible", "AWS", "Linux", "Bash"],
+        "languages": [
+          {"language": "Francais", "level": "C1"},
+          {"language": "Anglais", "level": "C1"}
+        ],
+        "experiences": [
+          {
+            "title": "Ingenieur plateforme",
+            "company": "Detroit Cloud",
+            "location": "Tanger",
+            "start": "2020-02",
+            "end": "",
+            "description": "Exploitation de clusters Kubernetes, infrastructure declaree avec Terraform, chaines d'integration continue."
+          },
+          {
+            "title": "Administrateur systeme",
+            "company": "Reseau Atlantique",
+            "location": "Casablanca",
+            "start": "2019-01",
+            "end": "2020-01",
+            "description": "Administration de serveurs Linux, automatisation avec Ansible et supervision."
+          }
+        ],
+        "education": [
+          {"degree": "Diplome d'ingenieur en reseaux", "institution": "INPT", "year": 2018, "level": 5}
+        ]
+      }
+    }
+  ]
+}

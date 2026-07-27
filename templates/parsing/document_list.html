@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}CV deposes{% endblock %}
+{% block heading %}CV deposes{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">{{ paginator.count|default:documents|length }} document(s).</p>
+{% endblock %}
+{% block actions %}
+  <a class="btn btn--primary" href="{% url 'parsing:upload' %}">Deposer un CV</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  {% if documents %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Fichier</th>
+            <th>Candidat</th>
+            <th>Statut</th>
+            <th>Methode</th>
+            <th class="num">Pages</th>
+            <th class="num">Duree</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for document in documents %}
+            <tr>
+              <td>{{ document.original_filename }}</td>
+              <td>
+                {% if document.candidate %}
+                  <a href="{{ document.candidate.get_absolute_url }}">{{ document.candidate.full_name }}</a>
+                {% else %}
+                  <span class="subtle">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if document.status == "done" %}
+                  <span class="badge badge--ok">{{ document.get_status_display }}</span>
+                {% elif document.status == "failed" %}
+                  <span class="badge badge--danger" title="{{ document.error }}">{{ document.get_status_display }}</span>
+                {% else %}
+                  <span class="badge">{{ document.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td class="muted">{{ document.get_method_display|default:"—" }}</td>
+              <td class="num">{{ document.page_count }}</td>
+              <td class="num muted">
+                {% if document.extraction_seconds %}{{ document.extraction_seconds|floatformat:1 }} s{% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      La methode indique la voie retenue par le diagnostic : texte natif pour
+      une mise en page simple, vision pour un document scanne ou multi-colonnes.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun CV depose" text="Commencez par en deposer un." %}
+  {% endif %}
+</section>
+{% endblock %}

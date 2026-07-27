@@ -1,0 +1,61 @@
+# === Environnement Python =================================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# === Secrets et donnees locales ===========================================
+.env
+.env.*
+!.env.example
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+/media/
+/staticfiles/
+/rapports/
+
+# === Outils ================================================================
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+.tox/
+celerybeat-schedule*
+*.log
+
+# === Editeurs ==============================================================
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# === Assistants de developpement ===========================================
+# Ces repertoires et fichiers appartiennent a l'outillage local du poste, pas
+# au projet. Ils n'ont rien a faire dans l'historique.
+.claude/
+.cursor/
+.cursorrules
+.cursorignore
+.aider*
+.continue/
+.windsurf/
+.codeium/
+.gemini/
+.copilot/
+.github/copilot-instructions.md
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+COPILOT.md
+SKILL.md
+.specstory/
+.tabnine/

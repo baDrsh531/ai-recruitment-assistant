@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DJANGO_SETTINGS_MODULE: config.settings.dev
+  SECRET_KEY: ci-only-not-a-secret
+  DEBUG: "False"
+  DATABASE_URL: sqlite:///ci.sqlite3
+  # Aucun serveur d'inference en CI : le moteur deterministe et le harnais
+  # d'evaluation n'en ont pas besoin, et les tests qui en dependent sont
+  # marques `llm` et exclus.
+  EMBEDDING_PROVIDER: local
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: pip install -e ".[dev]"
+
+      - name: Analyse statique
+        run: ruff check .
+
+      - name: Verifications Django
+        run: python manage.py check --deploy --fail-level ERROR
+
+      - name: Migrations a jour
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: pytest -m "not llm" --cov=apps --cov-report=term-missing
+
+  evaluation:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: pip install -e ".[dev]"
+
+      # Le coeur de la demarche : une modification du scoring qui degrade le
+      # classement fait echouer la CI, avec les chiffres a l'appui.
+      - name: Evaluer le moteur de classement
+        run: |
+          python manage.py evaluate \
+            --json rapports/evaluation.json \
+            --baseline apps/evaluation/baselines/ranking_v1.json
+
+      # Un ratio d'impact sous 0.80 (regle des quatre cinquiemes) ou une
+      # propriete de non-discrimination mise en defaut fait echouer la CI.
+      - name: Auditer les biais
+        run: python manage.py audit_bias --detail --json rapports/biais.json
+
+      - name: Mesurer l'attenuation par screening a l'aveugle
+        run: python manage.py audit_bias --compare-blind
+
+      - name: Conserver les rapports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapports
+          path: rapports/

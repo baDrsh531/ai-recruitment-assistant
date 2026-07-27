@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Transparence et audit de biais{% endblock %}
+{% block heading %}Transparence et audit de biais{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Le tri de candidatures est un systeme d'IA a haut risque (AI Act, annexe III.4).
+    Cette page documente ce que le moteur mesure, et ce qu'il ignore.
+  </p>
+{% endblock %}
+
+{% block actions %}
+  <form method="post" action="{% url 'evaluation:refresh_bias_report' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn">Recalculer l'audit</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+
+{% if not freshly_computed %}
+  <p class="small subtle">
+    Chiffres issus du dernier calcul, conserves en cache une heure. L'audit
+    represente environ 500 scorings et demande une dizaine de secondes ; il est
+    relance automatiquement a chaque changement de version du moteur, ou
+    manuellement par le bouton ci-dessus.
+  </p>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Effet des attributs identitaires</h2>
+    <span class="badge">moteur {{ report.engine_version }}</span>
+  </div>
+  <div class="card__body">
+    <p class="muted">
+      Pour chaque candidat du jeu d'evaluation, on produit des variantes ne
+      differant que par un attribut identitaire, puis on rescore. La question
+      posee est celle d'un auditeur : <em>si cette meme personne avait un autre
+      prenom, une autre ville, un autre age apparent, serait-elle toujours
+      retenue&nbsp;?</em>
+    </p>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Attribut</th>
+          <th class="num">Ecart moyen</th>
+          <th class="num">Ecart max</th>
+          <th class="num">Rangs modifies</th>
+          <th class="num">Ratio d'impact</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in report.dimensions %}
+          <tr>
+            <td>{{ item.dimension }}</td>
+            <td class="num muted">{{ item.mean_abs_delta|floatformat:5 }}</td>
+            <td class="num muted">{{ item.max_abs_delta|floatformat:5 }}</td>
+            <td class="num muted">{{ item.rank_changes }} / {{ item.comparisons }}</td>
+            <td class="num">{{ item.impact_ratio|floatformat:3 }}</td>
+            <td>
+              {% if not item.influences_score %}
+                <span class="badge badge--ok">aucun effet</span>
+              {% elif item.passes %}
+                <span class="badge badge--warn">influe, seuil respecte</span>
+              {% else %}
+                <span class="badge badge--danger">sous le seuil</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    Le ratio d'impact compare le taux de selection dans les
+    {{ report.shortlist_size }} premiers entre la variante la moins retenue et
+    la mieux retenue. Le seuil de {{ threshold }} est la regle dite « des quatre
+    cinquiemes », reprise par la loi new-yorkaise LL144 sur l'audit des outils
+    automatises d'aide au recrutement.
+  </p>
+</section>
+
+<div class="grid grid--main">
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Attributs influents</h2></div>
+    {% if influential %}
+      <div class="card__body stack">
+        {% for item in influential %}
+          <div>
+            <p class="row" style="justify-content: space-between;">
+              <strong>{{ item.dimension }}</strong>
+              <span class="badge {% if item.passes %}badge--warn{% else %}badge--danger{% endif %}">
+                ratio {{ item.impact_ratio|floatformat:3 }}
+              </span>
+            </p>
+            <p class="small muted">Exemple d'ecart mesure : {{ item.max_delta_example }}</p>
+            <div class="kv mt-4">
+              {% for label, rate in item.selection_rates.items %}
+                <div class="kv__row">
+                  <span class="kv__key">{{ label }}</span>
+                  <span class="kv__value">{{ rate|floatformat:3 }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="card__note">
+        La localisation est un critere metier legitime — un poste sur site
+        impose une contrainte reelle — mais c'est aussi un marqueur social et
+        geographique. Elle est le seul levier identitaire actif du moteur.
+        L'attenuation disponible est le screening a l'aveugle, dont l'effet est
+        mesure ci-dessous ; le remplacement de la comparaison textuelle par un
+        geocodage reste a faire.
+      </p>
+    {% else %}
+      {% include "partials/empty.html" with title="Aucun attribut influent" %}
+    {% endif %}
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Sans effet mesurable</h2></div>
+      <div class="card__body">
+        <div class="kv">
+          {% for item in neutral %}
+            <div class="kv__row">
+              <span class="kv__key">{{ item.dimension }}</span>
+              <span class="badge badge--ok">{{ item.comparisons }} comparaisons</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <p class="card__note">
+        Ces attributs n'entrent dans aucun critere du moteur. Le chiffre n'est
+        pas une intention affichee : il est mesure a chaque execution.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Proprietes verifiees</h2></div>
+      <div class="card__body stack">
+        {% for check in report.properties %}
+          <div>
+            <p class="row">
+              {% if check.holds %}
+                <span class="badge badge--ok">verifiee</span>
+              {% else %}
+                <span class="badge badge--danger">mise en defaut</span>
+              {% endif %}
+              <strong class="small">{{ check.name }}</strong>
+            </p>
+            <p class="small muted">{{ check.description }}</p>
+            {% if check.detail %}<p class="small error">{{ check.detail }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Effet du screening a l'aveugle</h2>
+    <span class="badge badge--brand">attenuation mesuree</span>
+  </div>
+  <div class="card__body">
+    <p class="muted">
+      Le mode aveugle exclut la localisation du calcul du score et masque les
+      employeurs dans l'analyse redigee. Il s'active offre par offre. Le
+      tableau chiffre ce que l'on y gagne.
+    </p>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Attribut</th>
+          <th class="num">Ratio standard</th>
+          <th class="num">Ratio aveugle</th>
+          <th class="num">Gain</th>
+          <th class="num">Rangs modifies</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in mitigations %}
+          <tr>
+            <td>{{ item.dimension }}</td>
+            <td class="num muted">{{ item.ratio_standard|floatformat:3 }}</td>
+            <td class="num">{{ item.ratio_blind|floatformat:3 }}</td>
+            <td class="num">
+              {% if item.gain > 0 %}
+                <span class="badge badge--ok">+{{ item.gain|floatformat:3 }}</span>
+              {% else %}
+                <span class="subtle">—</span>
+              {% endif %}
+            </td>
+            <td class="num muted">
+              {{ item.rank_changes_standard }} → {{ item.rank_changes_blind }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    {% for item in neutralised %}
+      <strong>{{ item.dimension }}</strong> : effet entierement neutralise
+      ({{ item.max_delta_standard|floatformat:5 }} → {{ item.max_delta_blind|floatformat:5 }}).
+    {% empty %}
+      Le mode aveugle ne modifie aucun ratio d'impact sur ce jeu.
+    {% endfor %}
+    Contrepartie assumee : la contrainte geographique disparait du calcul. Pour
+    un poste sur site, elle devra etre reintroduite plus tard dans le
+    processus, par une decision humaine tracee — jamais par un tri automatique.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Qualite du classement</h2>
+    <span class="badge">jeu {{ quality.dataset }} v{{ quality.dataset_version }}</span>
+  </div>
+  <div class="card__body">
+    <div class="kv">
+      <div class="kv__row">
+        <span class="kv__key">nDCG@5 — qualite globale du classement</span>
+        <span class="kv__value">{{ quality.aggregate.ndcg_at_5|floatformat:3 }}</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Precision@3 — pertinence des trois premiers</span>
+        <span class="kv__value">{{ quality.aggregate.precision_at_3|floatformat:3 }}</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Paires correctement ordonnees</span>
+        <span class="kv__value">{{ quality.aggregate.pair_accuracy|floatformat:3 }}</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Correlation de Spearman</span>
+        <span class="kv__value">{{ quality.aggregate.spearman|floatformat:3 }}</span>
+      </div>
+    </div>
+  </div>
+  <p class="card__note">
+    Mesures obtenues sur {{ quality.cases|length }} cas annotes a la main.
+    Elles sont recalculees a chaque integration continue : une modification du
+    scoring qui degrade le classement fait echouer la construction.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Ce que cet audit ne dit pas</h2></div>
+  <div class="card__body stack">
+    <p class="muted">
+      Il ne prouve pas l'absence de biais. Il mesure l'effet des attributs
+      qu'il teste, sur le jeu qu'on lui donne, et sur le seul moteur
+      deterministe.
+    </p>
+    <p class="muted">
+      Trois zones restent hors de sa portee : l'extraction du CV par le modele
+      de langage, dont la lecture pourrait varier selon la forme du document ;
+      la redaction de l'analyse, qui est generee et non calculee ; et les biais
+      presents dans les criteres eux-memes, puisque c'est le recruteur qui
+      decide de ce qui compte.
+    </p>
+    <p class="muted">
+      Enfin, le systeme ne collecte aucun attribut protege — genre, age,
+      origine, situation familiale. C'est voulu, mais cela implique qu'aucune
+      parite ne peut etre mesuree sur des candidatures reelles : seuls les
+      contrefactuels de cette page le permettent.
+    </p>
+  </div>
+</section>
+{% endblock %}

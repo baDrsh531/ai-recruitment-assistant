@@ -1,0 +1,73 @@
+{% load static %}<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}Assistant IA de recrutement{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="app">
+  <aside class="sidebar">
+    <a class="sidebar__brand" href="{% url 'candidates:dashboard' %}">
+      Recrutement<span>.IA</span>
+    </a>
+
+    <nav class="sidebar__nav">
+      {% include "partials/nav_link.html" with url_name="candidates:dashboard" label="Tableau de bord" icon="grid" %}
+
+      <p class="sidebar__section">Recrutement</p>
+      {% include "partials/nav_link.html" with url_name="jobs:list" label="Offres d'emploi" icon="briefcase" %}
+      {% include "partials/nav_link.html" with url_name="candidates:list" label="Candidats" icon="users" %}
+
+      <p class="sidebar__section">Documents</p>
+      {% include "partials/nav_link.html" with url_name="parsing:upload" label="Deposer un CV" icon="upload" %}
+      {% include "partials/nav_link.html" with url_name="parsing:documents" label="CV deposes" icon="file" %}
+
+      <p class="sidebar__section">Systeme</p>
+      {% include "partials/nav_link.html" with url_name="evaluation:bias_report" label="Transparence" icon="chart" %}
+      <a class="nav-link" href="/admin/">
+        {% include "partials/icon.html" with name="settings" %}
+        Administration
+      </a>
+    </nav>
+
+    <div class="sidebar__footer">
+      <p class="sidebar__user">{{ user.get_full_name|default:user.username }}</p>
+      <p class="sidebar__role">{{ user.get_role_display }}</p>
+      {% if user.blind_screening %}
+        <p class="mt-4"><span class="badge badge--warn">Screening a l'aveugle</span></p>
+      {% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="link-plain">Se deconnecter</button>
+      </form>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="page-head">
+      <div>
+        <h1 class="page-head__title">{% block heading %}{% endblock %}</h1>
+        {% block meta %}{% endblock %}
+      </div>
+      <div class="page-head__actions">{% block actions %}{% endblock %}</div>
+    </header>
+
+    <div class="content">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% else %}
+  {% block anonymous %}{% endblock %}
+{% endif %}
+</body>
+</html>

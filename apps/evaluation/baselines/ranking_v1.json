@@ -1,0 +1,213 @@
+{
+  "dataset": "ranking_v1",
+  "dataset_version": "1.0.0",
+  "engine_version": "1.2.0",
+  "semantic_used": false,
+  "aggregate": {
+    "ndcg_at_5": 0.997,
+    "precision_at_3": 1.0,
+    "pair_accuracy": 0.9841,
+    "spearman": 0.937
+  },
+  "cases": [
+    {
+      "id": "backend_python_senior",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.971,
+      "predicted_order": [
+        "bps_ideal",
+        "bps_solide",
+        "bps_drf",
+        "bps_flask",
+        "bps_junior",
+        "bps_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0001,
+        0.9433,
+        0.8831,
+        0.8804,
+        0.6375,
+        0.1053
+      ]
+    },
+    {
+      "id": "data_engineer_sql",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9747,
+      "predicted_order": [
+        "de_complet",
+        "de_postgres",
+        "de_sans_airflow",
+        "de_analyste",
+        "de_front"
+      ],
+      "relevances": [
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0001,
+        0.9033,
+        0.8867,
+        0.5668,
+        0.0969
+      ]
+    },
+    {
+      "id": "frontend_react",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9747,
+      "predicted_order": [
+        "fr_expert",
+        "fr_nextjs",
+        "fr_vue",
+        "fr_js_ancien",
+        "fr_backend"
+      ],
+      "relevances": [
+        3,
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0001,
+        0.9732,
+        0.8664,
+        0.6866,
+        0.1053
+      ]
+    },
+    {
+      "id": "devops_teletravail",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9487,
+      "predicted_order": [
+        "do_senior",
+        "do_complet",
+        "do_docker",
+        "do_sysadmin",
+        "do_data"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        1,
+        0
+      ],
+      "scores": [
+        0.9771,
+        0.9456,
+        0.5572,
+        0.2237,
+        0.08
+      ]
+    },
+    {
+      "id": "ml_engineer_certifie",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9747,
+      "predicted_order": [
+        "ml_ideal",
+        "ml_tensorflow",
+        "ml_sans_certif",
+        "ml_data_analyst",
+        "ml_chef_projet"
+      ],
+      "relevances": [
+        3,
+        2,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0,
+        0.9304,
+        0.9129,
+        0.7028,
+        0.1
+      ]
+    },
+    {
+      "id": "arbitrage_competences_anciennete",
+      "ndcg_at_5": 0.9793,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 0.8889,
+      "spearman": 0.8208,
+      "predicted_order": [
+        "arb_equilibre",
+        "arb_generaliste_senior",
+        "arb_pointu_jeune",
+        "arb_python_seul",
+        "arb_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        0.929,
+        0.9011,
+        0.8658,
+        0.3762,
+        0.1053
+      ]
+    },
+    {
+      "id": "profils_proches",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.8944,
+      "predicted_order": [
+        "pp_complet",
+        "pp_anglais_faible",
+        "pp_django_ancien",
+        "pp_sans_extras",
+        "pp_junior_motive"
+      ],
+      "relevances": [
+        3,
+        2,
+        2,
+        2,
+        1
+      ],
+      "scores": [
+        1.0001,
+        0.9471,
+        0.9412,
+        0.929,
+        0.8402
+      ]
+    }
+  ]
+}

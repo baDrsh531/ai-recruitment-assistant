@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ offer.title }}{% endblock %}
+{% block heading %}{{ offer.title }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ offer.department|default:"Sans departement" }} · {{ offer.location|default:"Lieu non precise" }}
+    · {{ offer.get_contract_type_display }} · {{ offer.get_remote_policy_display }}
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn btn--primary" href="{% url 'matching:ranking' offer.slug %}">Classement des candidats</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid grid--main">
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Description</h2></div>
+    <div class="card__body"><div class="prose">{{ offer.description }}</div></div>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Competences</h2></div>
+      <div class="card__body stack">
+        <div>
+          <p class="stat__label">Obligatoires</p>
+          <div class="chips mt-4">
+            {% for skill in offer.required_skills %}
+              <span class="chip chip--brand">
+                {{ skill.name }}
+                {% if skill.min_years %}<span class="chip__meta">{{ skill.min_years }} ans</span>{% endif %}
+              </span>
+            {% empty %}<span class="subtle small">Aucune</span>{% endfor %}
+          </div>
+        </div>
+        <div>
+          <p class="stat__label">Souhaitees</p>
+          <div class="chips mt-4">
+            {% for skill in offer.preferred_skills %}
+              <span class="chip">{{ skill.name }}</span>
+            {% empty %}<span class="subtle small">Aucune</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Exigences</h2></div>
+      <div class="card__body">
+        <div class="kv">
+          <div class="kv__row">
+            <span class="kv__key">Anciennete minimale</span>
+            <span class="kv__value">{{ offer.experience_min_years }} ans</span>
+          </div>
+          <div class="kv__row">
+            <span class="kv__key">Niveau d'etudes</span>
+            <span class="kv__value">{{ offer.get_education_level_display }}</span>
+          </div>
+          {% for language in offer.languages.all %}
+            <div class="kv__row">
+              <span class="kv__key">{{ language.language }}</span>
+              <span class="kv__value">{{ language.min_level }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Ponderation du score</h2></div>
+      <div class="card__body">
+        <div class="kv">
+          {% for key, value in offer.weights.items %}
+            <div class="kv__row">
+              <span class="kv__key">{{ key }}</span>
+              <span class="kv__value">{{ value|floatformat:2 }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <p class="card__note">
+        Le score est calcule par un moteur deterministe a partir de ces poids.
+        Un critere sur lequel l'offre n'exprime aucune exigence est exclu et
+        les poids restants sont renormalises.
+      </p>
+      <div class="card__body" style="border-top: 1px solid var(--border);">
+        <div class="kv">
+          <div class="kv__row">
+            <span class="kv__key">Screening a l'aveugle</span>
+            {% if offer.blind_screening %}
+              <span class="badge badge--warn">actif</span>
+            {% else %}
+              <span class="badge">inactif</span>
+            {% endif %}
+          </div>
+        </div>
+        <p class="hint mt-4">
+          Actif, il exclut la localisation du calcul — le seul critere du moteur
+          porteur d'un signal identitaire mesurable.
+          <a href="{% url 'evaluation:bias_report' %}">Voir les chiffres</a>.
+        </p>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

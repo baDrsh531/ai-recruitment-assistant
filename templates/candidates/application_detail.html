@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}{{ application.candidate.full_name }} — {{ application.offer.title }}{% endblock %}
+{% block heading %}{{ application.candidate.full_name }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ application.offer.title }} · {{ application.get_stage_display }}
+    · recue le {{ application.applied_at|date:"d/m/Y" }}
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{{ application.candidate.get_absolute_url }}">Fiche candidat</a>
+  <a class="btn" href="{% url 'matching:ranking' application.offer.slug %}">Classement</a>
+{% endblock %}
+
+{% block content %}
+{% if score %}
+<div class="grid grid--main">
+
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Detail par critere</h2>
+      <span class="badge">moteur {{ score.engine_version }}</span>
+    </div>
+    <div class="card__body stack">
+      {% for criterion in score.applicable_criteria %}
+        <div>
+          <div class="row" style="justify-content: space-between;">
+            <span>{{ criterion.label }}</span>
+            <span class="small subtle num">poids {{ criterion.weight|floatformat:2 }}</span>
+          </div>
+          {% widthratio criterion.score 1 100 as criterion_percent %}
+          {% include "partials/meter.html" with percent=criterion_percent %}
+        </div>
+      {% endfor %}
+    </div>
+    {% if score.skipped_criteria %}
+      <p class="card__note">
+        Criteres exclus, l'offre n'exprimant aucune exigence — leurs poids ont
+        ete redistribues :
+        {% for criterion in score.skipped_criteria %}{{ criterion.label }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+      </p>
+    {% endif %}
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Score de compatibilite</h2></div>
+      <div class="card__body">
+        <p class="score">{{ score.percentage }}&nbsp;%</p>
+        {% if score.is_overridden %}
+          <p class="small mt-4">
+            <span class="badge badge--warn">corrige manuellement</span>
+            calcul : {{ score.overall|floatformat:2 }} — {{ score.override_reason }}
+          </p>
+        {% endif %}
+        {% if score.blind %}
+          <p class="small mt-4">
+            <span class="badge badge--warn">screening a l'aveugle</span>
+            Localisation exclue du calcul, employeurs masques dans l'analyse.
+          </p>
+        {% endif %}
+        {% if score.breakdown.admissibility and score.breakdown.admissibility < 1 %}
+          <p class="hint mt-4">
+            Facteur de recevabilite {{ score.breakdown.admissibility|floatformat:2 }} applique :
+            les competences obligatoires ne sont que partiellement couvertes.
+          </p>
+        {% endif %}
+      </div>
+      <p class="card__note">
+        Calcule en {{ score.compute_ms }} ms. Resultat reproductible : le modele
+        de langage n'attribue aucune note.
+      </p>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><h2 class="card__title">Ecarts</h2></div>
+      {% if score.gaps %}
+        <div class="card__body stack">
+          {% for gap in score.gaps %}
+            <div>
+              <p><span class="badge badge--danger">{{ gap.skill }}</span></p>
+              <p class="small subtle">
+                {% if gap.best_match %}
+                  le plus proche dans le CV : {{ gap.best_match }} ({{ gap.score|floatformat:2 }})
+                {% else %}
+                  aucune competence proche dans le CV
+                {% endif %}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        {% include "partials/empty.html" with title="Aucun ecart" text="Toutes les competences obligatoires sont couvertes." %}
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="card span-all">
+    <div class="card__head"><h2 class="card__title">Competences attendues</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Attendue</th>
+            <th>Rapprochee de</th>
+            <th>Methode</th>
+            <th class="num">Anciennete</th>
+            <th class="num">Fraicheur</th>
+            <th class="num">Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for match in score.skill_matches %}
+            <tr>
+              <td>
+                {{ match.required }}
+                {% if match.requirement == "preferred" %}
+                  <span class="badge">souhaitee</span>
+                {% endif %}
+              </td>
+              <td class="muted">{{ match.matched_with|default:"—" }}</td>
+              <td>
+                <span class="badge{% if match.method == 'exact' %} badge--ok{% elif match.method == 'aucun' %} badge--danger{% else %} badge--brand{% endif %}">
+                  {{ match.method }}
+                </span>
+              </td>
+              <td class="num muted">{{ match.coverage|floatformat:2 }}</td>
+              <td class="num muted">{{ match.recency|floatformat:2 }}</td>
+              <td class="num">{{ match.score|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card span-all">
+    <div class="card__head"><h2 class="card__title">Analyse</h2></div>
+    {% if score.explanation %}
+      <div class="card__body"><div class="prose">{{ score.explanation }}</div></div>
+      <p class="card__note">
+        Redigee par {{ score.explanation_model }} a partir du score deja calcule
+        (prompt {{ score.explanation_prompt_id }} v{{ score.explanation_prompt_version }}).
+        Le modele commente les chiffres, il ne les produit pas.
+      </p>
+    {% else %}
+      {% include "partials/empty.html" with title="Aucune analyse redigee" text="Relancez le calcul avec « Recalculer avec analyse » depuis le classement. Un serveur d'inference joignable est necessaire." %}
+    {% endif %}
+  </section>
+</div>
+
+<p class="small subtle">
+  Le score est indicatif. Aucune candidature n'est ecartee automatiquement :
+  la decision revient a un recruteur identifie et elle est journalisee.
+</p>
+
+{% else %}
+<section class="card">
+  {% include "partials/empty.html" with title="Candidature non scoree" text="Lancez le calcul depuis le classement de l'offre." %}
+</section>
+{% endif %}
+{% endblock %}

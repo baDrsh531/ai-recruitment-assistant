@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Offres d'emploi{% endblock %}
+{% block heading %}Offres d'emploi{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">{{ paginator.count|default:offers|length }} offre(s).</p>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  {% if offers %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Intitule</th>
+            <th>Departement</th>
+            <th>Localisation</th>
+            <th>Statut</th>
+            <th class="num">Requises</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for offer in offers %}
+            <tr>
+              <td><a href="{{ offer.get_absolute_url }}">{{ offer.title }}</a></td>
+              <td class="muted">{{ offer.department|default:"—" }}</td>
+              <td class="muted">{{ offer.location|default:"—" }}</td>
+              <td>
+                <span class="badge{% if offer.is_open %} badge--ok{% endif %}">
+                  {{ offer.get_status_display }}
+                </span>
+              </td>
+              <td class="num">{{ offer.required_skills.count }}</td>
+              <td class="num">
+                <a class="btn btn--sm" href="{% url 'matching:ranking' offer.slug %}">Classement</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune offre" text="Creez-en une depuis l'administration." %}
+  {% endif %}
+</section>
+{% endblock %}

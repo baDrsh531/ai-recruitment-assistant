@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Classement — {{ offer.title }}{% endblock %}
+{% block heading %}Classement — {{ offer.title }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {% if offer.blind_screening %}
+      <span class="badge badge--warn">Screening a l'aveugle</span>
+      Localisation exclue du calcul, employeurs masques dans l'analyse.
+      <a href="{% url 'evaluation:bias_report' %}">effet mesure</a>.
+      <br>
+    {% endif %}
+    {{ scores|length }} candidature(s) scoree(s){% if unscored %}, {{ unscored }} en attente{% endif %}.
+    Le score est une aide au tri : aucune candidature n'est ecartee automatiquement.
+  </p>
+{% endblock %}
+{% block actions %}
+  <form method="post" action="{% url 'matching:score_offer' offer.slug %}">
+    {% csrf_token %}
+    <input type="hidden" name="explain" value="0">
+    <button type="submit" class="btn btn--primary">Recalculer</button>
+  </form>
+  <form method="post" action="{% url 'matching:score_offer' offer.slug %}">
+    {% csrf_token %}
+    <input type="hidden" name="explain" value="1">
+    <button type="submit" class="btn">Recalculer avec analyse</button>
+  </form>
+  <a class="btn" href="{{ offer.get_absolute_url }}">Voir l'offre</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  {% if scores %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 3rem;">Rang</th>
+            <th>Candidat</th>
+            <th style="width: 13rem;">Score</th>
+            <th>Ecarts sur competences obligatoires</th>
+            <th>Etape</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for score in scores %}
+            <tr>
+              <td class="num muted">{{ forloop.counter }}</td>
+              <td>
+                <a href="{{ score.application.get_absolute_url }}">
+                  {% if blind %}{{ score.application.candidate.display_name }}{% else %}{{ score.application.candidate.full_name }}{% endif %}
+                </a>
+                {% if score.is_overridden %}
+                  <span class="badge badge--warn" title="{{ score.override_reason }}">corrige</span>
+                {% endif %}
+              </td>
+              <td>{% include "partials/meter.html" with percent=score.percentage %}</td>
+              <td>
+                <div class="chips">
+                  {% for gap in score.gaps %}
+                    <span class="badge badge--danger">{{ gap.skill }}</span>
+                  {% empty %}
+                    <span class="subtle small">aucun</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td><span class="badge">{{ score.application.get_stage_display }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Moteur {{ scores.0.engine_version }} ·
+      {% if scores.0.semantic_used %}rapprochement semantique actif{% else %}ontologie seule (embeddings indisponibles){% endif %} ·
+      {{ scores.0.compute_ms }} ms de calcul
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun score" text="Lancez le calcul avec le bouton « Recalculer », ou en ligne de commande." %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Candidats{% endblock %}
+{% block heading %}Candidats{% endblock %}
+{% block meta %}
+  {% if blind %}
+    <p class="page-head__meta">
+      <span class="badge badge--warn">Screening a l'aveugle</span>
+      Les noms sont masques pour la premiere lecture.
+    </p>
+  {% else %}
+    <p class="page-head__meta">{{ paginator.count|default:candidates|length }} candidat(s).</p>
+  {% endif %}
+{% endblock %}
+{% block actions %}
+  <a class="btn btn--primary" href="{% url 'parsing:upload' %}">Deposer un CV</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  {% if candidates %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Candidat</th>
+            <th>Titre</th>
+            <th class="num">Experience</th>
+            <th>Competences</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidate in candidates %}
+            <tr>
+              <td>
+                <a href="{{ candidate.get_absolute_url }}">
+                  {% if blind %}{{ candidate.display_name }}{% else %}{{ candidate.full_name }}{% endif %}
+                </a>
+              </td>
+              <td class="muted">{{ candidate.headline|default:"—" }}</td>
+              <td class="num">{{ candidate.total_experience_years|floatformat:1 }} ans</td>
+              <td>
+                <div class="chips">
+                  {% for skill in candidate.skills.all|slice:":6" %}
+                    <span class="chip">{{ skill.name }}</span>
+                  {% empty %}
+                    <span class="subtle small">aucune</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun candidat" text="Deposez un CV pour alimenter la base." %}
+  {% endif %}
+</section>
+{% endblock %}

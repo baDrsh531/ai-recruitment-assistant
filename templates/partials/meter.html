@@ -1,0 +1,11 @@
+{% comment %}
+Jauge de score. `percent` est un entier de 0 a 100.
+La couleur suit trois paliers, identiques partout dans l'application.
+{% endcomment %}
+<div class="meter">
+  <div class="meter__track">
+    <div class="meter__fill{% if percent >= 75 %} meter__fill--ok{% elif percent >= 50 %} meter__fill--warn{% else %} meter__fill--danger{% endif %}"
+         style="width: {{ percent }}%"></div>
+  </div>
+  <span class="meter__value">{{ percent }}&nbsp;%</span>
+</div>

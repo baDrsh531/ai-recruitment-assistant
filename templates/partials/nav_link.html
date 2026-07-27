@@ -1,0 +1,5 @@
+{% url url_name as target %}
+<a class="nav-link{% if request.path == target %} is-active{% endif %}" href="{{ target }}">
+  {% include "partials/icon.html" with name=icon %}
+  {{ label }}
+</a>

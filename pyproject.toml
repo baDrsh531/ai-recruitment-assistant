@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-recruitment-assistant"
+version = "0.1.0"
+description = "Plateforme RH d'analyse de candidatures assistee par IA"
+requires-python = ">=3.11"
+dependencies = [
+    "Django==5.2.*",
+    "djangorestframework==3.15.*",
+    "django-environ==0.11.*",
+    "django-extensions==3.2.*",
+    "psycopg[binary]==3.2.*",
+    "celery==5.4.*",
+    "redis==5.2.*",
+    "httpx==0.28.*",
+    "pydantic==2.10.*",
+    "numpy==2.2.*",
+    "PyMuPDF==1.25.*",
+    "python-docx==1.1.*",
+    "python-dateutil==2.9.*",
+    "Pillow==11.*",
+    "whitenoise==6.8.*",
+]
+
+[project.optional-dependencies]
+# Embeddings locaux via ONNX (~50 Mo, pas de torch).
+# A installer seulement si le serveur d'inference n'expose pas /v1/embeddings.
+local-embeddings = ["fastembed==0.5.*"]
+ocr = ["pytesseract==0.3.*"]
+dev = [
+    "pytest==8.3.*",
+    "pytest-django==4.9.*",
+    "pytest-cov==6.0.*",
+    "factory-boy==3.3.*",
+    "ruff==0.9.*",
+    "django-debug-toolbar==5.0.*",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "config*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["migrations", ".venv", "staticfiles", "media"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "llm: test necessitant un serveur d'inference joignable",
+    "eval: test du harnais d'evaluation (lent)",
+]
