@@ -238,6 +238,43 @@ Moyenne                          0.997     1.000     0.984     0.937
 `--baseline` affiche l'ecart avec un rapport de reference et renvoie un code
 d'erreur en cas de regression : la CI echoue avec les chiffres a l'appui.
 
+### Une couche mesuree, puis desactivee : le rapprochement semantique
+
+Le moteur prevoit un troisieme niveau de rapprochement des competences, apres
+la correspondance exacte et l'ontologie : la similarite d'embeddings, censee
+attraper les intitules que l'ontologie ne connait pas. Il est **desactive par
+defaut**, et la commande suivante dit pourquoi :
+
+```powershell
+python manage.py probe_semantic
+```
+
+```
+Offre                     Candidat                Attendu         cosinus
+Symfony                   Laravel                 proches           0.393
+Polars                    Pandas                  proches           0.332
+Rust                      Go                      proches           0.326
+Symfony                   Comptabilite            sans rapport      0.647
+Kubernetes                Boulangerie             sans rapport      0.827
+
+paire proche la moins bien notee   : 0.280
+paire sans rapport la mieux notee  : 0.827
+-> les deux populations se chevauchent, aucun seuil ne les separe.
+```
+
+Un modele de phrases generaliste n'a **aucune connaissance technique**. Il note
+« Kubernetes / Boulangerie » au-dessus de toutes les paires reellement
+proches, et cette paire franchit le seuil : activee, la couche crediterait un
+boulanger sur une exigence Kubernetes.
+
+Le harnais de classement confirme l'inutilite par un autre chemin : active ou
+non, les quatre metriques sont **rigoureusement identiques** (nDCG@5 0.997).
+
+Le code reste en place et l'option `EMBEDDING_PROVIDER=local` le reactive : il
+redeviendra pertinent avec un modele entraine sur une taxonomie de
+competences. En attendant, l'ontologie fait le travail — et elle a le merite
+d'etre inspectable ligne a ligne.
+
 ### Mesurer la qualite de l'extraction
 
 ```powershell
@@ -415,6 +452,7 @@ tests/             suite pytest
 | `apps/parsing/evidence.py` | ancrage tolerant des citations, avec calcul des coordonnees |
 | `apps/parsing/pipeline.py` | orchestration complete, fusion des periodes d'experience |
 | `apps/matching/ontology.py` | relations entre competences — **dirigees** : Django implique Python, jamais l'inverse |
+| `apps/matching/management/commands/probe_semantic.py` | la mesure qui a fait desactiver le rapprochement semantique |
 | `apps/matching/engine.py` | calcul du score, renormalisation des poids, degradation controlee |
 | `apps/matching/explain.py` | le LLM ne voit que le detail chiffre, jamais le CV brut |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |

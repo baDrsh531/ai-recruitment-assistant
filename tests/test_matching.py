@@ -364,6 +364,42 @@ def test_semantic_flag_reports_degraded_mode(db, python_offer):
     assert engine.score(candidate, python_offer).semantic_used is False
 
 
+# --- Rapprochement semantique : desactive apres mesure -----------------------
+def test_semantic_matching_is_disabled_by_default(settings):
+    """Decision documentee, pas oubli de configuration.
+
+    Un modele de phrases generaliste n'a aucune connaissance technique : sur
+    les paires de reference de `manage.py probe_semantic`, il note
+    « Kubernetes / Boulangerie » au-dessus de « Symfony / Laravel ». Les paires
+    proches et les paires sans rapport se chevauchent, aucun seuil ne les
+    separe. Activee, la couche crediterait un boulanger sur du Kubernetes.
+    """
+    assert settings.EMBEDDING["PROVIDER"] == "none"
+
+
+def test_disabled_provider_yields_no_embedder(settings):
+    from apps.ai import embeddings
+
+    settings.EMBEDDING = {**settings.EMBEDDING, "PROVIDER": "none"}
+    embeddings.reset_availability()
+    assert embeddings.get_embedder_or_none() is None
+
+
+def test_scoring_still_works_without_semantic_matching(db, python_offer, monkeypatch):
+    """L'ontologie doit suffire : la desactivation ne degrade pas le service."""
+    monkeypatch.undo()  # retablit le vrai `_precompute_semantic`
+    candidate = make_candidate(
+        db, "Sans embeddings", skills=[("Django", 4), ("PostgreSQL", 3)], years=4
+    )
+    result = engine.score(candidate, python_offer)
+
+    assert result.semantic_used is False
+    # Python est credite via l'ontologie, sans aucun embedding.
+    python_match = next(m for m in result.skill_matches if m.required == "Python")
+    assert python_match.method == "ontologie"
+    assert python_match.score > 0.7
+
+
 # --- Persistance et service -------------------------------------------------
 @pytest.fixture
 def application(db, python_offer):

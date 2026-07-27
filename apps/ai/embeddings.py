@@ -95,6 +95,12 @@ class ServerEmbedder(BaseEmbedder):
 def get_embedder() -> BaseEmbedder:
     config = settings.EMBEDDING
     provider = config["PROVIDER"].lower()
+    if provider == "none":
+        raise EmbeddingError(
+            "Rapprochement semantique desactive (EMBEDDING_PROVIDER=none). "
+            "Voir `python manage.py probe_semantic` pour la mesure qui a "
+            "motive ce choix."
+        )
     if provider == "server":
         return ServerEmbedder(config["MODEL"], config["DIM"])
     return LocalEmbedder(config["MODEL"], config["DIM"])
@@ -106,21 +112,37 @@ def get_embedder() -> BaseEmbedder:
 _unavailable: str | None = None
 
 
-def get_embedder_or_none() -> BaseEmbedder | None:
+def get_embedder_or_none(*, force: bool = False) -> BaseEmbedder | None:
     """Renvoie le fournisseur d'embeddings, ou None s'il est indisponible.
 
     L'indisponibilite est memorisee et signalee une seule fois : elle degrade
     le service (rapprochement par ontologie seule) sans jamais l'interrompre.
+
+    `force` ignore le reglage `EMBEDDING_PROVIDER=none` : la commande
+    `probe_semantic` doit pouvoir mesurer le modele meme lorsque le projet a
+    choisi de ne pas s'en servir.
     """
     global _unavailable
+
+    if force:
+        config = settings.EMBEDDING
+        provider = config["PROVIDER"].lower()
+        try:
+            if provider == "server":
+                return ServerEmbedder(config["MODEL"], config["DIM"])
+            return LocalEmbedder(config["MODEL"], config["DIM"])
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Embeddings indisponibles : %s", exc)
+            return None
+
     if _unavailable is not None:
         return None
     try:
         return get_embedder()
     except Exception as exc:  # noqa: BLE001
         _unavailable = str(exc)
-        logger.warning(
-            "Embeddings indisponibles, rapprochement par ontologie seule : %s", exc
+        logger.info(
+            "Rapprochement semantique inactif, ontologie seule : %s", exc
         )
         return None
 

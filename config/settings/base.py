@@ -141,10 +141,26 @@ VLM = {
     "API_KEY": env("VLM_API_KEY", default="not-needed"),
     "TIMEOUT": env.int("VLM_TIMEOUT", default=180),
 }
+# Rapprochement semantique des competences.
+#
+# Desactive par defaut, apres mesure. Un modele de phrases generaliste n'a
+# aucune connaissance technique : sur les paires de reference de
+# `python manage.py probe_semantic`, il note « Kubernetes / Boulangerie » a
+# 0.827 — au-dessus de toutes les paires reellement proches — et « Symfony /
+# Laravel » a 0.393. Les deux populations se chevauchent : aucun seuil ne les
+# separe. Active, cette couche crediterait un boulanger sur une exigence
+# Kubernetes.
+#
+# Le code reste en place : il redeviendra utile avec un modele entraine sur
+# une taxonomie de competences. En attendant, l'ontologie fait le travail, et
+# elle est inspectable.
 EMBEDDING = {
-    "PROVIDER": env("EMBEDDING_PROVIDER", default="local"),  # "local" | "server"
-    "MODEL": env("EMBEDDING_MODEL", default="BAAI/bge-m3"),
-    "DIM": env.int("EMBEDDING_DIM", default=1024),
+    "PROVIDER": env("EMBEDDING_PROVIDER", default="none"),  # none | local | server
+    "MODEL": env(
+        "EMBEDDING_MODEL",
+        default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    ),
+    "DIM": env.int("EMBEDDING_DIM", default=384),
 }
 
 # --- Conformite AI Act / RGPD ---------------------------------------------

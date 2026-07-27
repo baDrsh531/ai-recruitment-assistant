@@ -21,13 +21,13 @@ dependencies = [
     "PyMuPDF==1.25.*",
     "python-docx==1.1.*",
     "python-dateutil==2.9.*",
-    "Pillow==11.*",
     "whitenoise==6.8.*",
 ]
 
 [project.optional-dependencies]
-# Embeddings locaux via ONNX (~50 Mo, pas de torch).
-# A installer seulement si le serveur d'inference n'expose pas /v1/embeddings.
+# Embeddings locaux via ONNX, sans torch. A installer lorsque le serveur
+# d'inference n'expose pas /v1/embeddings — c'est le cas de llama.cpp lance
+# sans l'option `--embeddings`.
 local-embeddings = ["fastembed==0.5.*"]
 ocr = ["pytesseract==0.3.*"]
 dev = [
