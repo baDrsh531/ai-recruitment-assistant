@@ -238,6 +238,36 @@ Moyenne                          0.997     1.000     0.984     0.937
 `--baseline` affiche l'ecart avec un rapport de reference et renvoie un code
 d'erreur en cas de regression : la CI echoue avec les chiffres a l'appui.
 
+### Graphiques
+
+Deux tableaux de bord : l'un RH (competences, anciennete, langues,
+distribution des scores), l'autre sur le **cout et la latence des appels
+modele** — latence mediane et 95e centile par usage, tokens d'entree et
+generes, volume quotidien.
+
+```powershell
+node scripts/audit_charts.mjs
+```
+
+Les graphiques sont du **SVG genere dans le navigateur, sans aucune
+bibliotheque**. Trois choix structurent le rendu :
+
+- **Le tableau equivalent est toujours emis par le serveur.** Sans JavaScript,
+  la page reste lisible et chaque valeur reste accessible ; avec, le tableau
+  cede la place au graphique et revient d'un clic. L'infobulle enrichit, elle
+  ne conditionne jamais l'acces a une valeur.
+- **La palette est validee, pas choisie a l'oeil.** Les deux teintes
+  categorielles passent tous les controles sur les surfaces reelles du projet,
+  en clair comme en sombre : ecart CVD 24.7 et 26.8 (cible >= 8), ecart en
+  vision normale 33.6 et 31.8 (plancher 15), contraste >= 3:1. Une serie unique
+  recoit une seule couleur — jamais un degrade qui redirait la longueur de la
+  barre.
+- **La geometrie est auditee.** `scripts/audit_charts.mjs` rejoue le rendu avec
+  un DOM minimal sur des cas limites — intitule tres long, valeur a six
+  chiffres, courbe a deux points — et echoue si quoi que ce soit sort du cadre.
+  Il a trouve trois debordements reels que les donnees de demonstration ne
+  faisaient jamais apparaitre. Il tourne en integration continue.
+
 ### Une couche mesuree, puis desactivee : le rapprochement semantique
 
 Le moteur prevoit un troisieme niveau de rapprochement des competences, apres
@@ -487,6 +517,8 @@ tests/             suite pytest
 | `apps/evaluation/extraction.py` | compare le profil reconstitue au profil d'origine |
 | `apps/evaluation/datasets/ranking_v1.json` | le jeu annote — le champ `tests` dit ce que chaque cas eprouve |
 | `static/css/app.css` | systeme de design : jetons, composants, theme clair et sombre |
+| `static/js/charts.js` | graphiques SVG sans bibliotheque, infobulles, acces clavier |
+| `scripts/audit_charts.mjs` | audit de geometrie : echoue si une marque sort du cadre |
 
 ---
 
@@ -499,7 +531,7 @@ tests/             suite pytest
 - [x] Harnais d'evaluation : jeu annote, nDCG@5, non-regression en CI
 - [x] Interface : systeme de design sans dependance externe, theme clair et sombre
 - [ ] Comparaison cote a cote de plusieurs candidats
-- [ ] Tableau de bord de cout et de latence des appels modele
+- [x] Tableau de bord de cout et de latence, graphiques sans dependance externe
 - [x] Audit de biais par contrefactuels, ratio d'impact, page de transparence
 - [x] Screening a l'aveugle agissant sur le score, avec mesure de son effet
 - [x] Harnais d'evaluation de l'extraction, a verite terrain generee

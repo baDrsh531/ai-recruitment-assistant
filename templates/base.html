@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}Assistant IA de recrutement{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/charts.js' %}" defer></script>
 </head>
 <body>
 {% if user.is_authenticated %}
@@ -27,7 +28,8 @@
       {% include "partials/nav_link.html" with url_name="parsing:documents" label="CV deposes" icon="file" %}
 
       <p class="sidebar__section">Systeme</p>
-      {% include "partials/nav_link.html" with url_name="evaluation:bias_report" label="Transparence" icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:invocations" label="Appels modele" icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:bias_report" label="Transparence" icon="grid" %}
       <a class="nav-link" href="/admin/">
         {% include "partials/icon.html" with name="settings" %}
         Administration

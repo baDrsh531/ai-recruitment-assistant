@@ -32,6 +32,16 @@ jobs:
       - name: Analyse statique
         run: ruff check .
 
+      # Le validateur de palette verifie les couleurs, pas la mise en page.
+      # Ce controle rejoue le rendu des graphiques sur des cas limites et
+      # echoue si une marque, une etiquette ou une cible sort du cadre.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Geometrie des graphiques
+        run: node scripts/audit_charts.mjs
+
       - name: Verifications Django
         run: python manage.py check --deploy --fail-level ERROR
 

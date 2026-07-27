@@ -714,7 +714,196 @@ input[type="file"] {
   color: var(--brand);
 }
 
-/* --- 5. Utilitaires ------------------------------------------------------ */
+/* --- 5. Graphiques -------------------------------------------------------
+   Palette validee contre les surfaces reelles du projet, dans les deux modes :
+   ecart CVD le plus faible 24.7 en clair, 26.8 en sombre (cible >= 8), ecart en
+   vision normale 33.6 et 31.8 (plancher 15), contraste >= 3:1 sur la surface.
+   Les couleurs suivent l'entite, jamais son rang.
+   ------------------------------------------------------------------------- */
+.chart {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chart {
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --chart-grid: #2c2c2a;
+    --chart-axis: #383835;
+  }
+}
+
+.chart__canvas {
+  overflow-x: auto;
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  min-width: 22rem;
+  height: auto;
+}
+
+/* Marques : la donnee est la seule chose autorisee a etre franche. */
+.chart__mark--1 { fill: var(--series-1); }
+.chart__mark--2 { fill: var(--series-2); }
+.chart__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart__line--1 { stroke: var(--series-1); }
+.chart__dot--1 { fill: var(--series-1); }
+.chart__ring { fill: var(--surface); }
+
+/* Grille et axes : filet plein d'un cran par-dessus la surface, recessifs. */
+.chart__grid,
+.chart__axis {
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.chart__grid { stroke: var(--chart-grid); }
+.chart__axis { stroke: var(--chart-axis); }
+
+/* Le texte porte l'encre neutre, jamais la couleur de la serie. */
+.chart__label,
+.chart__tick {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-family: var(--font);
+}
+.chart__tick { font-variant-numeric: tabular-nums; }
+.chart__value {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cible de pointage : plus large que la marque, et atteignable au clavier. */
+.chart__hit {
+  fill: transparent;
+  cursor: default;
+}
+.chart__hit:hover,
+.chart__hit:focus-visible {
+  fill: currentColor;
+  fill-opacity: 0.04;
+  outline: none;
+}
+.chart__hit:focus-visible {
+  stroke: var(--brand);
+  stroke-width: 2;
+}
+
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.chart__legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chart__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.chart__swatch--1 { background: var(--series-1); }
+.chart__swatch--2 { background: var(--series-2); }
+
+.chart__toggle {
+  margin-top: var(--space-3);
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.chart__toggle:hover { color: var(--text); }
+
+.chart__table {
+  margin-top: var(--space-4);
+  font-size: 0.8125rem;
+}
+.chart__table th,
+.chart__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+.chart__table td.num,
+.chart__table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Infobulle : la valeur mene, l'intitule suit. */
+.chart__tip {
+  position: absolute;
+  z-index: 40;
+  min-width: 6rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 0.75rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.chart__tip.is-visible { opacity: 1; }
+
+.chart__tip-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+.chart__tip-row + .chart__tip-row { margin-top: 2px; }
+.chart__tip-row strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.chart__tip-name { color: var(--text-muted); }
+.chart__tip-key {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.chart__tip-key--1 { background: var(--series-1); }
+.chart__tip-key--2 { background: var(--series-2); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chart__tip { transition: none; }
+}
+
+/* --- 6. Utilitaires ------------------------------------------------------ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .muted   { color: var(--text-muted); }
 .subtle  { color: var(--text-subtle); }
 .small   { font-size: 0.75rem; }

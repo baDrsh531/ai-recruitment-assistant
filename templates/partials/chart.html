@@ -1,0 +1,53 @@
+{% comment %}
+Graphique en SVG, rendu dans le navigateur.
+
+Amelioration progressive : le tableau ci-dessous est toujours emis par le
+serveur. Sans JavaScript, il reste visible et chaque valeur reste lisible ;
+avec, il cede la place au graphique et reste accessible d'un clic.
+
+Attend un objet `chart` (voir apps/core/charts.py).
+{% endcomment %}
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">{{ chart.title }}</h2>
+    {% if chart.subtitle %}<span class="small subtle">{{ chart.subtitle }}</span>{% endif %}
+  </div>
+
+  {% if chart.is_empty %}
+    {% include "partials/empty.html" with title="Aucune donnee" text="Ce graphique se remplira des les premieres candidatures." %}
+  {% else %}
+    <div class="card__body">
+      <figure class="chart" id="chart-{{ chart.id }}">
+        {{ chart.as_dict|json_script:chart.id }}
+        <div class="chart__canvas"></div>
+
+        <button type="button" class="chart__toggle" aria-expanded="false" hidden>
+          Voir les donnees
+        </button>
+
+        <table class="chart__table">
+          <caption class="visually-hidden">{{ chart.title }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Categorie</th>
+              {% for item in chart.series %}
+                <th scope="col" class="num">{{ item.name }}{% if chart.unit %} ({{ chart.unit }}){% endif %}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in chart.rows %}
+              <tr>
+                <th scope="row">{{ row.label }}</th>
+                {% for value in row.values %}
+                  <td class="num">{{ value|floatformat:"-1" }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </figure>
+    </div>
+    {% if chart.note %}<p class="card__note">{{ chart.note }}</p>{% endif %}
+  {% endif %}
+</section>

@@ -3,9 +3,28 @@ from django.db.models import Avg, Count
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.ai.models import AIInvocation
+from apps.core import charts
 from apps.jobs.models import JobOffer
+from apps.matching.models import MatchScore
 
-from .models import Application, Candidate, CVDocument
+from .models import Application, Candidate, CandidateLanguage, CandidateSkill, CVDocument
+
+# Tranches d'anciennete, dans un ordre qui porte du sens : elles ne sont pas
+# retriees par effectif.
+EXPERIENCE_BANDS = (
+    ("Moins d'un an", 0.0, 1.0),
+    ("1 a 3 ans", 1.0, 3.0),
+    ("3 a 5 ans", 3.0, 5.0),
+    ("5 a 8 ans", 5.0, 8.0),
+    ("8 ans et plus", 8.0, float("inf")),
+)
+
+SCORE_BANDS = (
+    ("Moins de 25 %", 0.0, 0.25),
+    ("25 a 50 %", 0.25, 0.50),
+    ("50 a 75 %", 0.50, 0.75),
+    ("75 % et plus", 0.75, 1.01),
+)
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -24,11 +43,94 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["ai"] = AIInvocation.objects.aggregate(
             calls=Count("id"), avg_latency=Avg("latency_ms")
         )
-        context["stages"] = (
-            Application.objects.values("stage").annotate(total=Count("id")).order_by("-total")
-        )
         context["recent_offers"] = JobOffer.objects.order_by("-created_at")[:5]
+        context["charts"] = self._charts()
         return context
+
+    # ----------------------------------------------------------------------
+    def _charts(self) -> dict[str, charts.Chart]:
+        return {
+            "skills": self._skills_chart(),
+            "experience": self._experience_chart(),
+            "languages": self._languages_chart(),
+            "scores": self._scores_chart(),
+        }
+
+    def _skills_chart(self) -> charts.Chart:
+        rows = (
+            CandidateSkill.objects.values("normalized_name")
+            .annotate(total=Count("candidate", distinct=True))
+            .order_by("-total")
+        )
+        return charts.bar(
+            "chart-skills",
+            "Competences les plus repandues",
+            [(row["normalized_name"], row["total"]) for row in rows],
+            unit="candidats",
+            subtitle="Nombre de candidats declarant la competence",
+            note=(
+                "Les intitules sont normalises par l'ontologie : « DRF » et "
+                "« Django REST Framework » comptent pour une seule competence."
+            ),
+        )
+
+    def _experience_chart(self) -> charts.Chart:
+        annees = list(
+            Candidate.objects.values_list("total_experience_years", flat=True)
+        )
+        pairs = [
+            (label, sum(1 for valeur in annees if bas <= valeur < haut))
+            for label, bas, haut in EXPERIENCE_BANDS
+        ]
+        return charts.ordered_bar(
+            "chart-experience",
+            "Anciennete des candidats",
+            pairs,
+            unit="candidats",
+            subtitle="Tranches ordonnees, effectif par tranche",
+            note=(
+                "L'anciennete totale fusionne les periodes qui se chevauchent : "
+                "deux missions menees en parallele ne comptent qu'une fois."
+            ),
+        )
+
+    def _languages_chart(self) -> charts.Chart:
+        rows = (
+            CandidateLanguage.objects.values("language")
+            .annotate(total=Count("candidate", distinct=True))
+            .order_by("-total")
+        )
+        return charts.bar(
+            "chart-languages",
+            "Langues parlees",
+            [(row["language"], row["total"]) for row in rows],
+            unit="candidats",
+            subtitle="Toutes candidatures confondues",
+        )
+
+    def _scores_chart(self) -> charts.Chart:
+        # Chaque calcul cree une ligne : on ne retient que le plus recent par
+        # candidature, sans quoi un recalcul comptrait deux fois.
+        derniers: dict[str, float] = {}
+        for score in MatchScore.objects.order_by("application_id", "-created_at"):
+            derniers.setdefault(str(score.application_id), score.effective_score)
+
+        valeurs = list(derniers.values())
+        pairs = [
+            (label, sum(1 for valeur in valeurs if bas <= valeur < haut))
+            for label, bas, haut in SCORE_BANDS
+        ]
+        return charts.ordered_bar(
+            "chart-scores",
+            "Distribution des scores",
+            pairs,
+            unit="candidatures",
+            subtitle="Dernier score calcule pour chaque candidature",
+            note=(
+                "Le score est une aide au tri. Aucune candidature n'est ecartee "
+                "automatiquement, quelle que soit sa tranche."
+            ),
+        )
 
 
 class CandidateListView(LoginRequiredMixin, ListView):

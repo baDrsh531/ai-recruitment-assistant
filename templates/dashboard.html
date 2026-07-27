@@ -51,9 +51,19 @@
     </div>
     <p class="card__note">
       Chaque appel est journalise : modele, version de prompt, tokens, latence.
-      Detail dans <a href="/admin/ai/aiinvocation/">l'administration</a>.
+      <a href="{% url 'evaluation:invocations' %}">Voir le detail des appels</a>.
     </p>
   </section>
+</div>
+
+<div class="grid grid--main">
+  {% include "partials/chart.html" with chart=charts.skills %}
+  {% include "partials/chart.html" with chart=charts.experience %}
+</div>
+
+<div class="grid grid--main">
+  {% include "partials/chart.html" with chart=charts.scores %}
+  {% include "partials/chart.html" with chart=charts.languages %}
 </div>
 
 <section class="card">

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Cout et latence des appels modele{% endblock %}
+{% block heading %}Appels modele{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Cout et latence sur les {{ window_days }} derniers jours. Chaque appel est
+    journalise depuis le premier jour : modele, version de prompt, tokens,
+    latence, cause d'arret.
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'evaluation:bias_report' %}">Transparence</a>
+  <a class="btn" href="/admin/ai/aiinvocation/">Journal detaille</a>
+{% endblock %}
+
+{% block content %}
+<div class="grid">
+  {% include "partials/stat_tile.html" with label="Appels" value=stats.calls %}
+  {% include "partials/stat_tile.html" with label="Tokens" value=stats.tokens %}
+  {% include "partials/stat_tile.html" with label="Latence mediane" value=stats.median_ms hint="millisecondes" %}
+  {% include "partials/stat_tile.html" with label="Appels en echec" value=stats.failures %}
+</div>
+
+{% include "partials/chart.html" with chart=charts.latency %}
+{% include "partials/chart.html" with chart=charts.tokens %}
+{% include "partials/chart.html" with chart=charts.volume %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Comment lire ces chiffres</h2></div>
+  <div class="card__body stack">
+    <p class="muted">
+      Un appel en echec n'est pas un incident silencieux : il figure au journal
+      avec sa cause. Une reponse tronquee, un serveur injoignable ou un JSON non
+      conforme y apparaissent au meme titre, ce qui permet de savoir pourquoi une
+      analyse manque plutot que de le constater.
+    </p>
+    <p class="muted">
+      Le score de compatibilite, lui, n'apparait pas ici : il est calcule sans
+      aucun appel modele. Seules l'extraction des CV, l'analyse redigee et les
+      questions d'entretien consomment des tokens.
+    </p>
+  </div>
+</section>
+{% endblock %}
