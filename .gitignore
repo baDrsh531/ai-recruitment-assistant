@@ -38,9 +38,10 @@ celerybeat-schedule*
 .DS_Store
 Thumbs.db
 
-# === Assistants de developpement ===========================================
-# Ces repertoires et fichiers appartiennent a l'outillage local du poste, pas
-# au projet. Ils n'ont rien a faire dans l'historique.
+# === Outillage local du poste ==============================================
+# Repertoires de configuration crees par les editeurs et les outils locaux :
+# ils appartiennent a la machine, pas au projet, et n'ont rien a faire dans
+# l'historique.
 .claude/
 .cursor/
 .cursorrules
