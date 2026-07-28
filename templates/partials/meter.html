@@ -1,5 +1,7 @@
 {% comment %}
-Jauge de score. `percent` est un entier de 0 a 100.
+Jauge de score. `percent` doit etre un ENTIER de 0 a 100 — une chaine ferait
+echouer silencieusement les comparaisons ci-dessous et peindrait toutes les
+barres en rouge. Passer `|add:0` si la valeur vient de `widthratio`.
 La couleur suit trois paliers, identiques partout dans l'application.
 {% endcomment %}
 <div class="meter">

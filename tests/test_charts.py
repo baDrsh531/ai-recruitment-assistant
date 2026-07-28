@@ -30,13 +30,18 @@ def test_bar_sorts_by_value():
 
 
 def test_bar_folds_the_tail_visibly():
-    """Le repli doit se voir : « Autres (N) », jamais une troncature muette."""
+    """Le repli doit se voir, et ne pas se confondre avec la valeur.
+
+    « Autres (15) » sur une barre valant 15 se lisait comme un doublon : le
+    premier nombre compte des categories, le second des candidats. Ecrits de la
+    meme facon, ils se confondaient.
+    """
     pairs = [(f"s{index}", 10 - index) for index in range(12)]
-    chart = charts.bar("c", "T", pairs, top=5)
+    chart = charts.bar("c", "T", pairs, top=5, other_label="autres competences")
 
     assert len(chart.rows) == 5
     dernier = chart.rows[-1]
-    assert dernier["label"] == "Autres (8)"
+    assert dernier["label"] == "8 autres competences"
     # Aucune valeur n'est perdue.
     assert sum(row["values"][0] for row in chart.rows) == sum(v for _, v in pairs)
 
@@ -44,7 +49,23 @@ def test_bar_folds_the_tail_visibly():
 def test_bar_keeps_everything_below_the_cap():
     chart = charts.bar("c", "T", [("a", 1), ("b", 2)], top=8)
     assert len(chart.rows) == 2
-    assert not any("Autres" in row["label"] for row in chart.rows)
+    assert not any("autres" in row["label"] for row in chart.rows)
+
+
+def test_dashboard_shows_the_recruitment_pipeline(client, population, recruteur):
+    """Regression : la refonte du tableau de bord avait fait disparaitre les etapes.
+
+    Le bloc affichait « Aucune candidature » alors que la base en comptait
+    sept — la cle avait ete perdue en reecrivant la vue pour les graphiques.
+    """
+    client.force_login(recruteur)
+    response = client.get(reverse("candidates:dashboard"))
+
+    stages = response.context["stages"]
+    assert stages, "le pipeline ne doit pas etre vide quand des candidatures existent"
+    assert sum(row["total"] for row in stages) == 4
+    # Les etapes sont affichees en clair, pas sous leur cle technique.
+    assert stages[0]["stage"] == "Recue"
 
 
 def test_ordered_bar_keeps_the_given_order():
@@ -196,6 +217,31 @@ def test_dashboard_renders_every_chart(client, population, recruteur):
     assert set(response.context["charts"]) == {
         "skills", "experience", "languages", "scores",
     }
+
+
+def test_criterion_meters_are_coloured_by_value(
+    client, population, recruteur, monkeypatch
+):
+    """Regression : toutes les jauges de criteres s'affichaient en rouge.
+
+    `widthratio ... as` produit une chaine ; comparee a un entier dans le
+    `{% if %}` de la jauge, la comparaison echoue sans erreur et tout retombe
+    sur la branche « danger ». Un critere a 100 % apparaissait donc en rouge.
+    """
+    from apps.matching import engine
+
+    monkeypatch.setattr(
+        engine.SkillMatcher, "_precompute_semantic", lambda self, *args: None
+    )
+    application = Application.objects.first()
+    score_application(application, with_explanation=False)
+
+    client.force_login(recruteur)
+    content = client.get(application.get_absolute_url()).content.decode()
+
+    # Au moins un critere est plein : sa jauge doit etre au palier superieur.
+    assert "meter__fill--ok" in content
+    assert content.count("meter__fill--danger") < content.count("meter__fill")
 
 
 def test_invocation_dashboard_requires_login(client, db):

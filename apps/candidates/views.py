@@ -43,6 +43,15 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context["ai"] = AIInvocation.objects.aggregate(
             calls=Count("id"), avg_latency=Avg("latency_ms")
         )
+        context["stages"] = [
+            {
+                "stage": dict(Application.Stage.choices).get(row["stage"], row["stage"]),
+                "total": row["total"],
+            }
+            for row in Application.objects.values("stage")
+            .annotate(total=Count("id"))
+            .order_by("-total")
+        ]
         context["recent_offers"] = JobOffer.objects.order_by("-created_at")[:5]
         context["charts"] = self._charts()
         return context
@@ -66,6 +75,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             "chart-skills",
             "Competences les plus repandues",
             [(row["normalized_name"], row["total"]) for row in rows],
+            other_label="autres competences",
             unit="candidats",
             subtitle="Nombre de candidats declarant la competence",
             note=(

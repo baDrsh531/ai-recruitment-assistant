@@ -70,6 +70,32 @@ def test_strict_schema_hardens_objects():
     assert "additionalProperties" not in schema
 
 
+def test_templates_contain_no_visible_django_comment():
+    """Regression : un commentaire `{# ... #}` multiligne s'affichait en clair.
+
+    La syntaxe `{# ... #}` ne vaut que sur une seule ligne. Ecrite sur
+    plusieurs, elle n'est pas reconnue et le texte atterrit sur la page.
+    """
+    import re
+    from pathlib import Path
+
+    from django.conf import settings
+
+    fautifs = []
+    for gabarit in Path(settings.BASE_DIR, "templates").rglob("*.html"):
+        contenu = gabarit.read_text(encoding="utf-8")
+        for ouverture in re.finditer(r"\{#", contenu):
+            fin = contenu.find("#}", ouverture.start())
+            if fin == -1 or "\n" in contenu[ouverture.start() : fin]:
+                fautifs.append(gabarit.name)
+                break
+
+    assert not fautifs, (
+        "Commentaire `{# #}` multiligne, a remplacer par "
+        f"`{{% comment %}}` : {', '.join(sorted(set(fautifs)))}"
+    )
+
+
 def test_every_prompt_is_versioned():
     assert REGISTRY
     for prompt_id, prompt in REGISTRY.items():

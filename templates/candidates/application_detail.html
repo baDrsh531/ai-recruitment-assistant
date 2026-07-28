@@ -34,8 +34,14 @@
             <span>{{ criterion.label }}</span>
             <span class="small subtle num">poids {{ criterion.weight|floatformat:2 }}</span>
           </div>
+          {% comment %}
+            `widthratio ... as` produit une CHAINE. Comparee a un entier dans le
+            `{% if %}` de la jauge, la comparaison echoue silencieusement et
+            toutes les barres tombaient sur la branche « danger » : un critere a
+            100 % s'affichait en rouge. `add:0` la ramene a un entier.
+          {% endcomment %}
           {% widthratio criterion.score 1 100 as criterion_percent %}
-          {% include "partials/meter.html" with percent=criterion_percent %}
+          {% include "partials/meter.html" with percent=criterion_percent|add:0 %}
         </div>
       {% endfor %}
     </div>
@@ -166,8 +172,13 @@
 </section>
 {% endif %}
 
-{# Les questions d'entretien ne dependent pas du score : elles s'affichent
-   qu'il ait ete calcule ou non. #}
+{% comment %}
+  Les questions d'entretien ne dependent pas du score : elles s'affichent
+  qu'il ait ete calcule ou non.
+
+  `{# ... #}` ne vaut que sur une seule ligne en Django — ecrit sur plusieurs,
+  il n'est pas reconnu comme un commentaire et s'affiche en clair sur la page.
+{% endcomment %}
 <section class="card">
   <div class="card__head">
     <h2 class="card__title">Questions d'entretien</h2>

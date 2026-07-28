@@ -64,7 +64,7 @@ def bar(
     note: str = "",
     series_name: str = "",
     top: int | None = DEFAULT_TOP,
-    other_label: str = "Autres",
+    other_label: str = "autres",
 ) -> Chart:
     """Barres horizontales a serie unique.
 
@@ -76,7 +76,12 @@ def bar(
 
     if top is not None and len(entries) > top:
         tete, queue = entries[: top - 1], entries[top - 1 :]
-        entries = tete + [(f"{other_label} ({len(queue)})", sum(v for _, v in queue))]
+        # « 15 autres competences » et non « Autres (15) » : la barre porte la
+        # somme des effectifs, le libelle le nombre de categories repliees.
+        # Ecrits de la meme facon, les deux nombres se confondent a la lecture.
+        entries = tete + [
+            (f"{len(queue)} {other_label.lower()}", sum(v for _, v in queue))
+        ]
 
     return Chart(
         id=chart_id,

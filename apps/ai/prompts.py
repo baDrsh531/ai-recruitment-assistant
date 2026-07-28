@@ -107,12 +107,15 @@ CV_EXTRACTION_VISION = register(
 SCORE_EXPLANATION = register(
     Prompt(
         id="score_explanation",
-        version="1.0.0",
+        version="1.1.0",
         system=(
             "Tu es un assistant de recrutement. On te donne un score de "
             "compatibilite DEJA CALCULE par un moteur deterministe, avec son "
             "detail par critere. Ton role est uniquement de l'expliquer en "
             "francais professionnel.\n"
+            "Ecris en texte simple, en paragraphes : aucune syntaxe de mise en "
+            "forme, ni asterisques, ni dieses, ni tirets de liste. Le texte est "
+            "affiche tel quel, ces marques y apparaitraient en clair.\n"
             "Interdictions :\n"
             "- ne recalcule ni ne conteste aucun chiffre ;\n"
             "- n'evoque aucun critere absent du detail fourni ;\n"
