@@ -18,14 +18,3 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# La barre de debogage s'injecte dans chaque reponse et y insere ses propres
-# URLs : sans cet enregistrement, tout rendu de page echoue.
-#
-# Le critere est bien « l'application est installee », et non `settings.DEBUG`.
-# L'URLconf n'est importee qu'une fois : la conditionner a DEBUG la figerait a
-# la valeur du moment de l'import, et activer DEBUG plus tard (tests, shell)
-# casserait toutes les pages. En production, `debug_toolbar` n'est jamais dans
-# INSTALLED_APPS, donc ce bloc ne s'execute pas.
-if "debug_toolbar" in settings.INSTALLED_APPS:
-    urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]

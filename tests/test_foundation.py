@@ -169,11 +169,13 @@ def test_offer_detail_renders(client, recruiter, offer):
 
 
 def test_pages_render_with_debug_enabled(client, recruiter, offer, settings):
-    """Regression : la barre de debogage doit avoir ses URLs enregistrees.
+    """Regression : les pages doivent rendre aussi en mode developpement.
 
-    La suite tourne avec DEBUG=False, ce qui court-circuite le middleware de
-    django-debug-toolbar. Sans ce test, une page cassee uniquement en
-    developpement passerait inapercue.
+    La suite tourne avec DEBUG=False. Une page qui ne casserait qu'avec
+    DEBUG=True — le cas s'est deja produit — passerait sans ce test. C'est ce
+    mode de panne, invisible en integration continue et systematique sur le
+    poste de developpement, qui a fini par couter sa place a la barre de
+    debogage.
     """
     settings.DEBUG = True
     client.force_login(recruiter)

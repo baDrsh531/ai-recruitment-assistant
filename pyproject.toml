@@ -36,7 +36,6 @@ dev = [
     "pytest-cov==6.0.*",
     "factory-boy==3.3.*",
     "ruff==0.9.*",
-    "django-debug-toolbar==5.0.*",
 ]
 
 [tool.setuptools.packages.find]
