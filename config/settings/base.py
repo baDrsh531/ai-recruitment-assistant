@@ -38,6 +38,7 @@ LOCAL_APPS = [
     "apps.candidates",
     "apps.parsing",
     "apps.matching",
+    "apps.assistant",
     "apps.evaluation",
 ]
 

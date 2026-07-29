@@ -8,6 +8,7 @@ urlpatterns = [
     path("comptes/", include("apps.accounts.urls", namespace="accounts")),
     # Le classement est enregistre avant les URLs d'offres : sinon le motif
     # <slug>/ de jobs capturerait « <slug>/classement/ ».
+    path("offres/", include("apps.assistant.urls", namespace="assistant")),
     path("offres/", include("apps.matching.urls", namespace="matching")),
     path("offres/", include("apps.jobs.urls", namespace="jobs")),
     path("cv/", include("apps.parsing.urls", namespace="parsing")),

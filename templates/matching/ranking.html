@@ -24,6 +24,7 @@
     <input type="hidden" name="explain" value="1">
     <button type="submit" class="btn">Recalculer avec analyse</button>
   </form>
+  <a class="btn" href="{% url 'matching:comparison' offer.slug %}">Comparer</a>
   <a class="btn" href="{{ offer.get_absolute_url }}">Voir l'offre</a>
 {% endblock %}
 

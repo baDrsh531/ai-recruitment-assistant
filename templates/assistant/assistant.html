@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Assistant — {{ offer.title }}{% endblock %}
+{% block heading %}Assistant — {{ offer.title }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Interrogez les candidatures en francais. La question est traduite en
+    criteres, le filtrage est fait par le code, et le modele ne redige qu'a
+    partir des candidats reellement trouves.
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'matching:ranking' offer.slug %}">Classement</a>
+  <a class="btn" href="{% url 'matching:comparison' offer.slug %}">Comparer</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Poser une question</h2></div>
+  <form method="post" action="{% url 'assistant:ask' offer.slug %}">
+    {% csrf_token %}
+    <div class="card__body">
+      <div class="field">
+        <label class="label visually-hidden" for="question">Question</label>
+        <input class="input" type="text" name="question" id="question" required
+               autocomplete="off"
+               placeholder="Qui maitrise Python et Django avec au moins deux ans d'experience ?"
+               value="{{ latest.question|default:'' }}">
+      </div>
+      <div class="chips mt-4">
+        {% for suggestion in suggestions %}
+          <button type="submit" name="question" value="{{ suggestion }}" class="chip">
+            {{ suggestion }}
+          </button>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn--primary mt-4">Demander</button>
+    </div>
+  </form>
+</section>
+
+{% if latest %}
+  <div class="grid grid--main">
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">Reponse</h2>
+        <span class="badge">{{ latest.matched_count }} candidat(s)</span>
+      </div>
+      <div class="card__body">
+        <p class="small subtle">« {{ latest.question }} »</p>
+        {% if latest.answer %}
+          <div class="prose mt-4">{{ latest.answer }}</div>
+        {% else %}
+          <p class="muted mt-4">Aucune reponse redigee.</p>
+        {% endif %}
+      </div>
+      {% if latest.model %}
+        <p class="card__note">
+          Redigee par {{ latest.model }} a partir des seuls candidats listes
+          ci-contre (prompt {{ latest.answer_prompt_version }}), en
+          {{ latest.latency_ms }} ms. Le modele n'a pas choisi cette liste : il
+          l'a recue.
+        </p>
+      {% endif %}
+    </section>
+
+    <div class="stack">
+      <section class="card">
+        <div class="card__head"><h2 class="card__title">Criteres retenus</h2></div>
+        <div class="card__body">
+          {% if criteria_summary %}
+            <ul class="stack">
+              {% for critere in criteria_summary %}
+                <li>{{ critere|capfirst }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="subtle small">Aucun critere explicite dans la question.</p>
+          {% endif %}
+        </div>
+        <p class="card__note">
+          Ces criteres sont appliques par du code, sur la base. C'est ce qui
+          garantit qu'aucun candidat ne peut etre invente, et que la meme
+          question renvoie toujours la meme liste.
+        </p>
+      </section>
+
+      {% if latest.has_rejected_criteria %}
+        <section class="card">
+          <div class="card__head">
+            <h2 class="card__title">Criteres ecartes</h2>
+            <span class="badge badge--warn">discriminatoires</span>
+          </div>
+          <div class="card__body">
+            <div class="chips">
+              {% for critere in latest.rejected_criteria %}
+                <span class="badge badge--danger">{{ critere }}</span>
+              {% endfor %}
+            </div>
+            <p class="hint mt-4">
+              Ces criteres figuraient dans la question mais n'ont pas ete
+              appliques : age, genre, origine, situation familiale et sante ne
+              peuvent pas servir a trier des candidatures.
+            </p>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Candidats retenus</h2>
+      <span class="badge">selection calculee</span>
+    </div>
+    {% if matched %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Candidat</th>
+              <th>Titre</th>
+              <th class="num">Experience</th>
+              <th>Competences</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidate in matched %}
+              <tr>
+                <td>
+                  <a href="{{ candidate.get_absolute_url }}">
+                    {% if blind %}{{ candidate.display_name }}{% else %}{{ candidate.full_name }}{% endif %}
+                  </a>
+                </td>
+                <td class="muted">{{ candidate.headline|default:"—" }}</td>
+                <td class="num">{{ candidate.total_experience_years|floatformat:1 }} ans</td>
+                <td>
+                  <div class="chips">
+                    {% for skill in candidate.skills.all|slice:":6" %}
+                      <span class="chip">{{ skill.name }}</span>
+                    {% endfor %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      {% include "partials/empty.html" with title="Aucun candidat ne satisfait ces criteres" text="Assouplissez un critere, ou verifiez que les candidatures ont bien ete scorees." %}
+    {% endif %}
+  </section>
+{% endif %}
+
+{% if history|length > 1 %}
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Questions precedentes</h2>
+      <form method="post" action="{% url 'assistant:clear' offer.slug %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--sm">Effacer l'historique</button>
+      </form>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th class="num">Candidats</th>
+            <th class="num">Duree</th>
+            <th>Ecartes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in history %}
+            <tr>
+              <td>{{ item.question }}</td>
+              <td class="num">{{ item.matched_count }}</td>
+              <td class="num muted">{{ item.latency_ms }} ms</td>
+              <td>
+                {% if item.has_rejected_criteria %}
+                  <span class="badge badge--warn">{{ item.rejected_criteria|length }}</span>
+                {% else %}
+                  <span class="subtle small">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Chaque question est journalisee avec ses criteres et les candidats
+      retenus : la question « pourquoi ce profil est-il remonte ? » garde une
+      reponse verifiable.
+    </p>
+  </section>
+{% endif %}
+{% endblock %}

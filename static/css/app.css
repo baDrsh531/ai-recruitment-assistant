@@ -433,7 +433,11 @@ code {
   overflow-x: auto;
 }
 
-.table th {
+/* Seuls les en-tetes de COLONNE portent la casse d'etiquette. Appliquee a
+   `th` sans distinction, elle mettait aussi en capitales les en-tetes de
+   ligne — noms de competences et de candidats criaient dans le tableau
+   comparatif. */
+.table thead th {
   padding: var(--space-3) var(--space-5);
   text-align: left;
   font-size: 0.6875rem;
@@ -444,6 +448,14 @@ code {
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
+}
+
+.table tbody th {
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
 }
 
 .table td {

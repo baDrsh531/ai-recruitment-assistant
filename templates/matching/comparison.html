@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Comparaison — {{ offer.title }}{% endblock %}
+{% block heading %}Comparaison — {{ offer.title }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Un classement dit qui arrive devant ; il ne dit pas sur quoi les profils
+    different. Comparaison entierement calculee, sans appel modele.
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'matching:ranking' offer.slug %}">Classement</a>
+  <a class="btn" href="{{ offer.get_absolute_url }}">Voir l'offre</a>
+{% endblock %}
+
+{% block content %}
+{% if not comparison %}
+  <section class="card">
+    {% include "partials/empty.html" with title="Aucune candidature scoree" text="Lancez le calcul depuis le classement de l'offre." %}
+  </section>
+{% else %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Candidats compares</h2></div>
+  <form method="get" class="card__body">
+    <div class="chips">
+      {% for score in ranking %}
+        <label class="chip" for="c-{{ score.application.candidate.pk }}">
+          <input type="checkbox" name="c" id="c-{{ score.application.candidate.pk }}"
+                 value="{{ score.application.candidate.pk }}"
+                 {% if score.application.candidate.pk|stringformat:"s" in selection %}checked{% endif %}>
+          {% if blind %}{{ score.application.candidate.display_name }}{% else %}{{ score.application.candidate.full_name }}{% endif %}
+          <span class="chip__meta">{{ score.percentage }} %</span>
+        </label>
+      {% endfor %}
+    </div>
+    <p class="hint mt-4">
+      {{ max_candidates }} candidats au maximum : au-dela, les colonnes deviennent
+      trop etroites pour etre lues.
+    </p>
+    <button type="submit" class="btn btn--primary mt-4">Comparer la selection</button>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Vue d'ensemble</h2>
+    <span class="badge">moteur {{ comparison.engine_version }}</span>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Critere</th>
+          {% for column in comparison.columns %}
+            <th class="num">
+              {% if blind %}{{ column.candidate.display_name }}{% else %}{{ column.candidate.full_name }}{% endif %}
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Score global</th>
+          {% for column in comparison.columns %}
+            <td class="num"><strong>{{ column.percent }} %</strong></td>
+          {% endfor %}
+        </tr>
+        {% for row in comparison.criteria %}
+          <tr>
+            <th scope="row">
+              {{ row.label }}
+              <span class="small subtle">poids {{ row.weight|floatformat:2 }}</span>
+            </th>
+            {% for cell in row.cells %}
+              <td class="num">
+                {% if cell.best %}
+                  <span class="badge badge--ok">{{ cell.percent }} %</span>
+                {% else %}
+                  <span class="muted">{{ cell.percent }} %</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    Un critere n'est marque que lorsque l'ecart depasse cinq points : en deca,
+    designer un « meilleur » donnerait a un arrondi l'apparence d'un avantage.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce qui les differencie</h2>
+    <span class="badge">{{ comparison.discriminating_skills|length }} competence(s)</span>
+  </div>
+  {% if comparison.discriminating_skills %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Competence attendue</th>
+            {% for column in comparison.columns %}
+              <th class="num">
+                {% if blind %}{{ column.candidate.display_name }}{% else %}{{ column.candidate.full_name }}{% endif %}
+              </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in comparison.discriminating_skills %}
+            <tr>
+              <th scope="row">
+                {{ row.skill }}
+                {% if not row.is_required %}<span class="badge">souhaitee</span>{% endif %}
+              </th>
+              {% for cell in row.cells %}
+                <td class="num">
+                  {% if cell.best %}
+                    <span class="badge badge--ok">{{ cell.percent }} %</span>
+                  {% elif not cell.covered %}
+                    <span class="badge badge--danger">{{ cell.percent }} %</span>
+                  {% else %}
+                    <span class="muted">{{ cell.percent }} %</span>
+                  {% endif %}
+                  <span class="small subtle">
+                    {% if cell.matched_with %}{{ cell.method }}{% else %}absente{% endif %}
+                  </span>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "partials/empty.html" with title="Profils equivalents" text="Sur les competences attendues, ces candidats obtiennent les memes resultats." %}
+  {% endif %}
+</section>
+
+<div class="grid grid--charts">
+  {% for column in comparison.columns %}
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">
+          {% if blind %}{{ column.candidate.display_name }}{% else %}{{ column.candidate.full_name }}{% endif %}
+        </h2>
+        <span class="badge">{{ column.percent }} %</span>
+      </div>
+      <div class="card__body stack">
+        <div>
+          <p class="stat__label">Devant sur</p>
+          <div class="chips mt-4">
+            {% for skill in column.strengths %}
+              <span class="chip chip--brand">{{ skill }}</span>
+            {% empty %}
+              <span class="subtle small">Aucune competence ou ce profil devance les autres.</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div>
+          <p class="stat__label">Ecarts</p>
+          <div class="chips mt-4">
+            {% for skill in column.gaps %}
+              <span class="badge badge--danger">{{ skill }}</span>
+            {% empty %}
+              <span class="subtle small">Toutes les competences obligatoires sont couvertes.</span>
+            {% endfor %}
+          </div>
+        </div>
+        <a class="btn btn--sm" href="{{ column.candidate.get_absolute_url }}">Fiche candidat</a>
+      </div>
+    </section>
+  {% endfor %}
+</div>
+
+{% if comparison.shared_skills %}
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Socle commun</h2></div>
+    <div class="card__body">
+      <div class="chips">
+        {% for row in comparison.shared_skills %}
+          <span class="chip">{{ row.skill }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="card__note">
+      Sur ces competences, les candidats obtiennent le meme resultat : elles ne
+      departagent personne et sont sorties du tableau pour ne pas le charger.
+    </p>
+  </section>
+{% endif %}
+
+<p class="small subtle">
+  Cette comparaison n'ordonne pas les candidats et ne recommande personne :
+  elle expose des ecarts. La decision revient au recruteur, et elle est journalisee.
+</p>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,8 @@
 {% endblock %}
 {% block actions %}
   <a class="btn btn--primary" href="{% url 'matching:ranking' offer.slug %}">Classement des candidats</a>
+  <a class="btn" href="{% url 'matching:comparison' offer.slug %}">Comparer</a>
+  <a class="btn" href="{% url 'assistant:offer' offer.slug %}">Assistant</a>
 {% endblock %}
 
 {% block content %}
