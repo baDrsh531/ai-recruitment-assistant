@@ -8,7 +8,7 @@ from django.views.generic import TemplateView
 from apps.core.permissions import ActionPermissionMixin
 from apps.matching.engine import ENGINE_VERSION
 
-from . import bias, harness
+from . import bias, harness, threshold
 
 DATASET = "ranking_v1"
 # L'audit represente plusieurs centaines de scorings : c'est un calcul lourd,
@@ -61,6 +61,55 @@ class RefreshBiasReportView(ActionPermissionMixin, LoginRequiredMixin, View):
     def post(self, request):
         cache.delete(CACHE_KEY)
         return redirect(reverse("evaluation:bias_report"))
+
+
+class ThresholdView(LoginRequiredMixin, TemplateView):
+    """Ou couper le classement, et ce que coute chaque choix de seuil.
+
+    Le moteur classe ; il ne dit pas ou s'arreter. Cette page mesure ce que
+    chaque seuil retient et surtout ce qu'il ecarte a tort, parce que c'est le
+    chiffre que personne ne voit jamais dans un processus de recrutement.
+    """
+
+    template_name = "evaluation/threshold.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.core import charts
+
+        context = super().get_context_data(**kwargs)
+        calibration = threshold.cached(DATASET)
+        context["calibration"] = calibration
+        context["curve"] = threshold.sampled_curve(calibration, step=0.05)
+        context["engine_version"] = ENGINE_VERSION
+
+        points = threshold.sampled_curve(calibration, step=0.10)
+        # Les deux erreurs, pas les bons resultats : un graphique des profils
+        # correctement retenus resterait plat sur les trois quarts de la plage
+        # et ne montrerait aucun arbitrage. Ce sont les erreurs qui se croisent.
+        context["chart"] = charts.grouped_bar(
+            "chart-threshold",
+            "Les deux erreurs, seuil par seuil",
+            [
+                (
+                    f"{point.threshold_percentage} %",
+                    point.false_positive,
+                    point.false_negative,
+                )
+                for point in points
+            ],
+            ("Retenus a tort", "Bons profils manques"),
+            unit="profils",
+            kind="stack",
+            subtitle="Le seuil retenu est celui qui minimise le total pondere",
+            note=(
+                "Un seuil bas retient trop de monde, un seuil haut ecarte des "
+                "profils qu'il fallait recevoir. Les deux erreurs ne se valent "
+                "pas : la seconde coute un recrutement, la premiere une heure "
+                "d'entretien. C'est pourquoi le F2 pese le rappel quatre fois "
+                "plus que la precision."
+            ),
+        )
+        return context
 
 
 class InvocationDashboardView(LoginRequiredMixin, TemplateView):

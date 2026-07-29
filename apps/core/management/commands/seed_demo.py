@@ -10,7 +10,13 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.candidates.models import Application, Candidate, CandidateLanguage, CandidateSkill
+from apps.candidates.models import (
+    Application,
+    Candidate,
+    CandidateLanguage,
+    CandidateSkill,
+    Experience,
+)
 from apps.jobs.models import EducationLevel, JobLanguage, JobOffer, JobSkill, LanguageLevel
 
 DEMO_PASSWORD = "demo-recrutement-2026"
@@ -177,6 +183,44 @@ class Command(BaseCommand):
                         candidate=candidate, language=language, level=level
                     )
             Application.objects.get_or_create(candidate=candidate, offer=offers[0])
+
+        # Une repostulation : meme personne, six mois plus tard, CV remanie et
+        # nom saisi dans l'autre sens. C'est le cas que la page « Doublons »
+        # existe pour attraper, et il n'a rien d'exotique — un candidat qui
+        # repostule ne se souvient pas de l'adresse qu'il avait utilisee.
+        repostulation, creee = Candidate.objects.get_or_create(
+            email="s.elamrani@example.com",
+            defaults={
+                "full_name": "EL AMRANI Sara",
+                "headline": "Ingenieure data",
+                "total_experience_years": 5.0,
+                "highest_education": EducationLevel.MASTER,
+                "location": "Maroc",
+                "phone": "+212 661 22 33 44",
+            },
+        )
+        if creee:
+            for name, years in [("Python", 5.0), ("SQL", 6.0), ("dbt", 1.5)]:
+                CandidateSkill.objects.create(
+                    candidate=repostulation, name=name, years=years, last_used_year=2026
+                )
+            CandidateLanguage.objects.create(
+                candidate=repostulation, language="Anglais", level=LanguageLevel.C1
+            )
+            Experience.objects.create(
+                candidate=repostulation, title="Data engineer", company="OCP Group"
+            )
+            Application.objects.get_or_create(candidate=repostulation, offer=offers[1])
+
+        # Le dossier d'origine recoit le meme employeur : sans signal partage
+        # au-dela du nom, les deux resteraient — a juste titre — separes.
+        originale = Candidate.objects.filter(email="sara.elamrani@example.com").first()
+        if originale is not None:
+            originale.phone = originale.phone or "0661223344"
+            originale.save(update_fields=["phone"])
+            Experience.objects.get_or_create(
+                candidate=originale, title="Data engineer", company="OCP Group"
+            )
 
         self.stdout.write(
             self.style.SUCCESS(

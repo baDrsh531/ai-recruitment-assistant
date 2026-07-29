@@ -472,6 +472,20 @@ code {
   background: var(--surface-2);
 }
 
+/* Ligne de coupe du classement. Ce n'est pas une donnee : elle ne doit ni
+   reagir au survol comme une ligne de candidat, ni se lire comme un rang. */
+.table tbody tr.row--cut td {
+  padding: var(--space-2) var(--space-5);
+  background: var(--surface-2);
+  border-top: 2px dashed var(--border-strong);
+  border-bottom: 0;
+  font-style: italic;
+}
+
+.table tbody tr.row--cut:hover {
+  background: var(--surface-2);
+}
+
 .table .num {
   font-variant-numeric: tabular-nums;
   text-align: right;

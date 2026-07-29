@@ -43,28 +43,37 @@
           </tr>
         </thead>
         <tbody>
-          {% for score in scores %}
+          {% for row in rows %}
+            {% if row.cut_before %}
+              <tr class="row--cut">
+                <td></td>
+                <td colspan="4" class="muted small">
+                  seuil mesure a {{ cut_percentage }} % — au-dessus, aucun profil
+                  jugé bon n'est manqué sur le jeu annoté
+                </td>
+              </tr>
+            {% endif %}
             <tr>
               <td class="num muted">{{ forloop.counter }}</td>
               <td>
-                <a href="{{ score.application.get_absolute_url }}">
-                  {% if blind %}{{ score.application.candidate.display_name }}{% else %}{{ score.application.candidate.full_name }}{% endif %}
+                <a href="{{ row.score.application.get_absolute_url }}">
+                  {% if blind %}{{ row.score.application.candidate.display_name }}{% else %}{{ row.score.application.candidate.full_name }}{% endif %}
                 </a>
-                {% if score.is_overridden %}
-                  <span class="badge badge--warn" title="{{ score.override_reason }}">corrige</span>
+                {% if row.score.is_overridden %}
+                  <span class="badge badge--warn" title="{{ row.score.override_reason }}">corrige</span>
                 {% endif %}
               </td>
-              <td>{% include "partials/meter.html" with percent=score.percentage %}</td>
+              <td>{% include "partials/meter.html" with percent=row.score.percentage %}</td>
               <td>
                 <div class="chips">
-                  {% for gap in score.gaps %}
+                  {% for gap in row.score.gaps %}
                     <span class="badge badge--danger">{{ gap.skill }}</span>
                   {% empty %}
                     <span class="subtle small">aucun</span>
                   {% endfor %}
                 </div>
               </td>
-              <td><span class="badge">{{ score.application.get_stage_display }}</span></td>
+              <td><span class="badge">{{ row.score.application.get_stage_display }}</span></td>
             </tr>
           {% endfor %}
         </tbody>
@@ -74,6 +83,22 @@
       Moteur {{ scores.0.engine_version }} ·
       {% if scores.0.semantic_used %}rapprochement semantique actif{% else %}ontologie seule (embeddings indisponibles){% endif %} ·
       {{ scores.0.compute_ms }} ms de calcul
+    </p>
+    <p class="card__note">
+      Le seuil de {{ cut_percentage }} % vient d'un balayage sur
+      {{ calibration.total_candidates }} profils annotes a la main : c'est celui
+      qui maximise un F{{ calibration.beta|floatformat:0 }}, ou manquer un bon
+      profil pese quatre fois plus que recevoir un profil moyen.
+      {% if calibration.perfectly_separable %}
+        Il separe parfaitement le jeu annote, mais sur une marge de
+        {{ calibration.plateau_width_points }} point(s) seulement
+        ({{ calibration.plateau_low_percentage }}–{{ calibration.plateau_high_percentage }} %) :
+        cela en dit autant sur la facilite du jeu que sur le moteur, et ne
+        garantit rien sur des candidatures reelles.
+      {% endif %}
+      <a href="{% url 'evaluation:threshold' %}">Voir la courbe complete</a>.
+      {{ above_cut }} candidature(s) au-dessus. La ligne marque le classement,
+      elle n'ecarte personne.
     </p>
   {% else %}
     {% include "partials/empty.html" with title="Aucun score" text="Lancez le calcul avec le bouton « Recalculer », ou en ligne de commande." %}

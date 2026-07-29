@@ -500,6 +500,107 @@ Vingt-huit tests couvrent ces trois mecanismes (`tests/test_governance.py`),
 dont la verification qu'un compte en lecture seule est refuse sur *chacune* des
 vues mutantes, et que le journal de purge ne contient aucune donnee nominative.
 
+### Ou couper le classement
+
+Le moteur ordonne les candidatures ; il ne dit pas laquelle est la derniere a
+recevoir. En pratique on coupe quand meme, au chiffre rond. `apps/evaluation/
+threshold.py` remplace le chiffre rond par un balayage : pour chacun des 101
+seuils possibles, on compte qui passe et surtout **qui est ecarte a tort**.
+
+Le cout de l'erreur est asymetrique. Recevoir un candidat moyen coute une heure
+d'entretien ; ecarter un bon candidat coute un recrutement, et le cout est
+supporte par quelqu'un qui n'en saura jamais rien. Le seuil retenu maximise donc
+un F-beta avec beta = 2, qui pese le rappel quatre fois plus que la precision.
+Ce choix est un jugement, pas un resultat : il est en constante, et la page
+**Seuil de tri** affiche la courbe entiere pour qu'un recruteur puisse trancher
+autrement.
+
+```
+Sur 36 profils annotes, dont 22 juges a recevoir :
+
+seuil  retenus  bons  a tort  manques  precision  rappel     F2
+  50 %      28    22       6        0      0.786   1.000  0.948
+  70 %      24    22       2        0      0.917   1.000  0.982
+  85 %      22    22       0        0      1.000   1.000  1.000   <- retenu
+  90 %      17    17       0        5      1.000   0.773  0.809
+ 100 %       5     5       0       17      1.000   0.227  0.269
+```
+
+**Le resultat parfait est le point a ne pas croire.** A 85 %, le seuil separe le
+jeu annote sans une erreur — mais sur une marge d'**un seul point** (85–86 %).
+Une separation parfaite sur une marge aussi etroite en dit autant sur la
+facilite du jeu que sur la qualite du moteur. La marge est donc affichee a cote
+du seuil, et le seuil recommande est le **milieu** de l'intervalle optimal, pas
+une de ses bornes : au bord haut, un point de score perdu fait perdre un bon
+profil.
+
+Le classement marque cette ligne, il ne l'applique pas : tout ce qui se trouve
+dessous reste consultable et recevable.
+
+### Ce qui manque a un candidat
+
+`apps/matching/counterfactual.py` repond a la question qui suit le score. On
+modifie une caracteristique du profil sur une copie en memoire, on rejoue le
+moteur, on lit la difference — aucun modele de langage, le moteur coute 3 ms.
+
+Le critere de minimalite est le **nombre** de changements, pas leur cout :
+mettre « deux ans d'experience » et « un palier de CECRL » sur une meme echelle
+d'effort supposerait une equivalence que rien ne justifie.
+
+```
+Profil actuel                                                      9 %
+1. Acquerir « Django »       2 ans, obligatoire   +65,1 pts       74 %
+2. Acquerir « PostgreSQL »   1 an, obligatoire     +8,9 pts       83 %
+```
+
+Deux details qui comptent. Les apports affiches sont **marginaux** : PostgreSQL
+vaut 21,1 points pris seul, 8,9 une fois Django acquis, parce que le facteur de
+recevabilite est multiplicatif. Afficher l'apport isole donnait un tableau dont
+les lignes ne s'additionnaient pas. Et « Python » disparait du chemin apres
+Django : l'ontologie dirigee le credite deja a 0,85.
+
+**La localisation n'est jamais un levier.** « Demenagez » n'est pas un conseil
+qu'un outil de recrutement a a donner, et c'est le critere que l'audit de biais
+a identifie comme porteur d'un signal identitaire. Consequence assumee :
+certains ecarts sont annonces hors de portee plutot que combles sur le papier.
+
+### Dossiers en double
+
+Un candidat qui repostule six mois plus tard, avec un CV remanie et son nom
+saisi dans l'autre sens, cree aujourd'hui deux dossiers : deux scores, deux
+historiques, et un recruteur qui peut ecarter le premier sans savoir que le
+second existe.
+
+Le rapprochement se fait par blocage — adresse, nom normalise, telephone — puis
+par somme de signaux ponderes. **Le nom seul ne suffit jamais** : deux homonymes
+sont deux personnes, et une fusion est irreversible. Rien n'est fusionne sans
+qu'un recruteur habilite ne le valide, et chaque fusion est journalisee.
+
+La fusion ne perd rien : une competence presente des deux cotes garde
+l'anciennete la plus elevee, une candidature en double sur une meme offre
+conserve celle qui est allee le plus loin dans le processus, et l'echeance de
+conservation retenue est la plus tardive.
+
+### API REST
+
+DRF etait installe, configure et affiche dans le schema d'architecture sans une
+seule route. Il en a maintenant, sous `/api/` : offres, candidats, candidatures,
+classement, ecarts contrefactuels, decision, recalcul.
+
+Elle passe par les **memes services que l'interface** — `services.decide` valide
+et journalise, le role est verifie et le refus journalise, le screening a
+l'aveugle du compte appelant s'applique aux reponses. Ce dernier point n'est pas
+cosmetique : masquer le nom en renvoyant l'adresse e-mail et le profil LinkedIn
+aurait fait de l'attenuation du biais une formalite contournable en une requete.
+Les champs sont vides et un booleen `blind` dit pourquoi, pour qu'un
+consommateur distingue « absent » de « retire ».
+
+```
+GET  /api/offres/<slug>/classement/   rang, score, ecarts, versions de moteur
+GET  /api/candidatures/<id>/ecarts/   chemin vers le seuil, plafond atteignable
+POST /api/candidatures/<id>/decider/  motif obligatoire pour ecarter
+```
+
 ### Tests
 
 ```powershell
@@ -591,6 +692,10 @@ tests/             suite pytest
 - [x] Generation de questions d'entretien ancrees dans le CV
 - [x] Recherche en langage naturel : traduction en filtres, execution en base
 - [x] Decision humaine tracee, roles appliques, purge RGPD automatique
+- [x] API REST : memes services, memes roles, meme screening a l'aveugle
+- [x] Ecarts contrefactuels : ce qui manque pour atteindre le seuil, mesure
+- [x] Rapprochement des dossiers en double, fusion validee par un recruteur
+- [x] Seuil de shortlist calibre sur le jeu annote, avec sa marge
 - [ ] Recherche hybride BM25 + vectorielle
 - [ ] Rapport d'evaluation exportable en PDF
 

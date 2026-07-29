@@ -7,6 +7,7 @@ from django.views.generic import DetailView
 from apps.ai.client import InferenceError
 from apps.candidates.models import Application, Candidate
 from apps.core.permissions import ActionPermissionMixin
+from apps.evaluation import threshold
 from apps.jobs.models import JobOffer
 
 from . import comparison, engine, interview
@@ -28,6 +29,27 @@ class OfferRankingView(LoginRequiredMixin, DetailView):
             self.object.applications.count()
             - len({score.application_id for score in scores})
         )
+
+        # Ou couper, mesure sur le jeu annote plutot que choisi rond. La ligne
+        # est indicative : elle marque le classement, elle n'ecarte personne.
+        calibration = threshold.cached()
+        context["calibration"] = calibration
+        seuil = threshold.recommended_threshold()
+        context["cut_percentage"] = round(seuil * 100)
+        context["above_cut"] = sum(
+            1 for score in scores if score.effective_score >= seuil
+        )
+        # Le marqueur de coupe se pose sur la premiere ligne sous le seuil. Le
+        # calcul est fait ici : `{% with %}` est limite a son bloc, un drapeau
+        # pose dans la boucle ne survivrait pas a l'iteration suivante et le
+        # marqueur se repeterait sur chaque ligne restante.
+        coupe_posee = False
+        lignes = []
+        for score in scores:
+            sous_le_seuil = score.effective_score < seuil
+            lignes.append({"score": score, "cut_before": sous_le_seuil and not coupe_posee})
+            coupe_posee = coupe_posee or sous_le_seuil
+        context["rows"] = lignes
         return context
 
 

@@ -40,6 +40,7 @@ class AuditLog(models.Model):
         CANDIDATE_VIEWED = "candidate_viewed", "Candidat consulte"
         DATA_EXPORTED = "data_exported", "Donnees exportees"
         DATA_PURGED = "data_purged", "Donnees purgees"
+        CANDIDATES_MERGED = "candidates_merged", "Dossiers fusionnes"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

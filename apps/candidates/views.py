@@ -1,16 +1,21 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, Count
+from django.shortcuts import redirect
+from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.ai.models import AIInvocation
 from apps.core import charts
 from apps.core.models import AuditLog
+from apps.core.permissions import ActionPermissionMixin
+from apps.evaluation import threshold
 from apps.jobs.models import JobOffer
 from apps.matching import counterfactual, services
 from apps.matching.models import MatchScore
 
-from . import retention
+from . import duplicates, retention
 from .models import Application, Candidate, CandidateLanguage, CandidateSkill, CVDocument
 
 # Tranches d'anciennete, dans un ordre qui porte du sens : elles ne sont pas
@@ -179,6 +184,57 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         )
 
 
+class DuplicateListView(LoginRequiredMixin, TemplateView):
+    """Dossiers susceptibles de designer la meme personne.
+
+    La page propose, elle ne fusionne pas : le rapprochement est une hypothese,
+    et deux homonymes sont des gens differents.
+    """
+
+    template_name = "candidates/duplicates.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        groupes = duplicates.scan()
+        context["groups"] = groupes
+        context["can_decide"] = self.request.user.can_decide
+        context["blind"] = self.request.user.blind_screening
+        context["threshold"] = duplicates.SEUIL
+        context["stats"] = {
+            "groups": len(groupes),
+            "records": sum(groupe.size for groupe in groupes),
+            "certain": sum(1 for groupe in groupes if groupe.confidence >= 0.9),
+        }
+        context["merges"] = AuditLog.objects.filter(
+            action=AuditLog.Action.CANDIDATES_MERGED
+        ).select_related("actor")[:10]
+        return context
+
+
+class MergeCandidatesView(ActionPermissionMixin, LoginRequiredMixin, View):
+    """Fusionne des dossiers, sur decision d'un recruteur habilite."""
+
+    def post(self, request):
+        garde = Candidate.objects.filter(pk=request.POST.get("keep")).first()
+        autres = list(Candidate.objects.filter(pk__in=request.POST.getlist("merge")))
+
+        if garde is None:
+            messages.error(request, "Dossier a conserver introuvable.")
+            return redirect("candidates:duplicates")
+
+        try:
+            duplicates.merge(garde, autres, actor=request.user, request=request)
+        except duplicates.MergeRefused as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(
+                request,
+                f"{len(autres) + 1} dossiers fusionnes dans « {garde.full_name} ». "
+                "L'operation est journalisee et definitive.",
+            )
+        return redirect("candidates:duplicates")
+
+
 class ApplicationDetailView(LoginRequiredMixin, DetailView):
     model = Application
     template_name = "candidates/application_detail.html"
@@ -205,7 +261,13 @@ class ApplicationDetailView(LoginRequiredMixin, DetailView):
         # Ce qu'il manque pour atteindre le seuil. Le calcul rejoue le moteur
         # une quarantaine de fois ; mesure sur le pire cas du jeu de
         # demonstration : 14 ms et 7 requetes, soit moins qu'un score commente.
+        #
+        # Le seuil vise est celui que la calibration recommande, pas un chiffre
+        # rond : demander « ce qu'il manque pour atteindre 75 % » quand la coupe
+        # utile se situe ailleurs repondrait a cote de la question.
         context["counterfactual"] = counterfactual.analyse(
-            self.object.candidate, self.object.offer
+            self.object.candidate,
+            self.object.offer,
+            target=threshold.recommended_threshold(),
         )
         return context

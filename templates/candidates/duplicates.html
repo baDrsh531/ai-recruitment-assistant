@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Doublons{% endblock %}
+{% block heading %}Doublons probables{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ stats.groups }} rapprochement(s) portant sur {{ stats.records }} dossier(s).
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'candidates:list' %}">Tous les candidats</a>
+{% endblock %}
+
+{% block content %}
+
+{% if groups %}
+  {% for group in groups %}
+    <section class="card">
+      <div class="card__head">
+        <h2 class="card__title">
+          {% if blind %}{{ group.primary.display_name }}{% else %}{{ group.primary.full_name }}{% endif %}
+          — {{ group.size }} dossiers
+        </h2>
+        <span class="badge{% if group.confidence >= 0.9 %} badge--danger{% else %} badge--warn{% endif %}">
+          confiance {{ group.confidence|floatformat:2 }}
+        </span>
+      </div>
+
+      <div class="card__body">
+        <p class="small subtle">
+          Rapproches par : {% for reason in group.reasons %}{{ reason }}{% if not forloop.last %} · {% endif %}{% endfor %}.
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'candidates:merge' %}">
+        {% csrf_token %}
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Conserver</th>
+                <th>Dossier</th>
+                <th>Adresse</th>
+                <th class="num">Candidatures</th>
+                <th class="num">Experience</th>
+                <th class="num">Cree le</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for candidate in group.candidates %}
+                <tr>
+                  <td>
+                    {% if can_decide %}
+                      <input type="radio" name="keep" value="{{ candidate.pk }}"
+                             {% if candidate.pk == group.primary.pk %}checked{% endif %}>
+                      <input type="checkbox" name="merge" value="{{ candidate.pk }}" checked hidden>
+                    {% else %}
+                      {% if candidate.pk == group.primary.pk %}<span class="badge">propose</span>{% endif %}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ candidate.get_absolute_url }}">
+                      {% if blind %}{{ candidate.display_name }}{% else %}{{ candidate.full_name }}{% endif %}
+                    </a>
+                  </td>
+                  <td class="muted">{{ candidate.email|default:"—" }}</td>
+                  <td class="num">{{ candidate.applications.count }}</td>
+                  <td class="num muted">{{ candidate.total_experience_years|floatformat:1 }} ans</td>
+                  <td class="num muted">{{ candidate.created_at|date:"d/m/Y" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if can_decide %}
+          <div class="card__body">
+            <button type="submit" class="btn btn--primary">
+              Fusionner dans le dossier coche
+            </button>
+            <p class="hint mt-4">
+              La fusion est definitive. Les competences, experiences, CV et
+              candidatures des autres dossiers sont reportes ; une candidature
+              en double sur une meme offre conserve celle qui est allee le plus
+              loin dans le processus.
+            </p>
+          </div>
+        {% else %}
+          <p class="card__note">
+            Votre role est en lecture seule : vous voyez le rapprochement, vous
+            ne pouvez pas le valider.
+          </p>
+        {% endif %}
+      </form>
+    </section>
+  {% endfor %}
+{% else %}
+  <section class="card">
+    {% include "partials/empty.html" with title="Aucun doublon probable" text="Aucun dossier ne partage assez de signaux avec un autre pour etre propose au rapprochement." %}
+  </section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Comment les dossiers sont rapproches</h2></div>
+  <div class="card__body">
+    <div class="kv">
+      <div class="kv__row">
+        <span class="kv__key">Meme adresse electronique</span>
+        <span class="kv__value">0,70</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Meme numero de telephone</span>
+        <span class="kv__value">0,55</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Meme nom, ordre et casse indifferents</span>
+        <span class="kv__value">0,30</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Employeur en commun dans le parcours</span>
+        <span class="kv__value">0,25</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Seuil de proposition</span>
+        <span class="kv__value">{{ threshold|floatformat:2 }}</span>
+      </div>
+    </div>
+  </div>
+  <p class="card__note">
+    Le nom seul ne suffit jamais : deux homonymes sont deux personnes, et un
+    rapprochement automatique melerait leurs dossiers sans retour possible.
+    C'est pourquoi rien n'est fusionne sans qu'un recruteur habilite ne le
+    valide, et pourquoi chaque fusion est journalisee.
+  </p>
+</section>
+
+{% if merges %}
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Fusions realisees</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Date</th><th>Auteur</th><th>Operation</th></tr></thead>
+        <tbody>
+          {% for entry in merges %}
+            <tr>
+              <td class="muted">{{ entry.created_at|date:"d/m/Y H:i" }}</td>
+              <td>{{ entry.actor|default:"—" }}</td>
+              <td class="muted">{{ entry.summary }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}
