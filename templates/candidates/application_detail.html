@@ -109,6 +109,95 @@
   </section>
 {% endif %}
 
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce qui manque pour atteindre {{ counterfactual.target_percentage }} %</h2>
+    {% if counterfactual.already_there %}
+      <span class="badge badge--ok">seuil atteint</span>
+    {% elif counterfactual.reached %}
+      <span class="badge badge--brand">{{ counterfactual.path|length }} changement(s)</span>
+    {% else %}
+      <span class="badge badge--warn">hors de portee</span>
+    {% endif %}
+  </div>
+
+  {% if counterfactual.already_there %}
+    <div class="card__body">
+      <p class="muted">
+        Ce profil est deja a {{ counterfactual.current_percentage }} %. Rien ne
+        manque au regard du seuil ; ce qui reste a verifier releve de l'entretien.
+      </p>
+    </div>
+  {% elif counterfactual.reached %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th><th>Changement</th><th>Effort</th>
+            <th class="num">Apport a cette etape</th>
+            <th class="num">Seul</th>
+            <th class="num">Score atteint</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td class="muted">Profil actuel</td>
+            <td></td><td class="num muted">—</td><td class="num muted">—</td>
+            <td class="num">{{ counterfactual.current_percentage }} %</td>
+          </tr>
+          {% for step in counterfactual.path %}
+            <tr>
+              <td class="num muted">{{ forloop.counter }}</td>
+              <td>{{ step.action }}</td>
+              <td class="muted small">{{ step.effort }}</td>
+              <td class="num">+{{ step.gain_points|floatformat:1 }} pts</td>
+              <td class="num muted">+{{ step.standalone_gain_points|floatformat:1 }}</td>
+              <td class="num">{{ step.cumulative_percentage }} %</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Chaque ligne est mesuree, pas estimee : le changement est applique a une
+      copie du profil et le moteur est rejoue. La colonne « Seul » donne ce que
+      le levier rapporterait a lui seul, depuis le profil actuel — elle est
+      superieure a l'apport reel parce que le facteur de recevabilite est
+      multiplicatif : deux ecarts combles ensemble rapportent moins que la somme
+      de leurs effets separes.
+    </p>
+  {% else %}
+    <div class="card__body">
+      <p class="muted">
+        Meme en comblant tous les ecarts identifies, ce profil plafonne a
+        {{ counterfactual.ceiling_percentage }} % — sous le seuil de
+        {{ counterfactual.target_percentage }} %. L'ecart ne tient pas a ce qui
+        manque au candidat, mais a la distance entre ce profil et cette offre.
+      </p>
+    </div>
+  {% endif %}
+
+  {% if counterfactual.levers %}
+    <div class="card__body">
+      <p class="small subtle">
+        Leviers identifies, du plus au moins rentable :
+        {% for lever in counterfactual.levers %}{{ lever.label }} (+{{ lever.gain_points|floatformat:1 }}){% if not forloop.last %}, {% endif %}{% endfor %}.
+      </p>
+    </div>
+  {% endif %}
+
+  <p class="card__note">
+    La localisation n'est jamais un levier : « demenagez » n'est pas un conseil
+    qu'un outil de recrutement a a donner, et c'est le critere que l'audit de
+    biais a identifie comme porteur d'un signal identitaire.
+    {% if counterfactual.extracted_from_cv %}
+      Une competence absente peut aussi etre une competence non extraite du CV :
+      ces ecarts se verifient a l'entretien avant d'etre tenus pour acquis.
+    {% endif %}
+  </p>
+</section>
+
 {% if score %}
 <div class="grid grid--main">
 

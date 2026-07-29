@@ -13,6 +13,7 @@ urlpatterns = [
     path("offres/", include("apps.jobs.urls", namespace="jobs")),
     path("cv/", include("apps.parsing.urls", namespace="parsing")),
     path("transparence/", include("apps.evaluation.urls", namespace="evaluation")),
+    path("api/", include("apps.api.urls", namespace="api")),
     path("", include("apps.candidates.urls", namespace="candidates")),
 ]
 
