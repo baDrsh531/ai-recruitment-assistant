@@ -6,12 +6,13 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView, ListView
 
 from apps.candidates.models import CVDocument
+from apps.core.permissions import ActionPermissionMixin
 
 from .forms import CVUploadForm
 from .services import ingest
 
 
-class CVUploadView(LoginRequiredMixin, FormView):
+class CVUploadView(ActionPermissionMixin, LoginRequiredMixin, FormView):
     template_name = "parsing/upload.html"
     form_class = CVUploadForm
     success_url = reverse_lazy("parsing:documents")

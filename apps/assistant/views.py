@@ -6,6 +6,7 @@ from django.views.generic import DetailView
 
 from apps.ai.client import InferenceError
 from apps.candidates.models import Candidate
+from apps.core.permissions import ActionPermissionMixin
 from apps.jobs.models import JobOffer
 
 from .filters import FilterSet
@@ -48,7 +49,7 @@ class AssistantView(LoginRequiredMixin, DetailView):
         return context
 
 
-class AskView(LoginRequiredMixin, View):
+class AskView(ActionPermissionMixin, LoginRequiredMixin, View):
     def post(self, request, slug):
         offer = get_object_or_404(JobOffer, slug=slug)
         question = request.POST.get("question", "")
@@ -66,7 +67,7 @@ class AskView(LoginRequiredMixin, View):
         return redirect("assistant:offer", slug=offer.slug)
 
 
-class ClearHistoryView(LoginRequiredMixin, View):
+class ClearHistoryView(ActionPermissionMixin, LoginRequiredMixin, View):
     def post(self, request, slug):
         offer = get_object_or_404(JobOffer, slug=slug)
         RecruiterQuery.objects.filter(offer=offer).delete()

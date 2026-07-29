@@ -82,8 +82,15 @@ python manage.py seed_demo    # jeu de demonstration
 python manage.py runserver 4040
 ```
 
-Interface sur http://127.0.0.1:4040/ — compte de demonstration
-`recruteur` / `demo-recrutement-2026`.
+Interface sur http://127.0.0.1:4040/ — deux comptes de demonstration, meme mot
+de passe `demo-recrutement-2026` :
+
+| Compte | Role | Ce qu'il peut faire |
+|---|---|---|
+| `recruteur` | recruteur | tout : deposer, scorer, decider |
+| `observateur` | lecture seule | consulter ; toute action est refusee et journalisee |
+
+Le second existe pour verifier que le controle d'acces fait quelque chose.
 
 ### Verifier la connexion au serveur d'inference
 
@@ -447,6 +454,52 @@ par une decision humaine tracee — jamais par un tri automatique.
 Les memes chiffres sont consultables par le recruteur sur la page
 **Transparence** de l'application.
 
+### Gouvernance : trois affirmations rendues verifiables
+
+Le projet annoncait trois garanties que le code ne tenait pas. Un `grep` l'a
+montre sans ambiguite : `decide()` n'etait appelee par aucune vue, `can_decide`
+n'etait teste nulle part, `retention_until` restait vide sur les six dossiers en
+base. Trois champs de modele et un principe affiche — mais aucun comportement.
+
+**1. La decision est humaine, motivee et imputee.** La page d'une candidature
+porte un selecteur d'etape et un champ de motif. Ecarter un candidat
+(`rejected`, `withdrawn`) exige un motif d'au moins dix caracteres : le score ne
+motive pas une decision, le recruteur si. Le dossier ne conserve que la derniere
+decision ; le journal d'audit les conserve toutes, avec leur auteur et leur
+horodatage.
+
+**2. Le role est applique, pas seulement declare.** Un `ActionPermissionMixin`
+sur chaque vue qui ecrit — decision, calcul de score, generation de questions,
+depot de CV, assistant, rapport de biais — refuse l'action a un compte en
+lecture seule, et **journalise le refus** : une tentative refusee interesse un
+auditeur autant qu'une action reussie. La verification est doublee dans
+`decide()`, pour qu'appeler le service directement ne contourne rien. Le compte
+de demonstration `observateur` permet de le constater.
+
+**3. La conservation a une echeance et elle est respectee.** Chaque dossier
+recoit une date de fin de conservation a la creation. `purge_expired` supprime
+en cascade CV, profil, preuves, scores et questions ; `--dry-run` montre ce qui
+partirait avant de detruire quoi que ce soit. Une tache Celery quotidienne fait
+la meme chose. Le journal garde le compte des dossiers supprimes et leurs
+identifiants — **jamais un nom, jamais une adresse** — et c'est precisement ce
+qui permet de prouver la purge sans conserver ce qu'elle a efface.
+
+Le detail qui aurait tout annule : les dossiers deja en base avaient un champ
+vide, et `retention_until__lt` ne selectionne jamais un NULL. Ils auraient ete
+conserves indefiniment, en silence, par la fonctionnalite meme censee
+l'empecher. Une migration de donnees leur donne une echeance calculee depuis
+leur date de creation reelle — un dossier vieux d'un an ne repart pas pour une
+duree complete.
+
+```powershell
+python manage.py purge_expired --dry-run   # ce qui serait supprime
+python manage.py purge_expired             # suppression definitive
+```
+
+Vingt-huit tests couvrent ces trois mecanismes (`tests/test_governance.py`),
+dont la verification qu'un compte en lecture seule est refuse sur *chacune* des
+vues mutantes, et que le journal de purge ne contient aucune donnee nominative.
+
 ### Tests
 
 ```powershell
@@ -530,16 +583,16 @@ tests/             suite pytest
 - [x] Classement et analyse des ecarts de competences
 - [x] Harnais d'evaluation : jeu annote, nDCG@5, non-regression en CI
 - [x] Interface : systeme de design sans dependance externe, theme clair et sombre
-- [ ] Comparaison cote a cote de plusieurs candidats
+- [x] Comparaison cote a cote de plusieurs candidats
 - [x] Tableau de bord de cout et de latence, graphiques sans dependance externe
 - [x] Audit de biais par contrefactuels, ratio d'impact, page de transparence
 - [x] Screening a l'aveugle agissant sur le score, avec mesure de son effet
 - [x] Harnais d'evaluation de l'extraction, a verite terrain generee
 - [x] Generation de questions d'entretien ancrees dans le CV
-- [ ] Recherche hybride BM25 + vectorielle, recherche en langage naturel
-- [ ] Generation de questions d'entretien ancrees dans le CV
+- [x] Recherche en langage naturel : traduction en filtres, execution en base
+- [x] Decision humaine tracee, roles appliques, purge RGPD automatique
+- [ ] Recherche hybride BM25 + vectorielle
 - [ ] Rapport d'evaluation exportable en PDF
-- [ ] Purge RGPD automatique, tableau de bord de cout et de latence
 
 ---
 

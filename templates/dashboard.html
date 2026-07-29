@@ -56,6 +56,39 @@
   </section>
 </div>
 
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Conservation des donnees</h2>
+    {% if retention.expired %}
+      <span class="badge badge--danger">{{ retention.expired }} echu(s)</span>
+    {% else %}
+      <span class="badge badge--ok">a jour</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <div class="kv">
+      <div class="kv__row">
+        <span class="kv__key">Duree de conservation</span>
+        <span class="kv__value">{{ retention.days }} jours</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Echeance sous {{ retention.window }} jours</span>
+        <span class="kv__value">{{ retention.expiring }}</span>
+      </div>
+      <div class="kv__row">
+        <span class="kv__key">Dossiers echus, en attente de purge</span>
+        <span class="kv__value">{{ retention.expired }}</span>
+      </div>
+    </div>
+  </div>
+  <p class="card__note">
+    La purge tourne chaque jour et supprime le dossier complet : CV, profil
+    extrait, preuves, scores et questions. Seul le journal d'audit subsiste, avec
+    le compte des dossiers supprimes et aucune donnee nominative.
+    Verification manuelle : <code>python manage.py purge_expired --dry-run</code>.
+  </p>
+</section>
+
 <div class="grid grid--charts">
   {% include "partials/chart.html" with chart=charts.skills %}
   {% include "partials/chart.html" with chart=charts.experience %}

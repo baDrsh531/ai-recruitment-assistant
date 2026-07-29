@@ -19,6 +19,96 @@
 {% endblock %}
 
 {% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Decision</h2>
+    <span class="badge{% if application.is_closed %} badge--warn{% endif %}">
+      {{ application.get_stage_display }}
+    </span>
+  </div>
+
+  {% if can_decide %}
+    <form method="post" action="{% url 'matching:decide' application.pk %}">
+      {% csrf_token %}
+      <div class="card__body">
+        <div class="grid grid--main">
+          <div class="field">
+            <label class="label" for="note">Motif</label>
+            <input class="input" type="text" name="note" id="note"
+                   placeholder="Ce qui motive cette decision, en une phrase."
+                   value="{{ application.decision_note }}">
+            <p class="hint">
+              Obligatoire pour ecarter une candidature ou enregistrer un
+              desistement : le score ne motive pas une decision, le recruteur si.
+            </p>
+          </div>
+          <div class="field">
+            <label class="label" for="stage">Etape</label>
+            <select class="select" name="stage" id="stage">
+              {% for valeur, libelle in stages %}
+                <option value="{{ valeur }}"
+                        {% if valeur == application.stage %}selected{% endif %}>
+                  {{ libelle }}
+                </option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn--primary mt-4">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  {% else %}
+    <div class="card__body">
+      <p class="muted">
+        Votre role est en lecture seule : vous pouvez consulter ce dossier, pas
+        le faire avancer.
+      </p>
+    </div>
+  {% endif %}
+
+  {% if application.decided_by %}
+    <p class="card__note">
+      Derniere decision par {{ application.decided_by }}
+      le {{ application.decided_at|date:"d/m/Y a H:i" }}
+      {% if application.decision_note %}— « {{ application.decision_note }} »{% endif %}
+    </p>
+  {% else %}
+    <p class="card__note">
+      Aucune decision enregistree. Le moteur classe les candidatures ; il n'en
+      ecarte aucune. Toute sortie du processus est le fait d'un recruteur
+      identifie, et elle est journalisee.
+    </p>
+  {% endif %}
+</section>
+
+{% if decisions %}
+  <section class="card">
+    <div class="card__head"><h2 class="card__title">Historique des decisions</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Date</th><th>Auteur</th><th>Etape</th><th>Motif</th></tr>
+        </thead>
+        <tbody>
+          {% for entree in decisions %}
+            <tr>
+              <td class="muted">{{ entree.created_at|date:"d/m/Y H:i" }}</td>
+              <td>{{ entree.actor|default:"—" }}</td>
+              <td><span class="badge">{{ entree.metadata.stage }}</span></td>
+              <td class="muted">{{ entree.metadata.note|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Le dossier ne retient que la derniere decision ; le journal d'audit les
+      conserve toutes, et il est immuable.
+    </p>
+  </section>
+{% endif %}
+
 {% if score %}
 <div class="grid grid--main">
 

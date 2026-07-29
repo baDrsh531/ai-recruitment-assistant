@@ -125,6 +125,16 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = TIME_ZONE
 
+# La purge des dossiers arrives a echeance doit tourner sans qu'on y pense :
+# une obligation de conservation limitee qui depend d'une commande lancee a la
+# main n'est pas respectee.
+CELERY_BEAT_SCHEDULE = {
+    "purge-dossiers-expires": {
+        "task": "apps.candidates.tasks.purge_expired_task",
+        "schedule": 24 * 60 * 60,
+    },
+}
+
 # --- Couche IA ------------------------------------------------------------
 # Deux endpoints distincts : un modele texte et un modele vision-langage.
 # Les adresses viennent exclusivement du .env : aucune infrastructure n'est

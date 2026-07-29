@@ -1,12 +1,16 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, Count
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.ai.models import AIInvocation
 from apps.core import charts
+from apps.core.models import AuditLog
 from apps.jobs.models import JobOffer
+from apps.matching import services
 from apps.matching.models import MatchScore
 
+from . import retention
 from .models import Application, Candidate, CandidateLanguage, CandidateSkill, CVDocument
 
 # Tranches d'anciennete, dans un ordre qui porte du sens : elles ne sont pas
@@ -54,6 +58,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         ]
         context["recent_offers"] = JobOffer.objects.order_by("-created_at")[:5]
         context["charts"] = self._charts()
+        context["retention"] = {
+            "days": settings.DATA_RETENTION_DAYS,
+            "window": retention.WARNING_WINDOW_DAYS,
+            "expiring": retention.expiring_soon().count(),
+            "expired": retention.expired().count(),
+        }
         return context
 
     # ----------------------------------------------------------------------
@@ -182,4 +192,14 @@ class ApplicationDetailView(LoginRequiredMixin, DetailView):
         # L'historique des scores est conserve : on affiche le plus recent.
         context["score"] = self.object.scores.order_by("-created_at").first()
         context["questions"] = list(self.object.interview_questions.all())
+        context["stages"] = Application.Stage.choices
+        context["can_decide"] = self.request.user.can_decide
+        context["stages_requiring_note"] = list(services.STAGES_REQUIRING_NOTE)
+        # Trace des decisions successives : le champ du modele ne garde que la
+        # derniere, le journal d'audit garde toutes les precedentes.
+        context["decisions"] = AuditLog.objects.filter(
+            action=AuditLog.Action.STAGE_CHANGED,
+            object_type="Application",
+            object_id=str(self.object.pk),
+        ).select_related("actor")[:10]
         return context

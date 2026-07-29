@@ -56,6 +56,32 @@ class Candidate(BaseModel):
     def get_absolute_url(self) -> str:
         return reverse("candidates:detail", kwargs={"pk": self.pk})
 
+    def save(self, *args, **kwargs):
+        """Fixe la date de fin de conservation a la creation.
+
+        Le champ existait, indexe, avec un reglage `DATA_RETENTION_DAYS` en
+        face — mais rien ne les reliait : aucune date n'etait ecrite, aucune
+        purge ne tournait. Un dossier de candidature ne se conserve pas
+        indefiniment, et une echeance qui n'est jamais posee ne se respecte pas.
+        """
+        if self.retention_until is None:
+            from django.conf import settings
+
+            self.retention_until = dt.date.today() + dt.timedelta(
+                days=settings.DATA_RETENTION_DAYS
+            )
+        return super().save(*args, **kwargs)
+
+    @property
+    def days_until_purge(self) -> int | None:
+        if self.retention_until is None:
+            return None
+        return (self.retention_until - dt.date.today()).days
+
+    @property
+    def retention_expired(self) -> bool:
+        return self.days_until_purge is not None and self.days_until_purge < 0
+
     def display_name(self, *, blind: bool = False) -> str:
         """Nom masque en mode screening a l'aveugle."""
         if not blind:

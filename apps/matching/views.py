@@ -6,10 +6,11 @@ from django.views.generic import DetailView
 
 from apps.ai.client import InferenceError
 from apps.candidates.models import Application, Candidate
+from apps.core.permissions import ActionPermissionMixin
 from apps.jobs.models import JobOffer
 
 from . import comparison, engine, interview
-from .services import latest_scores, score_offer
+from .services import DecisionRefused, decide, latest_scores, score_offer
 
 
 class OfferRankingView(LoginRequiredMixin, DetailView):
@@ -30,7 +31,38 @@ class OfferRankingView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ScoreOfferView(LoginRequiredMixin, View):
+class DecideView(ActionPermissionMixin, LoginRequiredMixin, View):
+    """Fait avancer une candidature dans le processus.
+
+    C'est ici que se materialise le principe affiche partout dans le projet :
+    le moteur classe, il n'ecarte personne. Sortir un candidat du processus
+    demande un motif ecrit, et la decision est imputee a son auteur.
+    """
+
+    def post(self, request, pk):
+        application = get_object_or_404(
+            Application.objects.select_related("candidate", "offer"), pk=pk
+        )
+        try:
+            decide(
+                application,
+                stage=request.POST.get("stage", ""),
+                note=request.POST.get("note", ""),
+                actor=request.user,
+                request=request,
+            )
+        except DecisionRefused as exc:
+            messages.error(request, str(exc))
+        else:
+            messages.success(
+                request,
+                f"{application.candidate.full_name} : "
+                f"{application.get_stage_display().lower()}.",
+            )
+        return redirect("candidates:application_detail", pk=application.pk)
+
+
+class ScoreOfferView(ActionPermissionMixin, LoginRequiredMixin, View):
     """Relance le calcul pour toutes les candidatures d'une offre."""
 
     def post(self, request, slug):
@@ -96,7 +128,7 @@ class ComparisonView(LoginRequiredMixin, DetailView):
         return context
 
 
-class GenerateQuestionsView(LoginRequiredMixin, View):
+class GenerateQuestionsView(ActionPermissionMixin, LoginRequiredMixin, View):
     """Genere les questions d'entretien d'une candidature."""
 
     def post(self, request, pk):

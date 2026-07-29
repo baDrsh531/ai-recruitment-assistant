@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     ComparisonView,
+    DecideView,
     GenerateQuestionsView,
     OfferRankingView,
     ScoreOfferView,
@@ -18,4 +19,5 @@ urlpatterns = [
         GenerateQuestionsView.as_view(),
         name="generate_questions",
     ),
+    path("candidatures/<uuid:pk>/decider/", DecideView.as_view(), name="decide"),
 ]

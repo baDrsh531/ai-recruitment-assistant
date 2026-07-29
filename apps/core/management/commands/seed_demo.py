@@ -105,6 +105,27 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Compte 'recruteur' deja present.")
 
+        # Un compte en lecture seule, pour verifier que le controle d'acces
+        # fait bien quelque chose : consulter oui, agir non.
+        observateur, cree = User.objects.get_or_create(
+            username="observateur",
+            defaults={
+                "email": "observateur@example.com",
+                "first_name": "Yassine",
+                "last_name": "Bennani",
+                "role": User.Role.VIEWER,
+                "department": "Direction",
+            },
+        )
+        if cree:
+            observateur.set_password(DEMO_PASSWORD)
+            observateur.save()
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Compte cree : observateur / {DEMO_PASSWORD} (lecture seule)"
+                )
+            )
+
         offers = []
         for spec in OFFERS:
             offer, made = JobOffer.objects.get_or_create(

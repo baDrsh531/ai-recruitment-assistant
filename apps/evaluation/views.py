@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
+from apps.core.permissions import ActionPermissionMixin
 from apps.matching.engine import ENGINE_VERSION
 
 from . import bias, harness
@@ -54,7 +55,7 @@ class BiasReportView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class RefreshBiasReportView(LoginRequiredMixin, View):
+class RefreshBiasReportView(ActionPermissionMixin, LoginRequiredMixin, View):
     """Force un nouveau calcul, sans attendre l'expiration du cache."""
 
     def post(self, request):

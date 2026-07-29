@@ -140,10 +140,35 @@ def override_score(
     return score
 
 
+# Sortir un candidat du processus demande un motif ecrit. C'est la contrepartie
+# concrete de « l'IA classe, elle ne rejette jamais » : le rejet est un acte
+# humain, et un acte humain se motive.
+STAGES_REQUIRING_NOTE = {Application.Stage.REJECTED, Application.Stage.WITHDRAWN}
+MIN_NOTE_LENGTH = 10
+
+
+class DecisionRefused(ValueError):
+    """La decision demandee n'est pas recevable en l'etat."""
+
+
 def decide(
     application: Application, *, stage: str, note: str, actor, request=None
 ) -> Application:
     """Fait avancer une candidature. Toute decision est humaine et journalisee."""
+    valides = {choix for choix, _ in Application.Stage.choices}
+    if stage not in valides:
+        raise DecisionRefused(f"Etape inconnue : {stage}")
+
+    note = (note or "").strip()
+    if stage in STAGES_REQUIRING_NOTE and len(note) < MIN_NOTE_LENGTH:
+        raise DecisionRefused(
+            "Ecarter une candidature demande un motif d'au moins "
+            f"{MIN_NOTE_LENGTH} caracteres. Le score ne motive pas une "
+            "decision : le recruteur si."
+        )
+    if actor is None or not getattr(actor, "can_decide", False):
+        raise DecisionRefused("Ce compte n'est pas habilite a decider.")
+
     application.stage = stage
     application.decided_by = actor
     application.decided_at = timezone.now()
