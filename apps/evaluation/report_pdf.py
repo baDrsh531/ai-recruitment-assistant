@@ -222,14 +222,14 @@ def _section_biais(rapport, mitigations, seuil_legal: float) -> str:
         noms = ", ".join(d.dimension for d in sous_le_seuil)
         avertissement = (
             f'<p class="alerte">Sous le seuil des quatre cinquiemes '
-            f"({seuil_legal:.2f}) : {noms}.</p>"
+            f"({nombre(seuil_legal, 2)}) : {noms}.</p>"
         )
 
     return f"""
       <h2>Effet des attributs identitaires</h2>
       <p class="sous">
         Methode des contrefactuels : un seul attribut change a la fois, tout le
-        reste du profil est identique. Seuil de reference {seuil_legal:.2f}
+        reste du profil est identique. Seuil de reference {nombre(seuil_legal, 2)}
         (regle des quatre cinquiemes, NYC LL144).
       </p>
       {_tableau(["Attribut", "Ratio d'impact", "Influence le score"], lignes, {1})}

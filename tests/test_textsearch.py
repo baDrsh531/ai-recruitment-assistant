@@ -265,6 +265,39 @@ def test_the_candidate_list_without_a_query_lists_everyone(client, db, recruteur
     assert reponse.context["search"] is None
 
 
+def test_the_header_counts_the_candidates(client, db, recruteur):
+    """Regression : « {{ paginator.count|default:…|length }} » rendait 0.
+
+    Le filtre `length` applique a un entier renvoie 0. Le compteur affichait
+    donc « 0 candidat(s) » des qu'il y avait des candidats, et n'etait juste
+    que sur une base vide — d'ou une erreur restee invisible.
+    """
+    for index in range(4):
+        _candidat(f"Profil {index}")
+
+    client.force_login(recruteur)
+    reponse = client.get(reverse("candidates:list"))
+
+    assert reponse.context["total"] == 4
+    assert "4 candidat(s)" in reponse.content.decode()
+
+
+def test_the_header_counts_the_search_results(client, db, recruteur):
+    _candidat("Cible", experiences=[("Dev", "A", "paiement")])
+    _candidat("Autre", experiences=[("Dev", "B", "logistique")])
+
+    client.force_login(recruteur)
+    reponse = client.get(reverse("candidates:list"), {"q": "paiement"})
+
+    assert reponse.context["total"] == 1
+
+
+def test_the_header_counts_zero_on_an_empty_base(client, db, recruteur):
+    client.force_login(recruteur)
+    reponse = client.get(reverse("candidates:list"))
+    assert reponse.context["total"] == 0
+
+
 def test_the_api_searches(client, db, recruteur):
     _candidat("Paiement", experiences=[("Ingenieur", "Fintech", "Integration SEPA")])
 

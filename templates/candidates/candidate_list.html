@@ -8,7 +8,7 @@
       Les noms sont masques pour la premiere lecture.
     </p>
   {% else %}
-    <p class="page-head__meta">{{ paginator.count|default:candidates|length }} candidat(s).</p>
+    <p class="page-head__meta">{{ total }} candidat(s).</p>
   {% endif %}
 {% endblock %}
 {% block actions %}

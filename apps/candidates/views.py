@@ -181,6 +181,14 @@ class CandidateListView(LoginRequiredMixin, ListView):
         context["blind"] = self.request.user.blind_screening
         context["query"] = self.request.GET.get("q", "").strip()
         context["search"] = getattr(self, "search_result", None)
+        # Le gabarit calculait ce total avec `paginator.count|default:…|length`.
+        # Or `length` applique a un entier renvoie 0 : le compteur affichait
+        # « 0 candidat(s) » des qu'il y en avait, et n'etait juste que sur une
+        # base vide. Le total se calcule ici, ou il est simplement disponible.
+        paginateur = context.get("paginator")
+        context["total"] = (
+            paginateur.count if paginateur else len(context["candidates"])
+        )
         return context
 
 
