@@ -43,7 +43,14 @@ class Chart:
 
     @property
     def is_empty(self) -> bool:
-        return not self.rows or not any(sum(row["values"]) for row in self.rows)
+        if not self.rows:
+            return True
+        if self.kind == "ring":
+            # Une jauge a 0 % n'est pas vide : « zero dossier echu » est
+            # precisement le resultat qu'on veut lire. Elle n'est vide que si
+            # elle n'a rien a rapporter contre quoi que ce soit.
+            return not self.rows[0].get("total")
+        return not any(sum(row["values"]) for row in self.rows)
 
     def as_dict(self) -> dict:
         return {
@@ -169,6 +176,58 @@ def line(
         note=note,
         series=[Series(series_name or title, slot=1)],
         rows=[{"label": str(label), "values": [float(value)]} for label, value in pairs],
+    )
+
+
+def ring(
+    chart_id: str,
+    title: str,
+    value: float,
+    total: float,
+    *,
+    label: str = "",
+    subtitle: str = "",
+    unit: str = "",
+    note: str = "",
+    target: float | None = None,
+    target_label: str = "",
+    invert: bool = False,
+) -> Chart:
+    """Jauge circulaire : **un seul** ratio, lu comme un chiffre.
+
+    Ce n'est pas un camembert, et la distinction n'est pas cosmetique. Un
+    camembert demande de comparer des angles entre eux — l'oeil le fait mal des
+    trois parts. Ici il n'y a qu'une grandeur : une proportion contre son tout,
+    et l'anneau ne fait que donner une forme au chiffre affiche en son centre.
+    Une part-a-tout a plusieurs categories reste une barre empilee.
+
+    `target` trace un repere sur l'anneau — le seuil legal des quatre
+    cinquiemes, par exemple. `invert` dit qu'une valeur basse est le bon
+    resultat : le statut se lit alors a l'envers.
+    """
+    total = float(total)
+    value = float(value)
+    ratio = value / total if total else 0.0
+
+    return Chart(
+        id=chart_id,
+        title=title,
+        kind="ring",
+        subtitle=subtitle,
+        unit=unit,
+        note=note,
+        series=[Series(label or title, slot=1)],
+        rows=[
+            {
+                "label": label or title,
+                "values": [value],
+                "total": total,
+                "ratio": round(ratio, 4),
+                "target": target,
+                "target_label": target_label,
+                "invert": invert,
+            }
+        ],
     )
 
 

@@ -77,11 +77,79 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     # ----------------------------------------------------------------------
     def _charts(self) -> dict[str, charts.Chart]:
         return {
+            "decided": self._decided_ring(),
+            "shortlist": self._shortlist_ring(),
+            "retention": self._retention_ring(),
             "skills": self._skills_chart(),
             "experience": self._experience_chart(),
             "languages": self._languages_chart(),
             "scores": self._scores_chart(),
         }
+
+    # --- Jauges : un ratio, un chiffre ------------------------------------
+    def _decided_ring(self) -> charts.Chart:
+        total = Application.objects.count()
+        decidees = Application.objects.exclude(
+            stage=Application.Stage.RECEIVED
+        ).count()
+        return charts.ring(
+            "ring-decided",
+            "Candidatures traitees",
+            decidees,
+            total,
+            label="Dossiers ayant recu une decision",
+            unit="candidatures",
+            subtitle="Sorties de l'etat « recue »",
+            note=(
+                "Une candidature qui reste en « recue » n'a pas ete refusee : "
+                "elle n'a pas ete regardee. C'est le seul chiffre de cette page "
+                "qui mesure le travail du recruteur et non celui du moteur."
+            ),
+        )
+
+    def _shortlist_ring(self) -> charts.Chart:
+        derniers = self._latest_scores()
+        seuil = threshold.recommended_threshold()
+        au_dessus = sum(1 for valeur in derniers if valeur >= seuil)
+        return charts.ring(
+            "ring-shortlist",
+            "Au-dessus du seuil mesure",
+            au_dessus,
+            len(derniers),
+            label="Candidatures au-dessus du seuil",
+            unit="candidatures",
+            subtitle=f"Seuil calibre a {round(seuil * 100)} %",
+            note=(
+                "La ligne marque le classement, elle n'ecarte personne. Un "
+                "dossier sous le seuil reste consultable, scorable et recevable."
+            ),
+        )
+
+    def _retention_ring(self) -> charts.Chart:
+        total = Candidate.objects.count()
+        return charts.ring(
+            "ring-retention",
+            "Conservation des dossiers",
+            retention.expired().count(),
+            total,
+            label="Dossiers arrives a echeance",
+            unit="dossiers",
+            subtitle=f"Duree de conservation : {settings.DATA_RETENTION_DAYS} jours",
+            target=0.0,
+            target_label="objectif : aucun dossier echu",
+            invert=True,
+            note=(
+                "Ici, zero est le bon resultat : un dossier echu est un dossier "
+                "que la purge quotidienne aurait du supprimer."
+            ),
+        )
+
+    def _latest_scores(self) -> list[float]:
+        """Dernier score de chaque candidature. Un recalcul ne compte pas deux fois."""
+        derniers: dict[str, float] = {}
+        for score in MatchScore.objects.order_by("application_id", "-created_at"):
+            derniers.setdefault(str(score.application_id), score.effective_score)
+        return list(derniers.values())
 
     def _skills_chart(self) -> charts.Chart:
         rows = (
@@ -137,13 +205,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )
 
     def _scores_chart(self) -> charts.Chart:
-        # Chaque calcul cree une ligne : on ne retient que le plus recent par
-        # candidature, sans quoi un recalcul comptrait deux fois.
-        derniers: dict[str, float] = {}
-        for score in MatchScore.objects.order_by("application_id", "-created_at"):
-            derniers.setdefault(str(score.application_id), score.effective_score)
-
-        valeurs = list(derniers.values())
+        valeurs = self._latest_scores()
         pairs = [
             (label, sum(1 for valeur in valeurs if bas <= valeur < haut))
             for label, bas, haut in SCORE_BANDS

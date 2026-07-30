@@ -56,7 +56,10 @@ globalThis.window = { innerWidth: 1280, scrollX: 0, scrollY: 0 };
 
 const source = readFileSync(join(RACINE, "static/js/charts.js"), "utf8");
 // eslint-disable-next-line no-eval -- audit hors production, sur un fichier du depot
-eval(source.replace("})();", "globalThis.__viz = { renderBars, renderLine };})();"));
+eval(source.replace(
+  "})();",
+  "globalThis.__viz = { renderBars, renderLine, renderGauge };})();"
+));
 
 // Cas limites : c'est la qu'apparaissent les debordements, jamais sur les
 // donnees de demonstration.
@@ -110,6 +113,46 @@ const CAS = [
       kind: "line", unit: "appels",
       series: [{ name: "Appels", slot: 1 }],
       rows: [{ label: "27/07", values: [5] }],
+    },
+  },
+  // Les jauges cassent aux extremites : a 100 % un arc SVG dont le depart et
+  // l'arrivee se confondent est degenere et ne dessine rien, et a 0 % il ne
+  // faut tracer aucun remplissage plutot qu'un arc de longueur nulle.
+  {
+    nom: "jauge, proportion nulle",
+    data: {
+      kind: "ring", unit: "dossiers",
+      series: [{ name: "Echus", slot: 1 }],
+      rows: [{ label: "Echus", values: [0], total: 7, ratio: 0, target: 0,
+               target_label: "objectif", invert: true }],
+    },
+  },
+  {
+    nom: "jauge, proportion pleine",
+    data: {
+      kind: "ring", unit: "candidatures",
+      series: [{ name: "Traitees", slot: 1 }],
+      rows: [{ label: "Traitees", values: [12], total: 12, ratio: 1,
+               target: null, target_label: "", invert: false }],
+    },
+  },
+  {
+    nom: "jauge, seuil et grands nombres",
+    data: {
+      kind: "ring", unit: "candidatures",
+      series: [{ name: "Au-dessus", slot: 1 }],
+      rows: [{ label: "Au-dessus du seuil", values: [98765], total: 123456,
+               ratio: 0.8, target: 0.85, target_label: "seuil calibre",
+               invert: false }],
+    },
+  },
+  {
+    nom: "jauge, tout a zero",
+    data: {
+      kind: "ring", unit: "dossiers",
+      series: [{ name: "Echus", slot: 1 }],
+      rows: [{ label: "Echus", values: [0], total: 0, ratio: 0,
+               target: null, target_label: "", invert: false }],
     },
   },
 ];
@@ -169,10 +212,12 @@ function inspecter(racine, W, H) {
 
 let defauts = 0;
 for (const cas of CAS) {
-  const racine =
-    cas.data.kind === "line"
-      ? globalThis.__viz.renderLine(cas.data)
-      : globalThis.__viz.renderBars(cas.data, cas.data.kind === "stack");
+  const rendus = {
+    line: globalThis.__viz.renderLine,
+    ring: globalThis.__viz.renderGauge,
+  };
+  const racine = (rendus[cas.data.kind] ||
+    ((d) => globalThis.__viz.renderBars(d, d.kind === "stack")))(cas.data);
 
   const [, , W, H] = racine.getAttribute("viewBox").split(" ").map(Number);
   const problemes = inspecter(racine, W, H);

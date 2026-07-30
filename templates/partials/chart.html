@@ -25,26 +25,62 @@ Attend un objet `chart` (voir apps/core/charts.py).
           Voir les donnees
         </button>
 
+        {% comment %}
+          La jauge n'a qu'une ligne, mais son tableau doit porter les trois
+          nombres qui la composent — part, tout, proportion — sinon la version
+          sans JavaScript perdrait ce que le graphique montre.
+        {% endcomment %}
         <table class="chart__table">
           <caption class="visually-hidden">{{ chart.title }}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Categorie</th>
-              {% for item in chart.series %}
-                <th scope="col" class="num">{{ item.name }}{% if chart.unit %} ({{ chart.unit }}){% endif %}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in chart.rows %}
+          {% if chart.kind == "ring" %}
+            <thead>
               <tr>
-                <th scope="row">{{ row.label }}</th>
-                {% for value in row.values %}
-                  <td class="num">{{ value|floatformat:"-1" }}</td>
+                <th scope="col">Mesure</th>
+                <th scope="col" class="num">Valeur</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in chart.rows %}
+                <tr>
+                  <th scope="row">{{ row.label }}</th>
+                  <td class="num">{{ row.values.0|floatformat:"-1" }}{% if chart.unit %} {{ chart.unit }}{% endif %}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td class="num">{{ row.total|floatformat:"-1" }}{% if chart.unit %} {{ chart.unit }}{% endif %}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Proportion</th>
+                  <td class="num">{{ row.ratio|floatformat:3 }}</td>
+                </tr>
+                {% if row.target %}
+                  <tr>
+                    <th scope="row">{{ row.target_label|default:"Seuil" }}</th>
+                    <td class="num">{{ row.target|floatformat:3 }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          {% else %}
+            <thead>
+              <tr>
+                <th scope="col">Categorie</th>
+                {% for item in chart.series %}
+                  <th scope="col" class="num">{{ item.name }}{% if chart.unit %} ({{ chart.unit }}){% endif %}</th>
                 {% endfor %}
               </tr>
-            {% endfor %}
-          </tbody>
+            </thead>
+            <tbody>
+              {% for row in chart.rows %}
+                <tr>
+                  <th scope="row">{{ row.label }}</th>
+                  {% for value in row.values %}
+                    <td class="num">{{ value|floatformat:"-1" }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          {% endif %}
         </table>
       </figure>
     </div>

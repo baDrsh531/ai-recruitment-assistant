@@ -16,6 +16,18 @@
   {% include "partials/stat_tile.html" with label="CV en traitement" value=stats.documents_pending %}
 </div>
 
+{% comment %}
+  Trois jauges juste sous les compteurs : chacune porte un seul ratio, celui
+  qu'on regarde en premier en ouvrant l'application. Ce ne sont pas des
+  camemberts — comparer des angles entre eux se lit mal des trois parts, et une
+  part-a-tout a plusieurs categories reste une barre empilee, plus bas.
+{% endcomment %}
+<div class="grid grid--rings">
+  {% include "partials/chart.html" with chart=charts.decided %}
+  {% include "partials/chart.html" with chart=charts.shortlist %}
+  {% include "partials/chart.html" with chart=charts.retention %}
+</div>
+
 <div class="grid">
   <section class="card">
     <div class="card__head"><h2 class="card__title">Pipeline de recrutement</h2></div>
@@ -71,13 +83,15 @@
         <span class="kv__key">Duree de conservation</span>
         <span class="kv__value">{{ retention.days }} jours</span>
       </div>
+      {% comment %}
+        Le compte des dossiers echus n'est pas repete ici : la jauge en haut de
+        page le porte deja, et deux affichages du meme nombre finissent par
+        diverger. Ce bloc dit ce que la jauge ne dit pas — la duree retenue et
+        ce qui arrive a echeance bientot.
+      {% endcomment %}
       <div class="kv__row">
         <span class="kv__key">Echeance sous {{ retention.window }} jours</span>
         <span class="kv__value">{{ retention.expiring }}</span>
-      </div>
-      <div class="kv__row">
-        <span class="kv__key">Dossiers echus, en attente de purge</span>
-        <span class="kv__value">{{ retention.expired }}</span>
       </div>
     </div>
   </div>

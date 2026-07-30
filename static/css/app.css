@@ -324,6 +324,17 @@ code {
   align-items: start;
 }
 
+/* Une jauge tient dans moins de place qu'un graphique a categories : trois
+   par ligne sur un ecran large, une seule sur un telephone. */
+.grid--rings {
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  align-items: start;
+}
+
+.grid--rings .chart__canvas {
+  justify-content: center;
+}
+
 .span-all {
   grid-column: 1 / -1;
 }
@@ -758,6 +769,8 @@ input[type="file"] {
   --series-2: #eb6834;
   --chart-grid: #e1e0d9;
   --chart-axis: #c3c2b7;
+  /* Piste de la jauge : meme teinte que --series-1, un cran clair. */
+  --gauge-track: #d3e2f4;
   margin: 0;
 }
 
@@ -767,6 +780,9 @@ input[type="file"] {
     --series-2: #d95926;
     --chart-grid: #2c2c2a;
     --chart-axis: #383835;
+    /* Un cran SOMBRE de la meme rampe : en mode sombre, eclaircir la piste la
+       ferait ressortir plus que la donnee. */
+    --gauge-track: #1e3a5c;
   }
 }
 
@@ -793,6 +809,43 @@ input[type="file"] {
 .chart__line--1 { stroke: var(--series-1); }
 .chart__dot--1 { fill: var(--series-1); }
 .chart__ring { fill: var(--surface); }
+
+/* Jauge circulaire. Ce n'est pas un camembert : il n'y a qu'une grandeur, et
+   l'anneau ne fait que donner une forme au chiffre affiche en son centre. La
+   piste non remplie est un cran clair de la meme rampe que le remplissage —
+   l'etat se lit sur tout l'anneau, pas seulement sur la partie coloree. */
+/* `.chart__svg` impose `min-width: 20rem` pour qu'un graphique a categories
+   reste lisible et defile sur un ecran etroit. Une jauge n'en a pas besoin, et
+   `min-width` l'emporte toujours sur `max-width` : il faut donc le remettre a
+   zero ici plutot que d'esperer qu'un `max-width` suffise. */
+.chart__svg--gauge {
+  min-width: 0;
+  max-width: 10.5rem;
+  margin-inline: auto;
+}
+
+.chart__gauge-track { fill: none; stroke: var(--gauge-track); stroke-linecap: round; }
+.chart__gauge-fill  { fill: none; stroke: var(--series-1); stroke-linecap: round; }
+.chart__gauge-fill--ok     { stroke: var(--ok); }
+.chart__gauge-fill--warn   { stroke: var(--warn); }
+.chart__gauge-fill--danger { stroke: var(--danger); }
+/* Repere de seuil : un filet dans la couleur de surface qui coupe l'anneau.
+   Un trait par-dessus ajouterait de l'encre ; une coupure n'en ajoute pas. */
+.chart__gauge-target { stroke: var(--surface); stroke-width: 3; }
+/* `text-anchor` est pose en attribut SVG, pas ici : c'est de la geometrie, et
+   l'audit de mise en page ne lit que les attributs. */
+.chart__gauge-value {
+  fill: var(--text);
+  font-size: 1.75rem;
+  font-weight: 650;
+  /* Chiffre isole : figures proportionnelles. `tabular-nums` donne a chaque
+     chiffre la largeur d'un zero, ce qui delave un grand nombre. */
+  font-variant-numeric: proportional-nums;
+}
+.chart__gauge-caption {
+  fill: var(--muted);
+  font-size: 0.6875rem;
+}
 
 /* Grille et axes : filet plein d'un cran par-dessus la surface, recessifs. */
 .chart__grid,

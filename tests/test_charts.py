@@ -102,6 +102,75 @@ def test_chart_payload_is_json_serialisable():
     assert restored["series"][1]["name"] == "Deux"
 
 
+# --- Jauge circulaire --------------------------------------------------------
+def test_ring_computes_its_ratio():
+    chart = charts.ring("c", "T", 5, 8)
+    assert chart.kind == "ring"
+    assert chart.rows[0]["ratio"] == 0.625
+    assert chart.rows[0]["total"] == 8.0
+
+
+def test_ring_survives_a_total_of_zero():
+    """Une base vide ne doit pas produire une division par zero."""
+    chart = charts.ring("c", "T", 0, 0)
+    assert chart.rows[0]["ratio"] == 0.0
+    assert chart.is_empty
+
+
+def test_a_ring_at_zero_is_not_empty():
+    """« Zero dossier echu » est precisement le resultat qu'on veut lire."""
+    chart = charts.ring("c", "T", 0, 7)
+    assert not chart.is_empty
+    assert chart.rows[0]["ratio"] == 0.0
+
+
+def test_ring_carries_its_threshold():
+    chart = charts.ring("c", "T", 1, 10, target=0.8, target_label="seuil legal")
+    ligne = chart.rows[0]
+    assert ligne["target"] == 0.8
+    assert ligne["target_label"] == "seuil legal"
+
+
+def test_ring_declares_a_single_colour_slot():
+    """Une seule grandeur, donc une seule couleur et aucune legende."""
+    assert len(charts.ring("c", "T", 1, 2).series) == 1
+
+
+def test_ring_payload_is_json_serialisable():
+    chart = charts.ring("c", "T", 3, 4, unit="dossiers", target=0.5, invert=True)
+    restored = json.loads(json.dumps(chart.as_dict(), ensure_ascii=False))
+    assert restored["kind"] == "ring"
+    assert restored["unit"] == "dossiers"
+    assert restored["rows"][0]["invert"] is True
+
+
+def test_the_dashboard_shows_three_gauges(client, population, recruteur):
+    client.force_login(recruteur)
+    graphiques = client.get(reverse("candidates:dashboard")).context["charts"]
+
+    for cle in ["decided", "shortlist", "retention"]:
+        assert graphiques[cle].kind == "ring", cle
+        assert graphiques[cle].rows, cle
+
+
+def test_the_retention_gauge_reads_the_right_way_round(client, population, recruteur):
+    """Ici zero est le bon resultat : la jauge le declare, elle ne l'invente pas."""
+    client.force_login(recruteur)
+    jauge = client.get(reverse("candidates:dashboard")).context["charts"]["retention"]
+
+    assert jauge.rows[0]["invert"] is True
+    assert jauge.rows[0]["target"] == 0.0
+
+
+def test_gauge_values_survive_without_javascript(client, population, recruteur):
+    """Le tableau doit porter la part, le tout et la proportion."""
+    client.force_login(recruteur)
+    contenu = client.get(reverse("candidates:dashboard")).content.decode()
+
+    assert "Proportion" in contenu
+    assert "chart-ring-decided" in contenu
+
+
 @pytest.mark.parametrize(
     ("values", "fraction", "expected"),
     [
@@ -215,6 +284,7 @@ def test_dashboard_renders_every_chart(client, population, recruteur):
     response = client.get(reverse("candidates:dashboard"))
     assert response.status_code == 200
     assert set(response.context["charts"]) == {
+        "decided", "shortlist", "retention",
         "skills", "experience", "languages", "scores",
     }
 

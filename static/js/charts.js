@@ -113,6 +113,136 @@
     target.addEventListener("blur", hideTip);
   }
 
+  /* --- Jauge circulaire --------------------------------------------------- */
+  /* Une seule grandeur : une proportion contre son tout. Ce n'est pas un
+     camembert — comparer des angles entre eux se fait mal des trois parts, et
+     une part-a-tout a plusieurs categories reste une barre empilee. L'anneau
+     ne fait que donner une forme au chiffre affiche en son centre. */
+  const GAUGE_SIZE = 168;
+  const GAUGE_STROKE = 13;
+
+  function gaugeArc(cx, cy, rayon, fraction) {
+    // Depart a midi, sens horaire. Une fraction pleine se trace en deux arcs :
+    // un cercle complet exprime en un seul arc SVG est degenere — depart et
+    // arrivee confondus, le navigateur ne dessine rien.
+    const angle = Math.min(Math.max(fraction, 0), 1) * 2 * Math.PI;
+    const point = (a) => [cx + rayon * Math.sin(a), cy - rayon * Math.cos(a)];
+    const [x0, y0] = point(0);
+
+    if (fraction >= 0.9999) {
+      const [xm, ym] = point(Math.PI);
+      return `M ${x0} ${y0} A ${rayon} ${rayon} 0 1 1 ${xm} ${ym}`
+           + ` A ${rayon} ${rayon} 0 1 1 ${x0} ${y0}`;
+    }
+    const [x1, y1] = point(angle);
+    const grandArc = angle > Math.PI ? 1 : 0;
+    return `M ${x0} ${y0} A ${rayon} ${rayon} 0 ${grandArc} 1 ${x1} ${y1}`;
+  }
+
+  function gaugeStatus(row) {
+    if (row.target === null || row.target === undefined) return "";
+    const atteint = row.invert ? row.ratio <= row.target : row.ratio >= row.target;
+    if (atteint) return " chart__gauge-fill--ok";
+    // Sous le seuil : « warn » tant qu'on en est proche, « danger » au-dela.
+    const ecart = Math.abs(row.ratio - row.target);
+    return ecart <= 0.1 ? " chart__gauge-fill--warn" : " chart__gauge-fill--danger";
+  }
+
+  function renderGauge(data) {
+    const row = data.rows[0];
+    const racine = svg("svg", {
+      class: "chart__svg chart__svg--gauge",
+      viewBox: `0 0 ${GAUGE_SIZE} ${GAUGE_SIZE}`,
+      role: "img",
+      "aria-label":
+        `${row.label} : ${compact(row.values[0], data.unit)} sur `
+        + `${compact(row.total, data.unit)}, soit ${Math.round(row.ratio * 100)} %`,
+    });
+
+    const centre = GAUGE_SIZE / 2;
+    const rayon = centre - GAUGE_STROKE / 2 - 2;
+
+    racine.appendChild(svg("path", {
+      class: "chart__gauge-track",
+      d: gaugeArc(centre, centre, rayon, 1),
+      "stroke-width": GAUGE_STROKE,
+    }));
+
+    if (row.ratio > 0) {
+      racine.appendChild(svg("path", {
+        class: `chart__gauge-fill${gaugeStatus(row)}`,
+        d: gaugeArc(centre, centre, rayon, row.ratio),
+        "stroke-width": GAUGE_STROKE,
+      }));
+    }
+
+    // Repere de seuil : une coupure dans la couleur de surface. Un trait
+    // par-dessus ajouterait de l'encre qui n'est pas de la donnee.
+    if (row.target !== null && row.target !== undefined) {
+      const angle = Math.min(Math.max(row.target, 0), 1) * 2 * Math.PI;
+      const interne = rayon - GAUGE_STROKE / 2 - 1;
+      const externe = rayon + GAUGE_STROKE / 2 + 1;
+      racine.appendChild(svg("line", {
+        class: "chart__gauge-target",
+        x1: centre + interne * Math.sin(angle),
+        y1: centre - interne * Math.cos(angle),
+        x2: centre + externe * Math.sin(angle),
+        y2: centre - externe * Math.cos(angle),
+      }));
+    }
+
+    // `text-anchor` en attribut et non en CSS : c'est une affaire de
+    // geometrie, et l'audit de mise en page ne lit que les attributs.
+    const valeur = svg("text", {
+      class: "chart__gauge-value",
+      x: centre,
+      y: centre + 4,
+      "text-anchor": "middle",
+    });
+    valeur.textContent = `${Math.round(row.ratio * 100)} %`;
+    racine.appendChild(valeur);
+
+    // La legende ne porte que les deux nombres, sans unite : « 98,8 k / 123,5 k
+    // candidatures » deborde du cadre, et l'unite figure deja dans le titre,
+    // l'infobulle, l'etiquette accessible et le tableau.
+    const legende = svg("text", {
+      class: "chart__gauge-caption",
+      x: centre,
+      y: centre + 24,
+      "text-anchor": "middle",
+    });
+    legende.textContent = `${compact(row.values[0], "")} / ${compact(row.total, "")}`;
+    racine.appendChild(legende);
+
+    // Cible de pointage : le disque entier, largement au-dessus des 24 px.
+    const cible = svg("circle", {
+      class: "chart__hit",
+      cx: centre,
+      cy: centre,
+      r: centre,
+      tabindex: "0",
+      role: "button",
+      "aria-label": racine.getAttribute("aria-label"),
+    });
+    const lignes = [
+      {
+        slot: 1,
+        value: `${Math.round(row.ratio * 100)} %`,
+        name: `${compact(row.values[0], "")} sur ${compact(row.total, data.unit)}`,
+      },
+    ];
+    if (row.target !== null && row.target !== undefined) {
+      lignes.push({
+        value: `${Math.round(row.target * 100)} %`,
+        name: row.target_label || "seuil",
+      });
+    }
+    bindTip(cible, lignes);
+    racine.appendChild(cible);
+
+    return racine;
+  }
+
   /* --- Barres horizontales ----------------------------------------------- */
   function renderBars(data, stacked) {
     const rows = data.rows;
@@ -348,10 +478,15 @@
     }
     if (!data.rows?.length) return;
 
-    canvas.appendChild(
-      data.kind === "line" ? renderLine(data) : renderBars(data, data.kind === "stack")
-    );
+    const rendus = {
+      line: renderLine,
+      ring: renderGauge,
+      stack: (d) => renderBars(d, true),
+    };
+    canvas.appendChild((rendus[data.kind] || ((d) => renderBars(d, false)))(data));
 
+    // Une seule serie ne prend pas de legende : le titre dit deja ce qui est
+    // trace, et une boite a une pastille ne ferait que le repeter.
     if (data.series.length > 1) {
       const legende = document.createElement("ul");
       legende.className = "chart__legend";
