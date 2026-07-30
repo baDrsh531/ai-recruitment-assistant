@@ -21,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from apps.ai.client import InferenceError
+from apps.assistant import textsearch
 from apps.candidates.models import Application, Candidate
 from apps.jobs.models import JobOffer
 from apps.matching import counterfactual as cf
@@ -119,6 +120,46 @@ class CandidateViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CandidateSerializer
     permission_classes = [ReadOnlyOrCanDecide]
 
+    @action(detail=False, methods=["get"], url_path="recherche")
+    def search(self, request):
+        """Recherche plein texte sur les profils.
+
+        `q` porte la requete, `limite` borne le nombre de resultats. Le
+        classement vient de BM25, eventuellement fusionne au vectoriel par
+        rang : aucun modele de langage n'intervient et deux appels identiques
+        renvoient la meme liste dans le meme ordre.
+        """
+        requete = request.query_params.get("q", "").strip()
+        if not requete:
+            return Response(
+                {"detail": "Le parametre « q » est obligatoire."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            limite = min(50, max(1, int(request.query_params.get("limite", 10))))
+        except ValueError:
+            return Response(
+                {"detail": "Le parametre « limite » doit etre un entier."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        resultat = textsearch.search(requete, limit=limite)
+        contexte = self.get_serializer_context()
+        return Response(
+            {
+                **resultat.as_dict(),
+                "results": [
+                    {
+                        **hit.as_dict(),
+                        "candidate": CandidateSerializer(
+                            hit.candidate, context=contexte
+                        ).data,
+                    }
+                    for hit in resultat.hits
+                ],
+            }
+        )
+
 
 class ApplicationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
@@ -213,6 +254,7 @@ def racine(request):
         {
             "offres": reverse("api:joboffer-list", request=request),
             "candidats": reverse("api:candidate-list", request=request),
+            "recherche": reverse("api:candidate-search", request=request) + "?q=",
             "candidatures": reverse("api:application-list", request=request),
             "note": (
                 "Lecture ouverte a tout compte authentifie ; les ecritures "

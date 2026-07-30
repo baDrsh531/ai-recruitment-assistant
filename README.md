@@ -48,7 +48,10 @@ score de compatibilite avec une offre, classement et aide a la decision.
 scalaire numpy sur vecteurs normalises prend quelques millisecondes. Ajouter
 ChromaDB ou Qdrant serait un service de plus sans gain mesurable. L'interface
 de `apps/ai/embeddings.py` isole ce choix : basculer vers pgvector ne touchera
-que ce fichier.
+que ce fichier. Meme raisonnement pour la recherche plein texte : l'index BM25
+est reconstruit en memoire a chaque requete. Au-dela de quelques dizaines de
+milliers de profils c'est PostgreSQL full-text ou un moteur dedie qu'il faudrait
+— la limite est connue, elle n'est pas franchie ici.
 
 **Pourquoi deux modeles.** Le modele texte traite les CV a texte natif. Le
 modele vision lit les pages **en image** : c'est ce qui permet de traiter les
@@ -581,6 +584,77 @@ l'anciennete la plus elevee, une candidature en double sur une meme offre
 conserve celle qui est allee le plus loin dans le processus, et l'echeance de
 conservation retenue est la plus tardive.
 
+### Chercher dans le texte des profils
+
+L'assistant traduit une question en criteres, et c'est ce qu'il faut quand la
+question en contient. Mais « qui a travaille sur des systemes de paiement ? » ne
+se traduit en aucun filtre : ce n'est ni une competence declaree, ni une langue,
+ni un seuil. `apps/assistant/textsearch.py` cherche alors dans le texte.
+
+**BM25 plutot qu'un `LIKE`.** Une recherche par sous-chaine classe au hasard :
+un profil qui mentionne « paiement » vingt fois et un qui l'evoque une fois
+sortent a egalite, et « SEPA » ne pese pas plus que « projet ». BM25 corrige les
+deux — frequence saturante, rarete du terme, normalisation par la longueur du
+document. Trois tests couvrent exactement ces trois proprietes.
+
+**Fusion par rang.** Quand la couche vectorielle est disponible, les deux listes
+sont fusionnees par Reciprocal Rank Fusion. Additionner un score BM25 — non
+borne, dependant du corpus — et un cosinus dans [0, 1] supposerait une echelle
+commune qui n'existe pas. Les rangs, eux, se comparent. Sans embeddings,
+l'hybride se ramene au lexical, et l'interface le dit plutot que de laisser
+croire a une recherche semantique.
+
+Un jeu d'evaluation dedie, `search_v1`, fixe la pertinence **par
+construction** : chaque profil est ecrit pour repondre ou non a des requetes
+precises, arretees avant la premiere execution.
+
+```
+python manage.py evaluate_search --detail
+
+  Rappel@5                          0,959
+    plafond atteignable             0,959
+  MRR                               1,000
+  Precision@3                       0,929
+  Requetes sans reponse traitees    1,000
+```
+
+**Le plafond n'est pas un detail de presentation.** La requete « Python » compte
+sept profils pertinents pour cinq places : son rappel@5 ne *peut pas* depasser
+0,71. Sans cette borne publiee, un sans-faute se lirait comme un manque. Ici
+rappel@5 egale son plafond : aucun profil pertinent n'est rate.
+
+Deux details du decoupage, trouves en ecrivant les tests. Un terme compose est
+indexe entier **et** en morceaux : entier seul, « bout en bout » ne trouverait
+pas « bout-en-bout » ; en morceaux seuls, « 3-D » disparaitrait, ses deux
+moities tombant sous la longueur minimale. Et la requete sans reponse renvoie
+une liste vide — la CI verifie ce comportement, parce qu'un moteur qui remplit
+l'ecran a tout prix est pire qu'un moteur qui admet ne rien avoir.
+
+### Rapport d'evaluation en PDF
+
+Les chiffres vivent dans des pages web et des commandes. Un responsable
+conformite, lui, demande un document date, versionne et transmissible.
+`/transparence/rapport.pdf` le produit : qualite du classement, effet mesure des
+attributs identitaires, seuil de coupe et sa marge, qualite de la recherche,
+provenance.
+
+**Aucune dependance ajoutee.** PyMuPDF est deja la, pour lire les CV ; il sait
+aussi ecrire des PDF, tables, accents et metadonnees compris. ReportLab ou
+WeasyPrint auraient alourdi l'installation — WeasyPrint reclame GTK sous
+Windows — sans rien apporter de plus.
+
+Le document porte quatre informations sans lesquelles il ne prouverait rien six
+mois plus tard : version du moteur, version de chaque jeu d'evaluation, date, et
+compte a l'origine de l'export. L'export est lui-meme journalise : un document
+qui sort du systeme est une donnee qui circule.
+
+Deux pieges rencontres. `insert_htmlbox` ne pagine pas — il rend ce qui tient et
+signale le reste ; chaque bloc est donc mesure a blanc avant d'etre ecrit, faute
+de quoi une section disparaitrait en silence, ce qui est la pire facon de perdre
+un chiffre dans un document de conformite. Et le texte extrait d'un PDF contient
+les **ligatures** de la police : « Effet » en ressort en « Eﬀet », si bien qu'une
+verification par `in` echoue sur un document parfaitement correct.
+
 ### API REST
 
 DRF etait installe, configure et affiche dans le schema d'architecture sans une
@@ -597,6 +671,7 @@ consommateur distingue « absent » de « retire ».
 
 ```
 GET  /api/offres/<slug>/classement/   rang, score, ecarts, versions de moteur
+GET  /api/candidats/recherche/?q=     BM25, rang, score, termes trouves
 GET  /api/candidatures/<id>/ecarts/   chemin vers le seuil, plafond atteignable
 POST /api/candidatures/<id>/decider/  motif obligatoire pour ecarter
 ```
@@ -696,8 +771,8 @@ tests/             suite pytest
 - [x] Ecarts contrefactuels : ce qui manque pour atteindre le seuil, mesure
 - [x] Rapprochement des dossiers en double, fusion validee par un recruteur
 - [x] Seuil de shortlist calibre sur le jeu annote, avec sa marge
-- [ ] Recherche hybride BM25 + vectorielle
-- [ ] Rapport d'evaluation exportable en PDF
+- [x] Recherche BM25, fusion par rang avec le vectoriel, jeu d'evaluation dedie
+- [x] Rapport d'evaluation exportable en PDF, sans dependance ajoutee
 
 ---
 

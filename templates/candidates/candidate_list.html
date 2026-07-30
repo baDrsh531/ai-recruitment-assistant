@@ -17,6 +17,38 @@
 
 {% block content %}
 <section class="card">
+  <form method="get" class="card__body">
+    <div class="field">
+      <label class="label" for="q">Rechercher dans les profils</label>
+      <div class="row">
+        <input class="input" type="search" name="q" id="q" value="{{ query }}"
+               placeholder="systemes de paiement, anonymisation de donnees, Kubernetes…">
+        <button type="submit" class="btn btn--primary">Chercher</button>
+        {% if query %}<a class="btn" href="{% url 'candidates:list' %}">Effacer</a>{% endif %}
+      </div>
+      <p class="hint">
+        Recherche BM25 sur le profil extrait : intitules, experiences,
+        formations, certifications. Elle repond aux questions qu'aucun filtre
+        n'exprime — un sujet, un domaine, un vocabulaire metier.
+      </p>
+    </div>
+  </form>
+
+  {% if query %}
+    <p class="card__note">
+      {{ search.count }} profil(s) sur {{ search.corpus_size }} pour
+      « {{ query }} » ·
+      {% if search.semantic_used %}
+        BM25 fusionne au vectoriel par rang
+      {% else %}
+        BM25 seul, couche vectorielle desactivee
+      {% endif %}
+      · aucun appel modele, le resultat est reproductible.
+    </p>
+  {% endif %}
+</section>
+
+<section class="card">
   {% if candidates %}
     <div class="table-wrap">
       <table class="table">
@@ -53,7 +85,11 @@
       </table>
     </div>
   {% else %}
-    {% include "partials/empty.html" with title="Aucun candidat" text="Deposez un CV pour alimenter la base." %}
+    {% if query %}
+      {% include "partials/empty.html" with title="Aucun profil ne correspond" text="Aucun terme de la requete n'apparait dans les profils. La recherche prefere ne rien renvoyer plutot que de proposer du remplissage." %}
+    {% else %}
+      {% include "partials/empty.html" with title="Aucun candidat" text="Deposez un CV pour alimenter la base." %}
+    {% endif %}
   {% endif %}
 </section>
 {% endblock %}

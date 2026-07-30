@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.views import View
@@ -8,7 +9,7 @@ from django.views.generic import TemplateView
 from apps.core.permissions import ActionPermissionMixin
 from apps.matching.engine import ENGINE_VERSION
 
-from . import bias, harness, threshold
+from . import bias, harness, report_pdf, search_eval, threshold
 
 DATASET = "ranking_v1"
 # L'audit represente plusieurs centaines de scorings : c'est un calcul lourd,
@@ -110,6 +111,47 @@ class ThresholdView(LoginRequiredMixin, TemplateView):
             ),
         )
         return context
+
+
+class ExportReportView(LoginRequiredMixin, View):
+    """Rapport d'evaluation en PDF.
+
+    L'export est ouvert en lecture — il ne modifie aucun dossier — mais il est
+    journalise : un document qui sort du systeme est une donnee qui circule.
+    """
+
+    def get(self, request):
+        donnees = cache.get(CACHE_KEY) or _build_report()
+        calibration = threshold.cached(DATASET)
+
+        # La recherche a son propre harnais ; s'il echoue, le rapport sort sans
+        # cette section plutot que pas du tout.
+        try:
+            recherche = search_eval.run()
+        except (FileNotFoundError, ValueError):
+            recherche = None
+
+        sources = report_pdf.Sources(
+            quality=donnees["quality"],
+            bias=donnees["report"],
+            mitigations=donnees["mitigations"],
+            calibration=calibration,
+            search=recherche,
+        )
+        octets = report_pdf.build(sources, author=str(request.user))
+
+        sections = ["classement", "biais", "seuil", "provenance"]
+        if recherche is not None:
+            sections.insert(3, "recherche")
+        report_pdf.record_export(
+            request.user, request=request, size=len(octets), sections=sections
+        )
+
+        reponse = HttpResponse(octets, content_type="application/pdf")
+        reponse["Content-Disposition"] = (
+            f'attachment; filename="{report_pdf.filename()}"'
+        )
+        return reponse
 
 
 class InvocationDashboardView(LoginRequiredMixin, TemplateView):

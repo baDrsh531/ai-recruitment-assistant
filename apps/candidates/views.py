@@ -7,6 +7,7 @@ from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from apps.ai.models import AIInvocation
+from apps.assistant import textsearch
 from apps.core import charts
 from apps.core.models import AuditLog
 from apps.core.permissions import ActionPermissionMixin
@@ -165,11 +166,21 @@ class CandidateListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return Candidate.objects.prefetch_related("skills").order_by("full_name")
+        requete = self.request.GET.get("q", "").strip()
+        if not requete:
+            return Candidate.objects.prefetch_related("skills").order_by("full_name")
+
+        # Recherche plein texte : l'ordre vient du score BM25, pas du nom. On
+        # ne repasse pas par la base pour trier, sans quoi le classement
+        # obtenu serait perdu.
+        self.search_result = textsearch.search(requete, limit=50)
+        return [hit.candidate for hit in self.search_result.hits]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["blind"] = self.request.user.blind_screening
+        context["query"] = self.request.GET.get("q", "").strip()
+        context["search"] = getattr(self, "search_result", None)
         return context
 
 

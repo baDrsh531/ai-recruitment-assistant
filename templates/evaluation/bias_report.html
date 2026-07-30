@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block actions %}
+  <a class="btn btn--primary" href="{% url 'evaluation:export_pdf' %}">Rapport PDF</a>
+  <a class="btn" href="{% url 'evaluation:threshold' %}">Seuil de tri</a>
   <form method="post" action="{% url 'evaluation:refresh_bias_report' %}">
     {% csrf_token %}
     <button type="submit" class="btn">Recalculer l'audit</button>

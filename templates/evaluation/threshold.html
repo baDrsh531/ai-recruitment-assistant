@@ -10,6 +10,7 @@
   </p>
 {% endblock %}
 {% block actions %}
+  <a class="btn btn--primary" href="{% url 'evaluation:export_pdf' %}">Rapport PDF</a>
   <a class="btn" href="{% url 'evaluation:bias_report' %}">Audit de biais</a>
 {% endblock %}
 

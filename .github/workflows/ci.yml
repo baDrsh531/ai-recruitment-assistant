@@ -81,6 +81,12 @@ jobs:
       - name: Mesurer l'attenuation par screening a l'aveugle
         run: python manage.py audit_bias --compare-blind
 
+      # La recherche plein texte a sa propre verite terrain : une modification
+      # du decoupage ou des parametres BM25 qui degrade le rappel fait echouer
+      # la CI, au meme titre qu'une regression du scoring.
+      - name: Evaluer la recherche plein texte
+        run: python manage.py evaluate_search --detail --json rapports/recherche.json
+
       - name: Conserver les rapports
         if: always()
         uses: actions/upload-artifact@v4
