@@ -1,0 +1,62 @@
+# Deploiement sur Render, en une declaration.
+#
+# Choix du service : plan gratuit, pas de conteneur a construire localement, et
+# une base PostgreSQL geree. La contrepartie du plan gratuit est une mise en
+# veille apres quinze minutes sans trafic — le premier chargement suivant prend
+# une trentaine de secondes. C'est dit dans le bandeau de la demonstration
+# plutot que laisse decouvrir.
+#
+# Ce que la demonstration ne peut pas montrer : les deux modeles tournent sur un
+# serveur d'inference prive, injoignable depuis l'exterieur. L'analyse redigee
+# et les questions d'entretien sont donc indisponibles en ligne. Tout le reste
+# — extraction deja faite, score, classement, ecarts, seuil, recherche,
+# doublons, exports — ne depend d'aucun modele et fonctionne.
+
+databases:
+  - name: recrutement-ia-db
+    plan: free
+    databaseName: recrutement
+    user: recrutement
+
+services:
+  - type: web
+    name: recrutement-ia
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: "./scripts/build.sh"
+    startCommand: "gunicorn config.wsgi:application --workers 2 --timeout 120"
+    healthCheckPath: /sante/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: recrutement-ia.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://recrutement-ia.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: recrutement-ia-db
+          property: connectionString
+      # Sans broker : les taches s'executent en synchrone. Un worker Celery de
+      # plus pour une demonstration serait un service a payer sans rien montrer.
+      - key: CELERY_BROKER_URL
+        value: ""
+      # Le rapprochement semantique reste desactive, comme en local : la mesure
+      # a montre qu'il degradait le classement. Voir `probe_semantic`.
+      - key: EMBEDDING_PROVIDER
+        value: none
+      # Aucun serveur d'inference joignable depuis l'exterieur. L'application
+      # est concue pour se degrader proprement ; le bandeau le signale.
+      - key: LLM_BASE_URL
+        value: ""
+      - key: VLM_BASE_URL
+        value: ""
+      - key: DEMO_MODE
+        value: "True"

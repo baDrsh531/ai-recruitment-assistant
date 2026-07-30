@@ -61,6 +61,20 @@
     </header>
 
     <div class="content">
+      {% if demo_mode %}
+        <div class="alert alert--info">
+          <b>Demonstration publique.</b>
+          Les donnees sont fictives. Tout ce qui ne depend pas d'un modele
+          fonctionne : extraction deja faite, score, classement, ecarts, seuil
+          de tri, recherche, doublons, exports PDF.
+          {% if not llm_disponible %}
+            L'analyse redigee et les questions d'entretien sont indisponibles —
+            les deux modeles tournent sur un serveur prive, injoignable depuis
+            l'exterieur. Le moteur, lui, n'a jamais eu besoin d'un modele pour
+            calculer un score.
+          {% endif %}
+        </div>
+      {% endif %}
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</div>

@@ -6,6 +6,7 @@ from .views import (
     CandidateListView,
     DashboardView,
     DuplicateListView,
+    ExportApplicationView,
     MergeCandidatesView,
 )
 
@@ -18,4 +19,9 @@ urlpatterns = [
     path("candidats/fusionner/", MergeCandidatesView.as_view(), name="merge"),
     path("candidats/<uuid:pk>/", CandidateDetailView.as_view(), name="detail"),
     path("candidatures/<uuid:pk>/", ApplicationDetailView.as_view(), name="application_detail"),
+    path(
+        "candidatures/<uuid:pk>/dossier.pdf",
+        ExportApplicationView.as_view(),
+        name="export_application",
+    ),
 ]

@@ -14,6 +14,7 @@
       {% if questions %}Regenerer{% else %}Generer{% endif %} les questions d'entretien
     </button>
   </form>
+  <a class="btn" href="{% url 'candidates:export_application' application.pk %}">Dossier PDF</a>
   <a class="btn" href="{{ application.candidate.get_absolute_url }}">Fiche candidat</a>
   <a class="btn" href="{% url 'matching:ranking' application.offer.slug %}">Classement</a>
 {% endblock %}

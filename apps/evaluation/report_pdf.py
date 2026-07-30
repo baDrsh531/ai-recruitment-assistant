@@ -381,6 +381,193 @@ def build(sources: Sources, *, author: str = "", today: dt.date | None = None) -
     return octets
 
 
+# --- Dossier d'une candidature -----------------------------------------------
+def _dossier_entete(candidature, auteur: str, aujourdhui: dt.date, *, blind: bool) -> str:
+    candidat = candidature.candidate
+    return f"""
+      <h1>{candidat.display_name(blind=blind)}</h1>
+      <p class="sous">
+        {candidature.offer.title} · {candidature.get_stage_display()} ·
+        candidature recue le {candidature.applied_at.strftime('%d/%m/%Y')}
+      </p>
+      <p class="note">
+        Dossier edite le {aujourdhui.strftime('%d/%m/%Y')} par {auteur} —
+        moteur {ENGINE_VERSION}.
+        {"Screening a l'aveugle : identite masquee." if blind else ""}
+      </p>
+    """
+
+
+def _dossier_score(score) -> str:
+    if score is None:
+        return (
+            "<h2>Score de compatibilite</h2>"
+            "<p>Cette candidature n'a pas encore ete scoree.</p>"
+        )
+
+    lignes = [
+        [
+            critere["label"],
+            nombre(critere["weight"], 2),
+            nombre(critere["score"], 2),
+        ]
+        for critere in score.applicable_criteria
+    ]
+    correction = ""
+    if score.is_overridden:
+        correction = (
+            f'<p class="alerte">Score corrige manuellement : calcul '
+            f"{nombre(score.overall, 2)}, retenu {nombre(score.effective_score, 2)}. "
+            f"Motif : {score.override_reason}</p>"
+        )
+    recevabilite = ""
+    facteur = score.breakdown.get("admissibility", 1)
+    if facteur < 1:
+        recevabilite = (
+            f'<p class="note">Facteur de recevabilite {nombre(facteur, 2)} '
+            f"applique : les competences obligatoires ne sont que "
+            f"partiellement couvertes.</p>"
+        )
+
+    return f"""
+      <h2>Score de compatibilite — {score.percentage} %</h2>
+      <p class="sous">
+        Calcule en {score.compute_ms} ms par le moteur {score.engine_version},
+        sans appel modele. Deux executions donnent le meme chiffre.
+      </p>
+      {_tableau(["Critere", "Poids", "Score"], lignes, {1, 2})}
+      {correction}
+      {recevabilite}
+    """
+
+
+def _dossier_ecarts(score) -> str:
+    if score is None or not score.gaps:
+        return ""
+    lignes = [
+        [
+            ecart["skill"],
+            ecart.get("best_match") or "aucune competence proche",
+            nombre(ecart.get("score", 0.0), 2),
+        ]
+        for ecart in score.gaps
+    ]
+    return f"""
+      <h2>Ecarts sur les competences obligatoires</h2>
+      {_tableau(["Attendue", "Le plus proche dans le CV", "Score"], lignes, {2})}
+      <p class="note">
+        Un ecart n'est pas un motif de rejet : c'est un point a verifier en
+        entretien. Une competence absente du profil peut aussi n'avoir pas ete
+        extraite du CV.
+      </p>
+    """
+
+
+def _dossier_decisions(entrees) -> str:
+    if not entrees:
+        return (
+            "<h2>Decisions</h2>"
+            "<p>Aucune decision enregistree. Le moteur classe les candidatures ; "
+            "il n'en ecarte aucune.</p>"
+        )
+    lignes = [
+        [
+            entree.created_at.strftime("%d/%m/%Y %H:%M"),
+            str(entree.actor) if entree.actor else "—",
+            entree.metadata.get("stage", ""),
+            entree.metadata.get("note", "") or "—",
+        ]
+        for entree in entrees
+    ]
+    return f"""
+      <h2>Decisions</h2>
+      {_tableau(["Date", "Auteur", "Etape", "Motif"], lignes, set())}
+      <p class="note">
+        Toute sortie du processus est le fait d'un recruteur identifie, motivee
+        par ecrit et journalisee. Le journal d'audit est immuable ; ce tableau
+        en est un extrait.
+      </p>
+    """
+
+
+def _dossier_questions(questions) -> str:
+    if not questions:
+        return ""
+    corps = "".join(
+        f"<p><b>{item.theme or 'Question'}</b> — {item.get_intent_display()}<br>"
+        f"{item.question}"
+        + (
+            f'<br><span class="note">ancree sur : « {item.cv_claim[:160]} »</span>'
+            if item.cv_claim else ""
+        )
+        + "</p>"
+        for item in questions
+    )
+    modele = questions[0].model or "modele non renseigne"
+    return f"""
+      <h2>Questions d'entretien</h2>
+      <p class="sous">
+        {len(questions)} question(s) generees par {modele}, chacune ancree dans
+        une affirmation precise du profil.
+      </p>
+      {corps}
+    """
+
+
+def build_application(
+    application,
+    *,
+    score=None,
+    decisions=(),
+    questions=(),
+    author: str = "",
+    blind: bool = False,
+    today: dt.date | None = None,
+) -> bytes:
+    """Dossier d'une candidature : score detaille, ecarts, decisions, questions.
+
+    Le rapport global dit ce que vaut le systeme ; celui-ci dit ce qui a ete
+    fait d'un candidat. C'est le document qu'un candidat peut demander au titre
+    de l'article 15 du RGPD, et celui qu'un recruteur emporte en entretien.
+    """
+    aujourdhui = today or dt.date.today()
+    auteur = author or "un compte non identifie"
+
+    document = fitz.open()
+    redacteur = _Redacteur(document)
+    redacteur.bloc(
+        _dossier_entete(application, auteur, aujourdhui, blind=blind), espace=18
+    )
+    redacteur.bloc(_dossier_score(score))
+    ecarts = _dossier_ecarts(score)
+    if ecarts:
+        redacteur.bloc(ecarts)
+    redacteur.bloc(_dossier_decisions(list(decisions)))
+    entretien = _dossier_questions(list(questions))
+    if entretien:
+        redacteur.bloc(entretien)
+
+    redacteur.pieds_de_page(
+        f"Recrutement.IA · dossier de candidature · {aujourdhui.strftime('%d/%m/%Y')}"
+    )
+    document.set_metadata(
+        {
+            "title": f"Dossier — {application.candidate.display_name(blind=blind)}",
+            "author": auteur,
+            "subject": f"Candidature a « {application.offer.title} »",
+            "creator": "Recrutement.IA",
+        }
+    )
+    octets = document.tobytes()
+    document.close()
+    return octets
+
+
+def application_filename(application, today: dt.date | None = None) -> str:
+    jour = (today or dt.date.today()).isoformat()
+    return f"dossier_{str(application.pk)[:8]}_{jour}.pdf"
+
+
 def filename(today: dt.date | None = None) -> str:
     jour = (today or dt.date.today()).isoformat()
     return f"recrutement-ia_evaluation_{jour}_moteur-{ENGINE_VERSION}.pdf"

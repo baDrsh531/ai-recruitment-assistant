@@ -3,7 +3,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.core.views import sante
+
 urlpatterns = [
+    path("sante/", sante, name="sante"),
     path("admin/", admin.site.urls),
     path("comptes/", include("apps.accounts.urls", namespace="accounts")),
     # Le classement est enregistre avant les URLs d'offres : sinon le motif

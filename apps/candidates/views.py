@@ -2,7 +2,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Avg, Count
-from django.shortcuts import redirect
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
@@ -11,7 +12,8 @@ from apps.assistant import textsearch
 from apps.core import charts
 from apps.core.models import AuditLog
 from apps.core.permissions import ActionPermissionMixin
-from apps.evaluation import threshold
+from apps.core.services import record_audit
+from apps.evaluation import report_pdf, threshold
 from apps.jobs.models import JobOffer
 from apps.matching import counterfactual, services
 from apps.matching.models import MatchScore
@@ -252,6 +254,51 @@ class MergeCandidatesView(ActionPermissionMixin, LoginRequiredMixin, View):
                 "L'operation est journalisee et definitive.",
             )
         return redirect("candidates:duplicates")
+
+
+class ExportApplicationView(LoginRequiredMixin, View):
+    """Dossier d'une candidature en PDF.
+
+    Le rapport de transparence dit ce que vaut le systeme ; celui-ci dit ce qui
+    a ete fait d'un candidat. C'est le document qu'un candidat peut demander au
+    titre de l'article 15 du RGPD, et celui qu'un recruteur emporte en entretien.
+    L'export est journalise : un dossier qui sort du systeme circule.
+    """
+
+    def get(self, request, pk):
+        candidature = get_object_or_404(
+            Application.objects.select_related("candidate", "offer"), pk=pk
+        )
+        octets = report_pdf.build_application(
+            candidature,
+            score=candidature.scores.order_by("-created_at").first(),
+            decisions=AuditLog.objects.filter(
+                action=AuditLog.Action.STAGE_CHANGED,
+                object_type="Application",
+                object_id=str(candidature.pk),
+            ).select_related("actor"),
+            questions=list(candidature.interview_questions.all()),
+            author=str(request.user),
+            blind=request.user.blind_screening,
+        )
+
+        record_audit(
+            AuditLog.Action.DATA_EXPORTED,
+            actor=request.user,
+            obj=candidature,
+            summary=f"Dossier exporte ({len(octets) // 1024} Ko)",
+            request=request,
+            format="pdf",
+            scope="candidature",
+            blind=request.user.blind_screening,
+            bytes=len(octets),
+        )
+
+        reponse = HttpResponse(octets, content_type="application/pdf")
+        reponse["Content-Disposition"] = (
+            f'attachment; filename="{report_pdf.application_filename(candidature)}"'
+        )
+        return reponse
 
 
 class ApplicationDetailView(LoginRequiredMixin, DetailView):

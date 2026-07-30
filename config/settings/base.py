@@ -14,6 +14,13 @@ SECRET_KEY = env("SECRET_KEY", default="dev-only-change-me")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+# Demonstration publique. Le mode ne change aucun comportement du moteur : il
+# affiche un bandeau disant ce que la demonstration peut montrer et ce qu'elle
+# ne peut pas, plutot que de laisser un visiteur conclure qu'une fonctionnalite
+# est cassee alors qu'elle demande un serveur d'inference prive.
+DEMO_MODE = env.bool("DEMO_MODE", default=False)
+DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
+
 # --- Applications ---------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -71,6 +78,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.demonstration",
             ],
         },
     },

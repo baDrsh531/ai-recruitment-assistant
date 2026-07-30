@@ -648,6 +648,15 @@ mois plus tard : version du moteur, version de chaque jeu d'evaluation, date, et
 compte a l'origine de l'export. L'export est lui-meme journalise : un document
 qui sort du systeme est une donnee qui circule.
 
+**Deux rapports, deux publics.** Celui-ci dit ce que vaut le systeme.
+`/candidatures/<id>/dossier.pdf` dit ce qui a ete fait d'un candidat : score
+detaille par critere, ecarts, decisions avec leur motif et leur auteur,
+questions d'entretien. C'est le document qu'un candidat peut demander au titre
+de l'article 15 du RGPD, et celui qu'un recruteur emporte en entretien. **En
+screening a l'aveugle, l'identite y reste masquee, metadonnees du fichier
+comprises** — sans quoi l'export serait la porte de sortie que l'attenuation du
+biais cherche a fermer.
+
 Deux pieges rencontres. `insert_htmlbox` ne pagine pas — il rend ce qui tient et
 signale le reste ; chaque bloc est donc mesure a blanc avant d'etre ecrit, faute
 de quoi une section disparaitrait en silence, ce qui est la pire facon de perdre
@@ -674,6 +683,52 @@ GET  /api/offres/<slug>/classement/   rang, score, ecarts, versions de moteur
 GET  /api/candidats/recherche/?q=     BM25, rang, score, termes trouves
 GET  /api/candidatures/<id>/ecarts/   chemin vers le seuil, plafond atteignable
 POST /api/candidatures/<id>/decider/  motif obligatoire pour ecarter
+```
+
+### Mettre la demonstration en ligne
+
+`render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
+variables d'environnement, sonde de sante. Le deploiement se fait en trois
+etapes, sans conteneur a construire.
+
+1. Sur Render, **New → Blueprint**, puis pointer sur ce depot.
+2. Render lit `render.yaml`, cree le service et la base, genere `SECRET_KEY`.
+3. Ajuster `ALLOWED_HOSTS` et `CSRF_TRUSTED_ORIGINS` si le nom du service
+   differe de `recrutement-ia`.
+
+`scripts/build.sh` installe, collecte les statiques, migre, seme le jeu de
+demonstration et calcule les scores. **Chaque etape qui echoue arrete le
+deploiement** : mieux vaut ne pas deployer qu'exposer une version a moitie
+migree.
+
+**Ce que la demonstration ne montrera pas, et pourquoi.** Les deux modeles
+tournent sur un serveur d'inference prive, injoignable depuis l'exterieur.
+L'analyse redigee et les questions d'entretien y sont donc indisponibles. Tout
+le reste fonctionne, parce que rien d'autre n'a jamais eu besoin d'un modele :
+score, classement, ecarts, seuil de tri, recherche, doublons, exports. Un
+bandeau le dit sur chaque page plutot que de laisser un visiteur conclure a une
+panne. Le plan gratuit met le service en veille apres quinze minutes sans
+trafic ; le premier chargement suivant prend une trentaine de secondes.
+
+**Compte de visite.** Se connecter avec `observateur` : lecture seule sur tout,
+refus journalise sur toute action. Un visiteur voit l'application entiere sans
+pouvoir abimer le jeu de demonstration — le controle de role existait deja, il
+sert ici de bac a sable.
+
+Ce que la configuration promet est verifie hors ligne, dans
+`tests/test_deployment.py` : la sonde repond sans session et tombe a 503 si la
+base est injoignable, le manifeste declare la sonde et ne contient aucun
+secret, le script de construction s'arrete a la premiere erreur, et les
+reglages de production sont stricts. Verification supplementaire faite a la
+main sur le point d'entree WSGI — celui que gunicorn charge :
+
+```
+ok  /sante/                200      sonde : {"status": "ok", "moteur": "1.2.0"}
+ok  /comptes/connexion/    200      feuille /static/css/app.314c086cceb7.css
+ok  /                      302      non authentifie -> connexion
+ok  /api/                  403      refus explicite, pas une redirection
+    WhiteNoise             200, 20 431 octets, cache immutable
+    X-Frame-Options DENY · X-Content-Type-Options nosniff · Referrer-Policy same-origin
 ```
 
 ### Tests
@@ -773,6 +828,8 @@ tests/             suite pytest
 - [x] Seuil de shortlist calibre sur le jeu annote, avec sa marge
 - [x] Recherche BM25, fusion par rang avec le vectoriel, jeu d'evaluation dedie
 - [x] Rapport d'evaluation exportable en PDF, sans dependance ajoutee
+- [x] Dossier de candidature exportable, identite masquee en screening a l'aveugle
+- [x] Configuration de deploiement verifiee hors ligne (sonde, statiques, securite)
 
 ---
 
