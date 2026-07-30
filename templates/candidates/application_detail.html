@@ -112,6 +112,130 @@
 
 <section class="card">
   <div class="card__head">
+    <h2 class="card__title">Coherence du parcours</h2>
+    {% if not coherence.verifiable %}
+      <span class="badge">non verifiable</span>
+    {% elif coherence.attention %}
+      <span class="badge badge--warn">{{ coherence.attention|length }} a verifier</span>
+    {% else %}
+      <span class="badge badge--ok">rien a signaler</span>
+    {% endif %}
+  </div>
+
+  {% if not coherence.verifiable %}
+    <div class="card__body">
+      <p class="muted">
+        Le CV ne porte pas assez de dates pour qu'un controle ait un sens
+        ({{ coherence.dated_periods }} periode(s) datee(s) sur
+        {{ coherence.total_periods }}). Dire « aucune incoherence » ici serait
+        trompeur : rien n'a pu etre verifie.
+      </p>
+    </div>
+  {% elif coherence.signalements %}
+    <div class="card__body stack">
+      {% for item in coherence.signalements %}
+        <div class="timeline__item">
+          <p>
+            <span class="badge{% if item.gravite == 'attention' %} badge--warn{% endif %}">
+              {{ item.gravite }}
+            </span>
+            <strong>{{ item.titre }}</strong>
+          </p>
+          <p class="small muted mt-4">{{ item.detail }}</p>
+          <p class="timeline__quote">A demander : {{ item.question }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card__body">
+      <p class="muted">
+        Les {{ coherence.dated_periods }} periodes datees du parcours sont
+        coherentes entre elles : aucun chevauchement, aucune date impossible,
+        aucun ecart entre l'anciennete declaree et les periodes citees.
+      </p>
+    </div>
+  {% endif %}
+
+  <p class="card__note">
+    Ces controles cherchent des incoherences <b>verifiables</b>, jamais une
+    intention : chaque signalement est une regle calendaire qu'on peut rejouer a
+    la main, et aucun ne touche au score. Un chevauchement peut etre un cumul
+    declare, une mission de conseil ou une date mal extraite — ce sont des
+    questions a poser, pas des conclusions.
+    Le module ne cherche pas a deviner si un CV a ete redige par un modele : les
+    detecteurs de texte genere sur-signalent les locuteurs non natifs, ce qui
+    produirait exactement la discrimination que l'audit de biais traque.
+  </p>
+</section>
+
+{% if redirection.below_threshold %}
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Ailleurs dans l'entreprise</h2>
+      {% if redirection.has_suggestions %}
+        <span class="badge badge--ok">{{ redirection.suggestions|length }} offre(s)</span>
+      {% endif %}
+    </div>
+
+    {% if redirection.has_suggestions %}
+      <div class="card__body">
+        <p>
+          Ce dossier est a {{ redirection.current_percentage }} % ici, sous le
+          seuil de {{ counterfactual.target_percentage }} %. Il le depasse
+          pourtant sur {{ redirection.suggestions|length }} des
+          {{ redirection.offers_examined }} autre(s) offre(s) ouverte(s).
+        </p>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Offre</th>
+              <th>Competences obligatoires couvertes</th>
+              <th class="num">Score</th>
+              <th class="num">Ecart</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in redirection.suggestions %}
+              <tr>
+                <td>
+                  <a href="{% url 'matching:ranking' item.offer.slug %}">{{ item.offer.title }}</a>
+                  {% if item.already_applied %}
+                    <span class="badge">deja candidat</span>
+                  {% endif %}
+                </td>
+                <td class="muted small">
+                  {% for skill in item.matched_skills %}{{ skill }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+                </td>
+                <td class="num">{{ item.percentage }} %</td>
+                <td class="num">+{{ item.gain_points|floatformat:1 }} pts</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="card__note">
+        C'est un signalement, pas un transfert. Aucune candidature n'est creee :
+        postuler ailleurs est une decision qui appartient au candidat, et
+        proposer son dossier a une autre equipe sans le lui demander poserait un
+        probleme de finalite au sens du RGPD.
+      </p>
+    {% else %}
+      <div class="card__body">
+        <p class="muted">
+          Ce dossier est sous le seuil ici, et aucune des
+          {{ redirection.offers_examined }} autre(s) offre(s) ouverte(s) ne lui
+          conviendrait mieux. La verification a eu lieu : c'est ce qui distingue
+          « aucune autre offre » de « on n'a pas regarde ».
+        </p>
+      </div>
+    {% endif %}
+  </section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
     <h2 class="card__title">Ce qui manque pour atteindre {{ counterfactual.target_percentage }} %</h2>
     {% if counterfactual.already_there %}
       <span class="badge badge--ok">seuil atteint</span>

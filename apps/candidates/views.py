@@ -16,9 +16,10 @@ from apps.core.services import record_audit
 from apps.evaluation import report_pdf, threshold
 from apps.jobs.models import JobOffer
 from apps.matching import counterfactual, services
+from apps.matching import redirect as redirect_offers
 from apps.matching.models import MatchScore
 
-from . import duplicates, retention
+from . import coherence, duplicates, retention
 from .models import Application, Candidate, CandidateLanguage, CandidateSkill, CVDocument
 
 # Tranches d'anciennete, dans un ordre qui porte du sens : elles ne sont pas
@@ -398,4 +399,11 @@ class ApplicationDetailView(LoginRequiredMixin, DetailView):
             self.object.offer,
             target=threshold.recommended_threshold(),
         )
+        # Avant de laisser tomber un dossier sous le seuil, on regarde les
+        # autres offres ouvertes. C'est la consequence concrete de « l'outil
+        # classe, il n'ecarte personne ».
+        context["redirection"] = redirect_offers.for_application(self.object)
+        # Controles de coherence : des incoherences verifiables, jamais un
+        # jugement. Aucun signalement ne touche au score.
+        context["coherence"] = coherence.for_application(self.object)
         return context
