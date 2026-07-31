@@ -195,6 +195,45 @@ def audit(dataset_name: str = "ranking_v1", *, blind: bool = False) -> BiasRepor
     )
 
 
+# Seule dimension que l'audit trouve influente sur le score. C'est donc la
+# seule qu'il vaut la peine de recalculer quand on simule une ponderation :
+# rejouer les quatre couterait des centaines de scorings pour trois chiffres
+# qui ne bougeraient pas.
+MOST_INFLUENTIAL_DIMENSION = "localisation"
+
+
+def impact_ratio_for_weights(
+    weights: dict[str, float],
+    *,
+    dataset_name: str = "ranking_v1",
+    dimension: str = MOST_INFLUENTIAL_DIMENSION,
+) -> float:
+    """Ratio d'impact d'une dimension sous une ponderation donnee.
+
+    Sert au simulateur : donner plus de poids a la localisation ameliore
+    peut-etre le classement percu, et degrade mecaniquement ce ratio. Le prix
+    doit etre visible avant que la decision soit prise, pas apres.
+    """
+    if dimension not in DIMENSIONS:
+        raise ValueError(f"Dimension inconnue : {dimension}")
+
+    dataset = load_dataset(dataset_name)
+    accumulateur = _Accumulator(dimension, DIMENSIONS[dimension], weights=weights)
+
+    for case in dataset["cases"]:
+        with _temporary_case(case) as (offer, pairs):
+            candidates = [candidate for _, candidate in pairs]
+            baseline = {
+                candidate.pk: engine.score(
+                    candidate, offer, weights=weights
+                ).overall
+                for candidate in candidates
+            }
+            accumulateur.observe(offer, candidates, baseline)
+
+    return accumulateur.result().impact_ratio
+
+
 @dataclass
 class Mitigation:
     """Effet mesure du screening a l'aveugle, dimension par dimension."""
@@ -252,11 +291,20 @@ class _Accumulator:
     """Cumule les observations d'une dimension sur l'ensemble des cas."""
 
     def __init__(
-        self, dimension: str, variants: list[Variant], *, blind: bool = False
+        self,
+        dimension: str,
+        variants: list[Variant],
+        *,
+        blind: bool = False,
+        weights: dict[str, float] | None = None,
     ) -> None:
         self.dimension = dimension
         self.variants = variants
         self.blind = blind
+        # Ponderation simulee. `None` = celle de l'offre, c'est le cas normal ;
+        # le simulateur s'en sert pour mesurer ce qu'une autre ponderation
+        # ferait au ratio d'impact avant qu'on l'applique.
+        self.weights = weights
         self.deltas: list[float] = []
         self.max_delta = 0.0
         self.max_delta_example = ""
@@ -273,7 +321,9 @@ class _Accumulator:
 
             for variant in self.variants:
                 variant.apply(candidate)
-                score = engine.score(candidate, offer, blind=self.blind).overall
+                score = engine.score(
+                    candidate, offer, blind=self.blind, weights=self.weights
+                ).overall
 
                 delta = score - reference_score
                 self.deltas.append(abs(delta))

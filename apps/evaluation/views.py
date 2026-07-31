@@ -9,7 +9,15 @@ from django.views.generic import TemplateView
 from apps.core.permissions import ActionPermissionMixin
 from apps.matching.engine import ENGINE_VERSION
 
-from . import bias, harness, report_pdf, search_eval, threshold
+from . import (
+    agreement,
+    bias,
+    harness,
+    monitoring,
+    report_pdf,
+    search_eval,
+    threshold,
+)
 
 DATASET = "ranking_v1"
 # L'audit represente plusieurs centaines de scorings : c'est un calcul lourd,
@@ -53,6 +61,13 @@ class BiasReportView(LoginRequiredMixin, TemplateView):
         context.update(data)
         context["threshold"] = bias.IMPACT_RATIO_THRESHOLD
         context["engine_version"] = ENGINE_VERSION
+
+        # Surveillance : le releve courant compare au dernier enregistre. On ne
+        # journalise pas depuis un affichage — un controle enregistre a chaque
+        # rafraichissement de page rendrait l'historique illisible.
+        context["monitoring"] = monitoring.check(dataset_name=DATASET, record=False)
+        context["monitoring_history"] = monitoring.historique()
+        context["drift_threshold"] = monitoring.SEUIL_DERIVE
         return context
 
 
@@ -110,6 +125,25 @@ class ThresholdView(LoginRequiredMixin, TemplateView):
                 "plus que la precision."
             ),
         )
+        return context
+
+
+class AgreementView(LoginRequiredMixin, TemplateView):
+    """Accord entre recruteurs, et ecart au score.
+
+    Le projet mesure beaucoup ce que fait le moteur et jamais ce que font les
+    humains qui s'en servent. Cette page comble l'angle mort — sans noter
+    personne : un recruteur qui s'ecarte du score peut avoir raison, il a vu le
+    candidat quand le score a vu un PDF.
+    """
+
+    template_name = "evaluation/agreement.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["rapport"] = agreement.analyse()
+        context["minimum"] = agreement.MIN_DOSSIERS_COMMUNS
+        context["paliers"] = agreement.PALIERS
         return context
 
 

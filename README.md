@@ -503,6 +503,87 @@ Vingt-huit tests couvrent ces trois mecanismes (`tests/test_governance.py`),
 dont la verification qu'un compte en lecture seule est refuse sur *chacune* des
 vues mutantes, et que le journal de purge ne contient aucune donnee nominative.
 
+### Ce que la ponderation coute
+
+La ponderation des criteres est le seul endroit ou un recruteur decide de ce
+qui compte. Elle etait modifiable depuis l'origine, mais a l'aveugle. Le
+simulateur (`/offres/<slug>/ponderation/`) rejoue le moteur avec une autre
+ponderation et montre le classement obtenu **et** ce que cette ponderation fait
+au ratio d'impact.
+
+**Le resultat qui justifie le module :**
+
+```
+ponderation                              location  skills   ratio d'impact
+defaut                                      0,100   0,450        0,809
+skills 0,45 -> 0,20, experience 0,20 -> 0,45  0,100   0,200        0,714  ← sous le seuil
+```
+
+Baisser le poids des competences fait passer le systeme **sous le seuil des
+quatre cinquiemes sans toucher au poids de la localisation**. Quand les
+competences cessent de departager les candidats, ce sont les criteres restants
+qui decident, localisation comprise. Un recruteur qui se dirait « je vais
+valoriser l'experience plutot que les competences » franchirait le seuil sans
+le savoir.
+
+Rien n'est enregistre : la simulation passe par un parametre du moteur, jamais
+par une ecriture temporaire sur l'offre.
+
+### Surveiller, pas seulement auditer
+
+L'audit contrefactuel est une photographie. `monitor_bias` en fait un releve :
+a chaque execution les ratios sont recalcules, compares au dernier releve
+enregistre, et journalises. C'est l'enregistrement qui permet de repondre a
+« depuis quand ? », et un ecart apparu il y a six mois n'a pas les memes
+consequences qu'un ecart apparu hier.
+
+Deux niveaux, et la distinction est le coeur du dispositif : l'**ecart legal**
+— un ratio sous 0,80 — et la **derive**, une baisse d'au moins 0,05 sans
+franchissement de seuil. Le second est le signal utile : quand le premier se
+declenche, il est deja tard.
+
+Le module **ne bloque rien** en exploitation. Un systeme qui refuserait de
+scorer parce qu'un ratio a baisse mettrait un recruteur devant un ecran vide
+sans qu'il puisse rien y faire. `--strict` existe pour la CI, ou une derive doit
+arreter le train.
+
+### Mesurer aussi les humains
+
+Le projet mesure beaucoup ce que fait le moteur et jamais ce que font les gens
+qui s'en servent. C'est un angle mort : un outil dont on affirme qu'il ne decide
+rien repose entierement sur la qualite des decisions qu'il assiste.
+
+`/transparence/accord/` mesure deux choses. Le **kappa de Cohen** dit si deux
+recruteurs qui voient les memes dossiers prennent les memes decisions ;
+l'**ecart au score** dit si un recruteur suit le classement ou s'en detache.
+
+**Pourquoi le kappa plutot qu'un pourcentage** — c'est tout l'interet de la
+mesure. Quand neuf candidatures sur dix sont ecartees, deux recruteurs qui
+repondraient au hasard seraient d'accord 80 % du temps. Un test le montre : sur
+un jeu ou l'accord brut vaut 0,80, le kappa est **negatif**. Le pourcentage
+aurait fait croire a un consensus la ou il n'y a que la structure du vivier.
+
+Aucune des deux positions extremes n'est bonne en soi : un recruteur qui suit
+toujours le score n'apporte rien qu'un seuil automatique n'apporterait, un
+recruteur qui s'en detache systematiquement rend le score inutile. **Ces
+chiffres ne notent personne** — un recruteur qui s'ecarte du score peut avoir
+raison, il a vu le candidat quand le score a vu un PDF. En dessous de cinq
+dossiers communs, rien n'est affiche : le kappa y passe de 0 a 1 par accident.
+
+### Ce qu'un candidat peut demander
+
+`/candidatures/<id>/explication-candidat.pdf` produit un document destine a la
+personne concernee, au titre des articles 15 et 22 du RGPD. Ce n'est pas le
+dossier interne : **ni motif de decision, ni nom du recruteur, ni rang, ni
+mention des autres candidatures** — ce sont soit des appreciations qui ne lui
+sont pas opposables sous cette forme, soit des donnees concernant d'autres
+personnes. Cinq tests verrouillent ces absences, dont un sur les metadonnees du
+fichier : un nom se lit aussi dans les proprietes d'un PDF.
+
+Le vocabulaire est reecrit pour son lecteur. Un ecart y devient « ce que
+l'offre demandait et que le CV n'indiquait pas », avec la precision qu'une
+competence absente n'est pas une competence que le candidat n'a pas.
+
 ### Ou couper le classement
 
 Le moteur ordonne les candidatures ; il ne dit pas laquelle est la derniere a
@@ -566,6 +647,42 @@ Django : l'ontologie dirigee le credite deja a 0,85.
 qu'un outil de recrutement a a donner, et c'est le critere que l'audit de biais
 a identifie comme porteur d'un signal identitaire. Consequence assumee :
 certains ecarts sont annonces hors de portee plutot que combles sur le papier.
+
+### L'offre ou ce candidat passerait
+
+Un candidat qui n'atteint pas le seuil sur l'offre a laquelle il a postule
+disparait. C'est le comportement de tous les ATS, et c'est une perte seche pour
+les deux parties. `apps/matching/redirect.py` regarde les autres offres
+ouvertes avant de laisser tomber un dossier — c'est la consequence concrete de
+« l'outil classe, il n'ecarte personne ».
+
+**C'est un signalement, pas un transfert.** Aucune candidature n'est creee :
+postuler ailleurs appartient au candidat, et proposer son dossier a une autre
+equipe sans le lui demander poserait un probleme de finalite. La page distingue
+« aucune autre offre ne conviendrait » de « on n'a pas regarde » : elle dit
+combien d'offres ont ete examinees.
+
+### Coherence du parcours, et ce qu'on refuse d'y mettre
+
+Chevauchements d'emplois, dates inversees ou futures, diplome posterieur a
+l'experience, anciennete declaree superieure aux periodes citees. Chaque
+signalement est une regle calendaire qu'on peut rejouer a la main, et **aucun
+ne touche au score**.
+
+**Le module ne cherche pas a deviner si un CV a ete redige par un modele.** Les
+detecteurs de texte genere affichent 10 a 30 % de faux positifs et
+sur-signalent les locuteurs non natifs : un anglais scolaire correct ressemble
+statistiquement a du texte genere. Dans un outil de recrutement, cela produit
+exactement la discrimination que l'audit de biais passe son temps a traquer. Un
+test verrouille ce refus : aucun code de signalement ne peut porter sur le
+style d'ecriture.
+
+La retenue est testee autant que la detection. Un preavis d'un mois n'est pas
+un chevauchement, une reprise d'etudes n'est pas suspecte, et une interruption
+de carriere est signalee en information avec la mention qu'elle ne doit pas
+peser sur la decision. Un CV sans dates est declare **non verifiable** plutot
+que « sans incoherence » : les deux phrases n'ont pas le meme sens, et la
+seconde serait un mensonge.
 
 ### Dossiers en double
 
@@ -829,6 +946,12 @@ tests/             suite pytest
 - [x] Recherche BM25, fusion par rang avec le vectoriel, jeu d'evaluation dedie
 - [x] Rapport d'evaluation exportable en PDF, sans dependance ajoutee
 - [x] Dossier de candidature exportable, identite masquee en screening a l'aveugle
+- [x] Explication destinee au candidat (RGPD art. 15 et 22)
+- [x] Redirection positive vers une autre offre ouverte
+- [x] Controles de coherence du parcours, sans detection de texte genere
+- [x] Simulateur de ponderation montrant l'effet sur le ratio d'impact
+- [x] Surveillance continue du biais, avec historique et alerte de derive
+- [x] Accord entre recruteurs (kappa de Cohen) et ecart au score
 - [x] Configuration de deploiement verifiee hors ligne (sonde, statiques, securite)
 
 ---

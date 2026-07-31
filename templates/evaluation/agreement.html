@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Accord entre recruteurs{% endblock %}
+{% block heading %}Accord entre recruteurs{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ rapport.dossiers_decides }} dossier(s) ayant recu au moins une decision ·
+    seuil de reference {{ rapport.seuil|floatformat:2 }}.
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'evaluation:bias_report' %}">Audit de biais</a>
+  <a class="btn" href="{% url 'evaluation:threshold' %}">Seuil de tri</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce que cette page ne fait pas</h2>
+  </div>
+  <div class="card__body">
+    <p>
+      Elle ne note personne. Un recruteur qui s'ecarte du score peut avoir
+      raison : il a vu le candidat, le score a vu un PDF. Ces chiffres servent a
+      ouvrir une conversation, pas a la clore.
+    </p>
+    <p class="mt-4">
+      Aucune des deux positions extremes n'est bonne en soi. Un recruteur qui
+      suit toujours le score n'apporte rien qu'un seuil automatique n'apporterait ;
+      un recruteur qui s'en detache systematiquement rend le score inutile. C'est
+      l'ecart <b>entre recruteurs</b> qui se lit, pas l'ecart dans l'absolu.
+    </p>
+  </div>
+</section>
+
+{% if rapport.recruteurs %}
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Par recruteur</h2>
+      {% if rapport.ecart_maximal %}
+        <span class="badge{% if rapport.ecart_maximal > 0.3 %} badge--warn{% endif %}">
+          ecart maximal {{ rapport.ecart_maximal|floatformat:2 }}
+        </span>
+      {% endif %}
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Recruteur</th>
+            <th class="num">Decisions</th>
+            <th class="num">Taux de retenue</th>
+            <th class="num">Accord avec le score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in rapport.recruteurs %}
+            <tr>
+              <th scope="row">{{ item.nom }}</th>
+              <td class="num">{{ item.decisions }}</td>
+              <td class="num">
+                {% if item.assez_de_decisions %}
+                  {{ item.taux_de_retenue|floatformat:2 }}
+                {% else %}
+                  <span class="muted">{{ item.taux_de_retenue|floatformat:2 }}</span>
+                {% endif %}
+              </td>
+              <td class="num">
+                {% if item.mesurable %}
+                  {{ item.accord_avec_le_score|floatformat:2 }}
+                {% else %}
+                  <span class="muted">trop peu de dossiers</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Le taux de retenue est la part des dossiers que ce recruteur n'a pas
+      ecartes. Un ecart marque entre deux recruteurs sur le meme vivier merite
+      d'etre discute — il peut venir d'une lecture differente de l'offre autant
+      que d'une severite differente. En dessous de {{ minimum }} dossiers, aucun
+      chiffre n'est affiche : quelques decisions suffiraient a le faire varier
+      du tout au tout.
+    </p>
+  </section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Accord deux a deux (kappa de Cohen)</h2>
+    {% if not rapport.mesurable %}
+      <span class="badge">non mesurable</span>
+    {% endif %}
+  </div>
+
+  {% if not rapport.mesurable %}
+    <div class="card__body">
+      <p class="muted">
+        Aucune paire de recruteurs n'a juge au moins {{ minimum }} dossiers en
+        commun. Le kappa n'est pas calculable, et afficher un chiffre ici serait
+        pire que de n'en afficher aucun : sur trois dossiers communs, il passe de
+        0 a 1 par accident.
+      </p>
+    </div>
+  {% else %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Recruteurs</th>
+            <th class="num">Dossiers communs</th>
+            <th class="num">Accord brut</th>
+            <th class="num">Kappa</th>
+            <th>Lecture</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paire in rapport.paires %}
+            <tr>
+              <th scope="row">{{ paire.a }} / {{ paire.b }}</th>
+              <td class="num">{{ paire.commun }}</td>
+              <td class="num muted">{{ paire.accord_brut|floatformat:2 }}</td>
+              <td class="num">
+                {% if paire.interpretable %}{{ paire.kappa|floatformat:2 }}{% else %}—{% endif %}
+              </td>
+              <td class="muted small">
+                {% if paire.interpretable %}
+                  {{ paire.libelle }}
+                {% else %}
+                  moins de {{ minimum }} dossiers communs
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      <b>Pourquoi le kappa plutot qu'un pourcentage.</b> Un accord brut de 80 %
+      ne veut rien dire quand 90 % des candidatures sont ecartees : deux
+      recruteurs qui repondraient au hasard tomberaient d'accord presque aussi
+      souvent. Le kappa retranche cet accord attendu par chance — d'ou l'ecart
+      entre les deux colonnes.
+    </p>
+    <p class="card__note">
+      Lecture conventionnelle (Landis &amp; Koch) :
+      {% for seuil, mot in paliers %}{% if seuil >= 0 %}{{ seuil|floatformat:2 }} et plus, {{ mot }}{% if not forloop.last %} · {% endif %}{% endif %}{% endfor %}.
+      Ce sont des conventions, pas des verdicts.
+    </p>
+  {% endif %}
+</section>
+{% endblock %}

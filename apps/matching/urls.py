@@ -6,6 +6,7 @@ from .views import (
     GenerateQuestionsView,
     OfferRankingView,
     ScoreOfferView,
+    SimulatorView,
 )
 
 app_name = "matching"
@@ -14,6 +15,7 @@ urlpatterns = [
     path("<slug:slug>/classement/", OfferRankingView.as_view(), name="ranking"),
     path("<slug:slug>/comparer/", ComparisonView.as_view(), name="comparison"),
     path("<slug:slug>/scorer/", ScoreOfferView.as_view(), name="score_offer"),
+    path("<slug:slug>/ponderation/", SimulatorView.as_view(), name="simulator"),
     path(
         "candidatures/<uuid:pk>/questions/",
         GenerateQuestionsView.as_view(),

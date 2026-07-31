@@ -7,6 +7,7 @@ from .views import (
     DashboardView,
     DuplicateListView,
     ExportApplicationView,
+    ExportCandidateExplanationView,
     MergeCandidatesView,
 )
 
@@ -23,5 +24,10 @@ urlpatterns = [
         "candidatures/<uuid:pk>/dossier.pdf",
         ExportApplicationView.as_view(),
         name="export_application",
+    ),
+    path(
+        "candidatures/<uuid:pk>/explication-candidat.pdf",
+        ExportCandidateExplanationView.as_view(),
+        name="export_candidate_explanation",
     ),
 ]

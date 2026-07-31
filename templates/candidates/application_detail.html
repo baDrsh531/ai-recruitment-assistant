@@ -15,6 +15,10 @@
     </button>
   </form>
   <a class="btn" href="{% url 'candidates:export_application' application.pk %}">Dossier PDF</a>
+  <a class="btn" href="{% url 'candidates:export_candidate_explanation' application.pk %}"
+     title="Document destine au candidat : ni motif de decision, ni rang, ni mention des autres candidatures.">
+    Explication candidat
+  </a>
   <a class="btn" href="{{ application.candidate.get_absolute_url }}">Fiche candidat</a>
   <a class="btn" href="{% url 'matching:ranking' application.offer.slug %}">Classement</a>
 {% endblock %}

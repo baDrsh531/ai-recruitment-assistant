@@ -7,10 +7,10 @@ from django.views.generic import DetailView
 from apps.ai.client import InferenceError
 from apps.candidates.models import Application, Candidate
 from apps.core.permissions import ActionPermissionMixin
-from apps.evaluation import threshold
+from apps.evaluation import bias, threshold
 from apps.jobs.models import JobOffer
 
-from . import comparison, engine, interview
+from . import comparison, engine, interview, simulator
 from .services import DecisionRefused, decide, latest_scores, score_offer
 
 
@@ -110,6 +110,41 @@ class ScoreOfferView(ActionPermissionMixin, LoginRequiredMixin, View):
             messages.success(request, f"{len(scores)} candidature(s) scoree(s).")
 
         return redirect("matching:ranking", slug=offer.slug)
+
+
+class SimulatorView(LoginRequiredMixin, DetailView):
+    """Simulateur de ponderation.
+
+    En lecture : la page ne modifie rien, elle montre ce qu'une ponderation
+    ferait au classement et au ratio d'impact avant qu'on l'applique. Elle est
+    donc ouverte a tous les roles — c'est une lecture du systeme, pas une
+    action sur un dossier.
+    """
+
+    model = JobOffer
+    template_name = "matching/simulator.html"
+    context_object_name = "offer"
+    slug_url_kwarg = "slug"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        courants = self.object.weights
+
+        demandes = {
+            nom: self.request.GET.get(f"poids_{nom}", valeur)
+            for nom, valeur in courants.items()
+        }
+        simulation = simulator.simulate(self.object, demandes)
+
+        context["simulation"] = simulation
+        context["weights"] = simulation.weights
+        context["baseline_weights"] = courants
+        context["blind"] = self.request.user.blind_screening
+        context["legal_threshold"] = bias.IMPACT_RATIO_THRESHOLD
+        context["modified"] = simulation.weights != {
+            nom: round(valeur, 4) for nom, valeur in courants.items()
+        }
+        return context
 
 
 class ComparisonView(LoginRequiredMixin, DetailView):

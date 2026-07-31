@@ -95,6 +95,15 @@ def latest_scores(offer: JobOffer) -> list[MatchScore]:
 
     Chaque calcul cree une ligne (historique conserve) : il faut donc retenir
     la plus recente par candidature avant de classer.
+
+    Limite connue : `created_at` vient de l'horloge systeme, dont la resolution
+    est d'environ 15 ms sous Windows. Deux calculs de la *meme* candidature
+    dans le meme palier porteraient le meme horodatage et l'ordre serait
+    arbitraire. La cle primaire etant un UUID, aucun departage par ordre
+    d'insertion n'est possible. En pratique le cas ne se produit pas : un
+    recalcul d'offre ne score chaque candidature qu'une fois, et deux
+    recalculs manuels sont separes par des secondes. Les tests qui dependent de
+    cet ordre datent leurs enregistrements explicitement.
     """
     scores: QuerySet[MatchScore] = (
         MatchScore.objects.filter(application__offer=offer)

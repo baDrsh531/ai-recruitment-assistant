@@ -87,6 +87,13 @@ jobs:
       - name: Evaluer la recherche plein texte
         run: python manage.py evaluate_search --detail --json rapports/recherche.json
 
+      # Surveillance du biais en mode strict : une derive arrete le train. En
+      # exploitation la commande se contente de constater — un systeme qui
+      # refuserait de scorer parce qu'un ratio a baisse mettrait un recruteur
+      # devant un ecran vide sans qu'il puisse rien y faire.
+      - name: Controler la derive du biais
+        run: python manage.py monitor_bias --strict
+
       - name: Conserver les rapports
         if: always()
         uses: actions/upload-artifact@v4

@@ -116,7 +116,11 @@ class ScoreResult:
 
 # --- Point d'entree ---------------------------------------------------------
 def score(
-    candidate: Candidate, offer: JobOffer, *, blind: bool | None = None
+    candidate: Candidate,
+    offer: JobOffer,
+    *,
+    blind: bool | None = None,
+    weights: dict[str, float] | None = None,
 ) -> ScoreResult:
     """Calcule le score de compatibilite d'un candidat pour une offre.
 
@@ -148,7 +152,11 @@ def score(
         _location_criterion(candidate, offer, blind=blind),
     ]
 
-    weights = offer.weights
+    # `weights` permet de simuler une autre ponderation sans rien enregistrer :
+    # le simulateur s'en sert, et l'offre garde la sienne. Passer par un
+    # parametre plutot que par une ecriture temporaire evite qu'une simulation
+    # interrompue laisse une offre avec des poids qui ne sont pas les siens.
+    weights = weights if weights is not None else offer.weights
     applicable = [criterion for criterion in criteria if criterion.applicable]
     total_weight = sum(weights.get(c.name, 0.0) for c in applicable)
 

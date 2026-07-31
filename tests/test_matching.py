@@ -444,6 +444,19 @@ def test_history_is_kept_and_latest_wins(application):
     application.candidate.skills.filter(normalized_name="python").update(years=10)
     second = score_application(application, with_explanation=False)
 
+    # L'horloge de la machine avance par paliers de ~15 ms : deux calculs
+    # enchaines peuvent porter le meme `created_at`, et l'ordre devient alors
+    # arbitraire. On date explicitement plutot que de compter sur la vitesse
+    # d'execution — un test qui echoue une fois sur dix ne prouve rien.
+    from datetime import timedelta
+
+    from apps.matching.models import MatchScore
+
+    MatchScore.objects.filter(pk=second.pk).update(
+        created_at=first.created_at + timedelta(seconds=1)
+    )
+    second.refresh_from_db()
+
     assert application.scores.count() == 2
     latest = latest_scores(application.offer)
     assert len(latest) == 1

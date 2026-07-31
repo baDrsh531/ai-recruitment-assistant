@@ -563,6 +563,255 @@ def build_application(
     return octets
 
 
+# --- Explication destinee au candidat ----------------------------------------
+# Le dossier interne est ecrit pour un recruteur : il porte des motifs de
+# decision, des comparaisons implicites et un vocabulaire d'outil. Ce
+# document-ci s'adresse a la personne concernee, au titre des articles 15 et 22
+# du RGPD — droit d'acces, et droit d'obtenir une explication sur une decision
+# automatisee. Ce ne sont pas les memes lecteurs, donc pas le meme document.
+#
+# Ce qu'il contient : les donnees retenues du CV, d'ou elles viennent dans le
+# document, comment le score a ete construit, et ce que le candidat peut
+# demander. Ce qu'il ne contient pas : les motifs internes de decision, le rang
+# du candidat, et toute mention des autres candidatures — ce sont des donnees
+# qui concernent d'autres personnes ou des appreciations qui ne lui sont pas
+# opposables sous cette forme.
+
+CRITERES_EN_CLAIR = {
+    "skills": "Competences attendues par l'offre",
+    "experience": "Anciennete demandee",
+    "education": "Niveau d'etudes demande",
+    "languages": "Langues demandees",
+    "certifications": "Certifications demandees",
+    "location": "Localisation",
+}
+
+
+def _candidat_entete(candidature, aujourdhui: dt.date) -> str:
+    return f"""
+      <h1>Votre candidature</h1>
+      <p class="sous">
+        {candidature.offer.title} — dossier edite le {aujourdhui.strftime('%d/%m/%Y')}
+      </p>
+      <p>
+        Ce document vous explique comment votre candidature a ete analysee. Il
+        vous est destine : il vous appartient, et vous pouvez en demander la
+        rectification.
+      </p>
+      <p class="note">
+        Aucune decision vous concernant n'est prise automatiquement. Un score de
+        compatibilite est calcule par un programme, sans intelligence
+        artificielle et sans appreciation ; il aide un recruteur a organiser sa
+        lecture. La decision de poursuivre ou non revient a une personne
+        identifiee, qui doit la motiver par ecrit.
+      </p>
+    """
+
+
+def _candidat_donnees(candidat) -> str:
+    lignes = [
+        ["Nom", candidat.full_name],
+        ["Intitule retenu", candidat.headline or "non renseigne"],
+        ["Anciennete retenue", f"{candidat.total_experience_years:.1f} an(s)"],
+        ["Competences retenues", str(candidat.skills.count())],
+        ["Experiences retenues", str(candidat.experiences.count())],
+        ["Formations retenues", str(candidat.education.count())],
+    ]
+    if candidat.retention_until:
+        lignes.append(
+            ["Conservation jusqu'au", candidat.retention_until.strftime("%d/%m/%Y")]
+        )
+    return f"""
+      <h2>Ce qui a ete retenu de votre CV</h2>
+      {_tableau(["Element", "Valeur"], lignes, set())}
+      <p class="note">
+        Ces donnees sont extraites de votre CV par un programme. Une erreur
+        d'extraction est possible : si l'une d'elles est inexacte, vous pouvez
+        en demander la correction.
+      </p>
+    """
+
+
+def _candidat_preuves(candidat) -> str:
+    """Chaque competence retenue, avec l'extrait du CV qui la justifie.
+
+    La section n'apparait que si au moins une preuve existe. Annoncer « rien
+    n'est retenu sans preuve » puis afficher une colonne de tirets serait une
+    contradiction, et c'est le candidat qui la lirait.
+    """
+    avec_preuve = []
+    sans_preuve = 0
+    for competence in candidat.skills.all()[:25]:
+        preuve = competence.evidence
+        if preuve is not None and preuve.text:
+            extrait = f"« {preuve.text[:90]} »"
+            if preuve.page:
+                extrait += f" (page {preuve.page})"
+            avec_preuve.append([competence.name, extrait])
+        else:
+            sans_preuve += 1
+
+    if not avec_preuve:
+        if not sans_preuve:
+            return ""
+        return """
+          <h2>D'ou vient chaque information</h2>
+          <p>
+            Votre profil n'a pas ete construit a partir d'un document depose :
+            les informations ci-dessus ont ete saisies directement. Il n'y a
+            donc pas de passage de CV a vous montrer.
+          </p>
+        """
+
+    reste = ""
+    if sans_preuve:
+        reste = (
+            f'<p class="note">{sans_preuve} autre(s) competence(s) figurent a '
+            f"votre profil sans extrait associe : elles ont ete saisies "
+            f"directement plutot que lues dans un document.</p>"
+        )
+
+    return f"""
+      <h2>D'ou vient chaque information</h2>
+      <p class="sous">
+        Aucune donnee n'est retenue sans que le passage du document qui la
+        justifie puisse etre montre.
+      </p>
+      {_tableau(["Competence retenue", "Passage de votre CV"], avec_preuve, set())}
+      {reste}
+    """
+
+
+def _candidat_score(score) -> str:
+    if score is None:
+        return (
+            "<h2>Analyse de compatibilite</h2>"
+            "<p>Votre candidature n'a pas encore ete analysee.</p>"
+        )
+
+    lignes = [
+        [
+            CRITERES_EN_CLAIR.get(critere["name"], critere["label"]),
+            f"{nombre(critere['weight'] * 100, 0)} %",
+            f"{nombre(critere['score'] * 100, 0)} %",
+        ]
+        for critere in score.applicable_criteria
+    ]
+    ecartes = [
+        CRITERES_EN_CLAIR.get(critere["name"], critere["label"])
+        for critere in score.skipped_criteria
+    ]
+    mention_ecartes = ""
+    if ecartes:
+        mention_ecartes = (
+            f'<p class="note">Criteres non applicables, l\'offre n\'exprimant '
+            f"aucune exigence : {', '.join(ecartes)}. Ils ne vous ont ni "
+            f"avantage ni desavantage.</p>"
+        )
+
+    return f"""
+      <h2>Analyse de compatibilite — {score.percentage} %</h2>
+      <p class="sous">
+        Chaque critere est note separement, puis pondere. Le poids est fixe par
+        l'offre, avant toute candidature.
+      </p>
+      {_tableau(["Critere", "Poids", "Votre note"], lignes, {1, 2})}
+      {mention_ecartes}
+      <p class="note">
+        Ce pourcentage n'est pas une note sur votre valeur professionnelle :
+        c'est une mesure d'ecart entre ce que l'offre demande et ce que votre CV
+        indique. Un ecart eleve sur une offre n'en dit rien sur une autre.
+      </p>
+    """
+
+
+def _candidat_ecarts(score) -> str:
+    if score is None or not score.gaps:
+        return ""
+    lignes = [
+        [
+            ecart["skill"],
+            ecart.get("best_match") or "aucune competence proche identifiee",
+        ]
+        for ecart in score.gaps
+    ]
+    return f"""
+      <h2>Ce que l'offre demandait et que le CV n'indiquait pas</h2>
+      {_tableau(
+          ["Competence demandee", "Ce qui s'en rapprochait le plus"], lignes, set()
+      )}
+      <p class="note">
+        Une competence absente de cette liste n'est pas une competence que vous
+        n'avez pas : c'est une competence que votre CV ne mentionnait pas, ou
+        que le programme n'a pas su y lire.
+      </p>
+    """
+
+
+def _candidat_droits(aujourdhui: dt.date) -> str:
+    return f"""
+      <h2>Vos droits</h2>
+      <p>
+        Vous pouvez demander l'acces a vos donnees, leur rectification, leur
+        effacement, et une explication sur la maniere dont votre candidature a
+        ete traitee. Vous pouvez aussi demander que la decision vous concernant
+        soit reexaminee par une personne.
+      </p>
+      <p class="note">
+        Articles 15 et 22 du reglement general sur la protection des donnees.
+        Le tri de candidatures est un systeme d'IA a haut risque au sens de
+        l'annexe III.4 du reglement europeen sur l'intelligence artificielle :
+        chaque etape de votre dossier est enregistree, avec sa date et son
+        auteur. Document edite le {aujourdhui.strftime('%d/%m/%Y')}.
+      </p>
+    """
+
+
+def build_candidate_explanation(
+    application, *, score=None, today: dt.date | None = None
+) -> bytes:
+    """Explication destinee au candidat lui-meme.
+
+    Deliberement sans le nom du recruteur, sans les motifs de decision, sans
+    rang et sans mention des autres candidatures : ce sont des appreciations
+    internes ou des donnees concernant d'autres personnes.
+    """
+    aujourdhui = today or dt.date.today()
+    candidat = application.candidate
+
+    document = fitz.open()
+    redacteur = _Redacteur(document)
+    redacteur.bloc(_candidat_entete(application, aujourdhui), espace=18)
+    redacteur.bloc(_candidat_donnees(candidat))
+    preuves = _candidat_preuves(candidat)
+    if preuves:
+        redacteur.bloc(preuves)
+    redacteur.bloc(_candidat_score(score))
+    ecarts = _candidat_ecarts(score)
+    if ecarts:
+        redacteur.bloc(ecarts)
+    redacteur.bloc(_candidat_droits(aujourdhui))
+
+    redacteur.pieds_de_page(
+        f"Document destine au candidat · {aujourdhui.strftime('%d/%m/%Y')}"
+    )
+    document.set_metadata(
+        {
+            "title": "Votre candidature — explication",
+            "subject": f"Candidature a « {application.offer.title} »",
+            "creator": "Recrutement.IA",
+        }
+    )
+    octets = document.tobytes()
+    document.close()
+    return octets
+
+
+def candidate_explanation_filename(application, today: dt.date | None = None) -> str:
+    jour = (today or dt.date.today()).isoformat()
+    return f"votre-candidature_{str(application.pk)[:8]}_{jour}.pdf"
+
+
 def application_filename(application, today: dt.date | None = None) -> str:
     jour = (today or dt.date.today()).isoformat()
     return f"dossier_{str(application.pk)[:8]}_{jour}.pdf"

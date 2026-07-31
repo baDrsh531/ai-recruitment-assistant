@@ -19,6 +19,89 @@
 
 {% block content %}
 
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Surveillance continue</h2>
+    {% if not monitoring.conforme %}
+      <span class="badge badge--danger">ecart legal</span>
+    {% elif not monitoring.stable %}
+      <span class="badge badge--warn">derive</span>
+    {% elif monitoring.premier_releve %}
+      <span class="badge">premier releve</span>
+    {% else %}
+      <span class="badge badge--ok">stable</span>
+    {% endif %}
+  </div>
+
+  {% if monitoring.premier_releve %}
+    <div class="card__body">
+      <p class="muted">
+        Aucun releve enregistre pour l'instant : il n'y a rien a comparer. Les
+        derives seront visibles a partir du deuxieme controle.
+        Lancer un controle : <code>python manage.py monitor_bias</code>.
+      </p>
+    </div>
+  {% elif monitoring.alertes %}
+    <div class="card__body stack">
+      {% for alerte in monitoring.alertes %}
+        <div class="timeline__item">
+          <p>
+            <span class="badge{% if alerte.niveau == 'ecart_legal' %} badge--danger{% else %} badge--warn{% endif %}">
+              {{ alerte.niveau }}
+            </span>
+            <strong>{{ alerte.dimension }}</strong>
+            {% if alerte.delta %}
+              <span class="small subtle">{{ alerte.delta|floatformat:3 }}</span>
+            {% endif %}
+          </p>
+          <p class="small muted mt-4">{{ alerte.message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card__body">
+      <p class="muted">
+        Aucun ecart legal, aucune derive depuis le dernier releve. Le pire
+        ratio observe est de {{ monitoring.pire_ratio|floatformat:3 }}.
+      </p>
+    </div>
+  {% endif %}
+
+  {% if monitoring_history %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Date</th><th>Attribut</th><th class="num">Ratio</th><th>Moteur</th></tr>
+        </thead>
+        <tbody>
+          {% for releve in monitoring_history %}
+            <tr>
+              <td class="muted">{{ releve.date|date:"d/m/Y H:i" }}</td>
+              <th scope="row">{{ releve.dimension }}</th>
+              <td class="num{% if releve.sous_le_seuil %} danger{% endif %}">
+                {{ releve.ratio|floatformat:3 }}
+              </td>
+              <td class="muted small">{{ releve.engine_version }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  <p class="card__note">
+    L'audit ci-dessous est une photographie ; ce bloc en est le releve. La
+    distinction qui compte est entre l'<b>ecart legal</b> — un ratio sous
+    {{ threshold|floatformat:2 }} — et la <b>derive</b>, une baisse d'au moins
+    {{ drift_threshold|floatformat:2 }} sans franchissement de seuil. Le second
+    est le signal utile : quand le premier se declenche, il est deja tard.
+    L'historique complet est dans le journal d'audit, qui est immuable ; cette
+    page en montre les derniers points. Aucun controle n'est enregistre depuis
+    cet affichage — un releve a chaque rafraichissement de page rendrait
+    l'historique illisible.
+  </p>
+</section>
+
 {% if not freshly_computed %}
   <p class="small subtle">
     Chiffres issus du dernier calcul, conserves en cache une heure. L'audit

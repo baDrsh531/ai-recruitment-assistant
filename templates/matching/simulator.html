@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Ponderation — {{ offer.title }}{% endblock %}
+{% block heading %}Et si on comptait autrement ?{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ offer.title }} · {{ simulation.rows|length }} candidature(s).
+    Rien n'est enregistre : cette page montre ce qu'une ponderation ferait
+    avant qu'on l'applique.
+  </p>
+{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'matching:ranking' offer.slug %}">Classement</a>
+  <a class="btn" href="{% url 'evaluation:bias_report' %}">Audit de biais</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ponderation</h2>
+    {% if modified %}<span class="badge badge--brand">modifiee</span>{% endif %}
+  </div>
+  <form method="get">
+    <div class="card__body">
+      <div class="grid grid--rings">
+        {% for nom, valeur in weights.items %}
+          <div class="field">
+            <label class="label" for="poids_{{ nom }}">{{ nom }}</label>
+            <input class="input" type="number" step="0.01" min="0" max="3"
+                   name="poids_{{ nom }}" id="poids_{{ nom }}" value="{{ valeur }}">
+          </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn--primary mt-4">Simuler</button>
+      <a class="btn mt-4" href="{% url 'matching:simulator' offer.slug %}">Revenir a l'offre</a>
+      <p class="hint mt-4">
+        Les poids sont ramenes a une somme de 1 : le chiffre affiche est celui
+        applique. Un poids negatif inverserait le critere — « moins de
+        competences vaut mieux » — et n'est donc pas accepte.
+      </p>
+    </div>
+  </form>
+</section>
+
+{% if simulation.impact_ratio is not None %}
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Ce que cette ponderation coute</h2>
+      {% if simulation.impact_ratio < legal_threshold %}
+        <span class="badge badge--danger">sous le seuil legal</span>
+      {% elif simulation.degrade_le_ratio %}
+        <span class="badge badge--warn">degrade le ratio</span>
+      {% else %}
+        <span class="badge badge--ok">sans effet defavorable</span>
+      {% endif %}
+    </div>
+    <div class="card__body">
+      <div class="kv">
+        <div class="kv__row">
+          <span class="kv__key">Ratio d'impact ({{ simulation.impact_dimension }}), ponderation actuelle</span>
+          <span class="kv__value">{{ simulation.baseline_impact_ratio|floatformat:3 }}</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">Ratio d'impact avec cette ponderation</span>
+          <span class="kv__value">{{ simulation.impact_ratio|floatformat:3 }}</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">Seuil des quatre cinquiemes</span>
+          <span class="kv__value">{{ legal_threshold|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if simulation.impact_ratio < legal_threshold %}
+      <p class="card__note">
+        <b>Cette ponderation ferait passer le systeme sous le seuil des quatre
+        cinquiemes</b> (regle NYC LL144). Elle est mesurable, elle est affichee,
+        et elle reste applicable — mais plus par inadvertance.
+      </p>
+    {% endif %}
+
+    <p class="card__note">
+      Le ratio ne depend pas que du poids de la localisation. Baisser celui des
+      competences suffit a le degrader sans y toucher : quand les competences
+      cessent de departager les candidats, ce sont les criteres restants qui
+      decident, localisation comprise. Mesure sur le jeu annote : passer les
+      competences de 0,45 a 0,20 fait tomber le ratio de 0,809 a 0,714, a poids
+      de localisation inchange.
+    </p>
+  </section>
+{% else %}
+  <section class="card">
+    <p class="card__note">
+      Le ratio d'impact n'a pas pu etre calcule. Le classement simule ci-dessous
+      reste valable ; l'absence est affichee plutot que remplacee par un chiffre
+      approche.
+    </p>
+  </section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Classement simule</h2>
+    <span class="badge">{{ simulation.mouvements }} mouvement(s) de rang</span>
+  </div>
+  {% if simulation.rows %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="num">Rang</th>
+            <th>Candidat</th>
+            <th class="num">Score simule</th>
+            <th class="num">Ecart</th>
+            <th class="num">Mouvement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in simulation.rows %}
+            <tr>
+              <td class="num muted">{{ row.rang_simule }}</td>
+              <td>
+                <a href="{{ row.application.get_absolute_url }}">
+                  {% if blind %}{{ row.application.candidate.display_name }}{% else %}{{ row.application.candidate.full_name }}{% endif %}
+                </a>
+              </td>
+              <td class="num">{{ row.percentage }} %</td>
+              <td class="num muted">{{ row.delta_points|floatformat:1 }} pts</td>
+              <td class="num">
+                {% if row.delta_rang > 0 %}
+                  <span class="badge badge--ok">+{{ row.delta_rang }}</span>
+                {% elif row.delta_rang < 0 %}
+                  <span class="badge badge--warn">{{ row.delta_rang }}</span>
+                {% else %}
+                  <span class="muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Un ecart de points sans mouvement de rang ne change rien au tri : c'est le
+      rang qui decide qui est lu en premier, pas le pourcentage. Rien n'est
+      enregistre — l'offre garde sa ponderation tant qu'elle n'est pas modifiee
+      depuis l'administration.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune candidature" text="Cette offre n'a pas encore de candidature a classer." %}
+  {% endif %}
+</section>
+{% endblock %}

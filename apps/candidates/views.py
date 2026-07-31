@@ -364,6 +364,47 @@ class ExportApplicationView(LoginRequiredMixin, View):
         return reponse
 
 
+class ExportCandidateExplanationView(LoginRequiredMixin, View):
+    """Explication destinee au candidat lui-meme.
+
+    Le dossier interne s'adresse a un recruteur ; celui-ci s'adresse a la
+    personne concernee, au titre des articles 15 et 22 du RGPD. Ce ne sont pas
+    les memes lecteurs, donc pas le meme document : ni motifs de decision, ni
+    rang, ni mention des autres candidatures.
+
+    L'export est journalise separement du dossier interne : savoir qu'un
+    document est parti vers un candidat n'a pas le meme sens qu'un dossier tire
+    pour un entretien.
+    """
+
+    def get(self, request, pk):
+        candidature = get_object_or_404(
+            Application.objects.select_related("candidate", "offer"), pk=pk
+        )
+        octets = report_pdf.build_candidate_explanation(
+            candidature,
+            score=candidature.scores.order_by("-created_at").first(),
+        )
+
+        record_audit(
+            AuditLog.Action.DATA_EXPORTED,
+            actor=request.user,
+            obj=candidature,
+            summary=f"Explication candidat editee ({len(octets) // 1024} Ko)",
+            request=request,
+            format="pdf",
+            scope="explication_candidat",
+            bytes=len(octets),
+        )
+
+        reponse = HttpResponse(octets, content_type="application/pdf")
+        reponse["Content-Disposition"] = (
+            "attachment; filename="
+            f'"{report_pdf.candidate_explanation_filename(candidature)}"'
+        )
+        return reponse
+
+
 class ApplicationDetailView(LoginRequiredMixin, DetailView):
     model = Application
     template_name = "candidates/application_detail.html"
