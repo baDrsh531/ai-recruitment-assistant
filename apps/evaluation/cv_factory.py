@@ -21,7 +21,19 @@ from __future__ import annotations
 
 import fitz
 
-LAYOUTS = ("simple", "deux_colonnes", "tableau", "scanne")
+LAYOUTS = ("simple", "deux_colonnes", "tableau", "scanne", "arabe")
+
+# L'arabe demande une police contenant ses glyphes et un moteur capable de
+# faconnage contextuel. `insert_textbox` ne fait ni l'un ni l'autre : il rend
+# les lettres detachees et dans le mauvais sens. `insert_htmlbox`, qui s'appuie
+# sur le moteur de mise en page de MuPDF, produit un rendu correct — verifie a
+# l'oeil sur la sortie, pas seulement par extraction.
+POLICES_ARABES = (
+    r"C:\Windows\Fonts\arial.ttf",
+    r"C:\Windows\Fonts\tahoma.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/System/Library/Fonts/Supplemental/Arial.ttf",
+)
 
 TITLE_SIZE = 15
 HEADING_SIZE = 9.5
@@ -37,6 +49,8 @@ def build(profile: dict, layout: str = "simple") -> bytes:
         data = _two_columns(profile)
     elif layout == "tableau":
         data = _with_table(profile)
+    elif layout == "arabe":
+        data = _arabic(profile)
     else:
         data = _single_column(profile)
 
@@ -95,6 +109,61 @@ def _fr_month(value: str) -> str:
 
 
 # --- Mises en page ----------------------------------------------------------
+def police_arabe() -> str | None:
+    """Premiere police du systeme contenant les glyphes arabes."""
+    from pathlib import Path
+
+    for chemin in POLICES_ARABES:
+        if Path(chemin).is_file():
+            return chemin
+    return None
+
+
+def _arabic(profile: dict) -> bytes:
+    """CV en arabe, sens droite-a-gauche.
+
+    Ce n'est pas une traduction du CV francais : les intitules de sections sont
+    en arabe, le sens de lecture est inverse, et les noms de technologies
+    restent en latin — comme sur un vrai CV marocain, ou les deux ecritures
+    cohabitent dans la meme ligne.
+    """
+    document = fitz.open()
+    page = document.new_page()
+
+    sections = [
+        ("الاسم", profile["full_name"]),
+        ("المسمى الوظيفي", profile.get("headline", "")),
+        ("الاتصال", _contact_block(profile).replace("\n", " · ")),
+        ("المهارات", "، ".join(profile.get("skills", []))),
+        ("اللغات", _languages_block(profile).replace("\n", " · ")),
+        ("الخبرة المهنية", _experience_block(profile)),
+        ("التعليم", _education_block(profile)),
+    ]
+    corps = "".join(
+        f"<h3>{titre}</h3><p>{contenu.replace(chr(10), '<br>')}</p>"
+        for titre, contenu in sections
+        if contenu
+    )
+    html = f'<div dir="rtl" style="text-align: right">{corps}</div>'
+
+    police = police_arabe()
+    css = ""
+    if police:
+        # Chemin en barres obliques : le CSS traite l'antislash comme une
+        # echappement et « C:\Windows\Fonts\arial.ttf » devient
+        # « C:WindowsFontsarial.ttf ». La police n'est alors pas trouvee, le
+        # rendu retombe sur une fonte sans glyphes arabes, et le PDF sort vide
+        # de son arabe sans qu'aucune erreur ne remonte.
+        chemin = police.replace("\\", "/")
+        css = f"* {{font-family: ar;}} @font-face {{font-family: ar; src: url({chemin});}}"
+
+    page.insert_htmlbox(fitz.Rect(45, 45, 550, 800), html, css=css)
+
+    data = document.tobytes()
+    document.close()
+    return data
+
+
 def _single_column(profile: dict) -> bytes:
     document = fitz.open()
     page = document.new_page()

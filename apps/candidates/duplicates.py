@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 
 from django.db import transaction
 
+from apps.core import arabic
 from apps.core.models import AuditLog
 from apps.core.services import record_audit
 
@@ -64,9 +65,15 @@ def cle_nom(nom: str) -> str:
 
     « SAHRAOUI Badr », « Badr Sahraoui » et « badr  sahraoui » donnent la meme
     cle : l'ordre nom/prenom varie d'un CV a l'autre, et la casse encore plus.
+
+    Un nom arabe est normalise avant reduction : « أحمد » et « احمد » sont deux
+    graphies du meme prenom, et un CV extrait d'un PDF rend des formes de
+    presentation qui n'egalent aucune saisie au clavier.
     """
+    nom = arabic.normaliser(nom or "")
     nettoye = _sans_accents(nom.lower())
-    nettoye = re.sub(r"[^a-z\s]", " ", nettoye)
+    # La classe latine effacerait l'arabe : les deux ecritures sont conservees.
+    nettoye = re.sub(r"[^a-zؠ-يٱ-ۓ\s]", " ", nettoye)
     jetons = sorted(
         jeton for jeton in nettoye.split() if len(jeton) > 1 and jeton not in MOTS_VIDES
     )

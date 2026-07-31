@@ -31,6 +31,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from apps.candidates.models import Candidate
+from apps.core import arabic
 
 # Parametres BM25 usuels. k1 regle la saturation de la frequence, b l'ampleur
 # de la normalisation par la longueur du document.
@@ -70,9 +71,22 @@ def tokenise(texte: str) -> list[str]:
     « bout-en-bout » ; ne garder que les morceaux ferait disparaitre « 3-D »,
     dont les deux parties tombent sous la longueur minimale. Emettre les deux
     coute quelques jetons et evite les deux echecs.
+
+    L'arabe est normalise avant decoupage : un PDF stocke des formes de
+    presentation, pas les lettres de base. Sans cette etape, chercher « سارة »
+    ne trouverait jamais « سارة » — ce sont deux suites de points de code
+    differentes.
     """
+    texte = arabic.normaliser(texte or "")
     nettoye = _sans_accents(texte.lower())
+
     jetons: list[str] = []
+    # Les mots arabes sont extraits a part : la classe latine ne les capte pas,
+    # et ils ne comportent ni casse ni trait d'union a traiter.
+    for mot in re.findall(r"[ؠ-يٱ-ۓ]+", nettoye):
+        if len(mot) >= MIN_LONGUEUR:
+            jetons.append(mot)
+
     for brut in re.findall(r"[a-z0-9+#.\-]+", nettoye):
         terme = brut.strip(".-")
         if not terme:

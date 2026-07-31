@@ -547,6 +547,51 @@ scorer parce qu'un ratio a baisse mettrait un recruteur devant un ecran vide
 sans qu'il puisse rien y faire. `--strict` existe pour la CI, ou une derive doit
 arreter le train.
 
+### Les CV en arabe
+
+Un CV arabe extrait d'un PDF ne rend pas les lettres qu'on croit. Le document
+stocke des **formes de presentation** — les variantes contextuelles d'une lettre
+selon sa position dans le mot, dans la plage U+FE70–U+FEFF. « سارة » ecrit dans
+le CV ressort en « ﺱﺍﺭﺓ » : d'autres points de code, donc aucune egalite de
+chaine possible avec une requete tapee au clavier.
+
+**La mesure, sur un CV arabe genere a verite connue :**
+
+```
+                            champs retrouves sur 8
+extraction brute                      2      (les deux champs latins)
+apres normalisation                   7
+```
+
+Sans cette etape, un CV arabe n'est pas partiellement lisible pour le systeme :
+il est illisible. La normalisation fait converger les formes de presentation
+vers les lettres de base, replie les variantes graphiques d'une meme lettre
+(`أ` `إ` `آ` → `ا`, `ة` → `ه`, `ى` → `ي`), retire le tatweel et les
+diacritiques, et convertit les chiffres arabo-indiens. « أحمد » et « احمد »
+designent la meme personne ; le rapprochement de doublons et la recherche le
+savent maintenant.
+
+**Pourquoi a la comparaison et non a l'extraction.** La normalisation change la
+longueur du texte — la ligature lam-alef est un caractere qui en devient deux.
+Appliquee a l'extraction, elle decalerait tous les offsets et casserait la
+correspondance entre un extrait et sa bbox, sur laquelle repose tout l'ancrage
+des preuves. Elle se fait donc au moment de comparer, comme le retrait des
+accents.
+
+**Le huitieme champ, et pourquoi il manque.** « الدار البيضاء » ressort en
+« البيضا » : le hamza final n'est pas rendu dans le PDF. C'est une perte au
+rendu, pas un defaut de normalisation — le caractere n'est pas dans le
+document. Les vrais PDF arabes presentent la meme classe de perte, ce qui rend
+la mesure representative plutot qu'artificiellement propre : 7 sur 8 est un
+plancher.
+
+**Ce qui n'est pas mesure, et ne doit pas etre revendique.** La voie vision sur
+un CV arabe scanne n'a pas ete eprouvee — le serveur d'inference n'est pas
+joignable depuis l'environnement de developpement. Et le CV de test, bien que
+melangeant arabe et latin sur une meme ligne comme un vrai CV marocain, reste
+plus propre qu'un document reel. Ces chiffres portent sur la couche texte,
+c'est-a-dire sur ce qui alimente le modele — pas sur le modele lui-meme.
+
 ### Mesurer aussi les humains
 
 Le projet mesure beaucoup ce que fait le moteur et jamais ce que font les gens
@@ -952,6 +997,7 @@ tests/             suite pytest
 - [x] Simulateur de ponderation montrant l'effet sur le ratio d'impact
 - [x] Surveillance continue du biais, avec historique et alerte de derive
 - [x] Accord entre recruteurs (kappa de Cohen) et ecart au score
+- [x] Traitement de l'arabe : normalisation, recherche, rapprochement de noms
 - [x] Configuration de deploiement verifiee hors ligne (sonde, statiques, securite)
 
 ---
