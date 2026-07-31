@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load l10n %}
 {% block title %}Ponderation — {{ offer.title }}{% endblock %}
 {% block heading %}Et si on comptait autrement ?{% endblock %}
 {% block meta %}
@@ -26,8 +27,21 @@
         {% for nom, valeur in weights.items %}
           <div class="field">
             <label class="label" for="poids_{{ nom }}">{{ nom }}</label>
-            <input class="input" type="number" step="0.01" min="0" max="3"
-                   name="poids_{{ nom }}" id="poids_{{ nom }}" value="{{ valeur }}">
+            {% comment %}
+              Deux precautions, chacune pour une raison differente.
+
+              `unlocalize` : la locale francaise rend 0.45 en « 0,45 », et un
+              champ `type="number"` refuse la virgule. Le navigateur affichait
+              donc un champ vide, et le formulaire perdait les poids courants
+              sans qu'aucune erreur ne remonte.
+
+              `step="any"` : une ponderation normalisee tombe sur des valeurs
+              comme 0.0417, qui ne sont pas des multiples de 0,01. Le champ
+              serait juge invalide pour la meme consequence.
+            {% endcomment %}
+            <input class="input" type="number" step="any" min="0" max="3"
+                   name="poids_{{ nom }}" id="poids_{{ nom }}"
+                   value="{{ valeur|unlocalize }}">
           </div>
         {% endfor %}
       </div>

@@ -222,9 +222,74 @@ class Command(BaseCommand):
                 candidate=originale, title="Data engineer", company="OCP Group"
             )
 
+        self._decisions(recruiter)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"{JobOffer.objects.count()} offres, {Candidate.objects.count()} candidats, "
                 f"{Application.objects.count()} candidatures."
             )
+        )
+
+    def _decisions(self, premier) -> None:
+        """Deux recruteurs decidant sur les memes dossiers.
+
+        Sans un second evaluateur, la page d'accord ne peut rien mesurer et
+        affiche « non mesurable » — ce qui est correct mais ne montre pas ce
+        qu'elle sait faire. Les desaccords sont deliberes : deux recruteurs qui
+        seraient toujours d'accord rendraient la mesure inutile, et ce n'est pas
+        ce qu'on observe en pratique.
+        """
+        from apps.core.models import AuditLog
+        from apps.matching.services import DecisionRefused, decide
+
+        if AuditLog.objects.filter(action=AuditLog.Action.STAGE_CHANGED).exists():
+            self.stdout.write("Historique de decisions deja present.")
+            return
+
+        User = get_user_model()
+        second, cree = User.objects.get_or_create(
+            username="manager",
+            defaults={
+                "email": "manager@example.com",
+                "first_name": "Youssef",
+                "last_name": "Berrada",
+                "role": User.Role.HIRING_MANAGER,
+                "department": "Technique",
+            },
+        )
+        if cree:
+            second.set_password(DEMO_PASSWORD)
+            second.save()
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Compte cree : manager / {DEMO_PASSWORD} (manager operationnel)"
+                )
+            )
+
+        MOTIF = "Profil trop eloigne du poste, verifie sur le CV complet."
+        # (recruteur, etape) par candidature. Les deux derniers dossiers
+        # opposent les deux evaluateurs : c'est ce que le kappa mesure.
+        PARCOURS = [
+            [(premier, "screening"), (second, "screening")],
+            [(premier, "phone"), (second, "screening")],
+            [(premier, "technical"), (second, "technical")],
+            [(premier, "rejected"), (second, "rejected")],
+            [(premier, "rejected"), (second, "screening")],
+            [(premier, "screening"), (second, "rejected")],
+        ]
+
+        candidatures = list(
+            Application.objects.select_related("candidate").order_by("applied_at")
+        )
+        for candidature, etapes in zip(candidatures, PARCOURS, strict=False):
+            for acteur, etape in etapes:
+                try:
+                    decide(candidature, stage=etape, note=MOTIF, actor=acteur)
+                except DecisionRefused as exc:
+                    self.stdout.write(self.style.WARNING(f"  decision refusee : {exc}"))
+
+        self.stdout.write(
+            f"{AuditLog.objects.filter(action='stage_changed').count()} decisions "
+            "journalisees, par deux evaluateurs."
         )

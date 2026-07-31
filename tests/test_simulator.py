@@ -230,6 +230,25 @@ def test_the_page_renders_with_the_current_weighting(client, offre, recruteur):
     assert reponse.context["simulation"].mouvements == 0
 
 
+def test_the_form_carries_the_current_weights(client, offre, recruteur):
+    """Regression : le formulaire perdait les poids courants, en silence.
+
+    Deux causes independantes, l'une et l'autre suffisantes. La locale
+    francaise rend 0.45 en « 0,45 » et un champ `type="number"` refuse la
+    virgule ; et un pas de 0,01 rend invalide une valeur normalisee comme
+    0.0417. Dans les deux cas le navigateur affiche un champ vide sans
+    qu'aucune erreur ne remonte.
+    """
+    client.force_login(recruteur)
+    reponse = client.get(reverse("matching:simulator", kwargs={"slug": offre.slug}))
+    contenu = reponse.content.decode()
+
+    assert 'step="any"' in contenu
+    assert 'value="0,' not in contenu, "une virgule decimale invalide le champ"
+    for valeur in reponse.context["weights"].values():
+        assert f'value="{valeur}"' in contenu
+
+
 def test_the_page_accepts_weights_from_the_query(client, offre, recruteur):
     client.force_login(recruteur)
     reponse = client.get(

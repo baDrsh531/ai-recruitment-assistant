@@ -130,8 +130,8 @@
     <div class="card__body">
       <p class="muted">
         Le CV ne porte pas assez de dates pour qu'un controle ait un sens
-        ({{ coherence.dated_periods }} periode(s) datee(s) sur
-        {{ coherence.total_periods }}). Dire « aucune incoherence » ici serait
+        ({{ coherence.periodes_datees }} periode(s) datee(s) sur
+        {{ coherence.periodes_totales }}). Dire « aucune incoherence » ici serait
         trompeur : rien n'a pu etre verifie.
       </p>
     </div>
@@ -153,7 +153,7 @@
   {% else %}
     <div class="card__body">
       <p class="muted">
-        Les {{ coherence.dated_periods }} periodes datees du parcours sont
+        Les {{ coherence.periodes_datees }} periodes datees du parcours sont
         coherentes entre elles : aucun chevauchement, aucune date impossible,
         aucun ecart entre l'anciennete declaree et les periodes citees.
       </p>

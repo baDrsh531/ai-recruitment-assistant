@@ -301,6 +301,28 @@ def test_the_page_shows_the_findings(client, db, recruteur):
     assert "A demander" in contenu
 
 
+def test_the_page_prints_the_period_counts(client, db, recruteur):
+    """Regression : le gabarit lisait les cles anglaises de `as_dict()` sur
+    l'objet, qui porte des attributs francais. Django rend une variable
+    inconnue par une chaine vide, et la phrase sortait en « ( periode(s)
+    datee(s) sur ) » — sans erreur, sans nombre."""
+    offre = JobOffer.objects.create(title="Backend", description="x", status="open")
+    candidat = _candidat(db)
+    _experience(candidat, "Dev", None)
+    _experience(candidat, "Lead", None)
+    candidature = Application.objects.create(candidate=candidat, offer=offre)
+
+    client.force_login(recruteur)
+    contenu = client.get(
+        reverse("candidates:application_detail", kwargs={"pk": candidature.pk})
+    ).content.decode()
+
+    # Fragments courts : le gabarit coupe la phrase sur deux lignes, et le HTML
+    # rendu conserve ses retours a la ligne.
+    assert "(0 periode(s)" in contenu
+    assert "sur\n        2)" in contenu or "sur 2)" in contenu
+
+
 def test_the_page_distinguishes_clean_from_unverifiable(client, db, recruteur):
     offre = JobOffer.objects.create(title="Backend", description="x", status="open")
     candidat = _candidat(db)
