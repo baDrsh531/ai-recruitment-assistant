@@ -847,6 +847,66 @@ GET  /api/candidatures/<id>/ecarts/   chemin vers le seuil, plafond atteignable
 POST /api/candidatures/<id>/decider/  motif obligatoire pour ecarter
 ```
 
+### Un agent qui prepare, et qui ne decide pas
+
+Un CV depose declenche un agent : il calcule le score, redige l'analyse, propose
+une suite au dossier, et prepare les questions d'entretien. Ce qu'il ne fait
+pas, c'est faire avancer une candidature. **Il produit une recommandation ; un
+recruteur la suit ou ne la suit pas.**
+
+Cette limite n'est pas une consigne dans un prompt, c'est une propriete du
+compte. L'agent a son propre role, `agent`, et ce role est **absent de
+`can_decide`** : s'il appelait `services.decide`, il serait refuse et le refus
+serait journalise, comme pour n'importe quel compte sans le droit. Le compte est
+cree sans mot de passe utilisable et inactif — on ne s'y connecte pas. C'est
+l'article 14 de l'AI Act pris au serieux : la supervision humaine tient parce
+que la machine n'a pas le bouton, pas parce qu'on lui a demande de ne pas
+appuyer dessus.
+
+Verifie sur les donnees de demonstration, apres une execution reelle contre le
+serveur d'inference : deux recommandations produites, **zero candidature
+avancee, zero decision au nom de l'agent**, et chaque entree du journal marquee
+`agent=True` — un audit peut donc separer ce qu'a fait la machine de ce qu'a
+fait un humain.
+
+**L'ordre des etapes est une decision de cout.** La recommandation passe avant
+les questions d'entretien, pour que celles-ci soient sautees sur un dossier
+propose au rejet. Preparer un entretien pour quelqu'un qu'on propose de ne pas
+recevoir depense des tokens pour un entretien qui n'aura pas lieu. Mesure sur
+les deux memes dossiers, avec les memes scores et les memes recommandations en
+sortie :
+
+| | etapes | tokens | duree |
+|---|---|---|---|
+| questions avant la recommandation | 8 | 5 050 | 28 648 ms |
+| questions apres | 6 | **2 287** | **11 166 ms** |
+
+Si un recruteur passe outre et fait avancer le dossier, les questions sont
+generees au passage suivant.
+
+**Trois garde-fous, parce qu'un agent qui tourne seul est un agent qui derape.**
+Un interrupteur coupe par defaut (`AGENT_ENABLED`) — sans lui, l'agent ne
+touche pas au modele. Un plafond de tokens glissant sur 24 h, compte sur les
+appels reellement passes et non estime, qui arrete l'agent au dossier suivant
+plutot qu'au milieu d'un dossier. Et un echec d'inference sur une etape ne fait
+pas tomber l'execution : l'etape est comptee en echec, le dossier continue,
+l'etape sera reprise au passage suivant puisque chaque etape sait dire si elle
+est deja faite.
+
+```
+python manage.py run_agent --dry-run   # ce qu'il ferait, sans appeler le modele
+python manage.py run_agent --limit 10
+```
+
+Sans broker Celery, le declenchement au depot d'un CV ne fait rien plutot que de
+bloquer la requete d'upload le temps de deux appels au modele ; l'agent tourne
+alors en lot par la commande. Avec un broker, le meme code part en asynchrone.
+
+Ce qu'il n'est pas : il n'apprend pas, il ne reecrit pas les ponderations, il ne
+change pas le seuil. Un agent qui ajusterait lui-meme ses propres criteres
+rendrait injustifiable chaque decision passee — le moteur resterait explicable,
+mais plus reproductible.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -914,6 +974,8 @@ Tout passe par le `.env` (voir `.env.example`).
 | `LLM_BASE_URL` / `LLM_MODEL` | modele texte, API compatible OpenAI |
 | `VLM_BASE_URL` / `VLM_MODEL` | modele vision pour les CV a mise en page complexe |
 | `EMBEDDING_PROVIDER` | `local` (fastembed ONNX) ou `server` (`/v1/embeddings`) |
+| `AGENT_ENABLED` | interrupteur de l'agent d'orchestration, coupe par defaut |
+| `AGENT_DAILY_TOKEN_BUDGET` | plafond glissant sur 24 h, mesure sur les appels passes |
 | `DATA_RETENTION_DAYS` | duree de conservation des donnees candidat (RGPD) |
 | `BLIND_SCREENING_DEFAULT` | masquage des attributs identitaires par defaut |
 
@@ -935,6 +997,7 @@ apps/
   parsing/         extraction PDF/DOCX, diagnostic de mise en page, ancrage
   matching/        ontologie de competences, moteur de score, classement
   evaluation/      metriques, jeux annotes, harnais de non-regression
+  agent/           orchestration : prepare un dossier, propose, ne decide pas
 templates/         interface — composants partages dans partials/
 static/css/        systeme de design, sans dependance externe
 tests/             suite pytest
@@ -957,6 +1020,8 @@ tests/             suite pytest
 | `apps/matching/management/commands/probe_semantic.py` | la mesure qui a fait desactiver le rapprochement semantique |
 | `apps/matching/engine.py` | calcul du score, renormalisation des poids, degradation controlee |
 | `apps/matching/explain.py` | le LLM ne voit que le detail chiffre, jamais le CV brut |
+| `apps/agent/pipeline.py` | les etapes de l'agent, et l'ordre qui evite de preparer un entretien qu'on propose de ne pas tenir |
+| `apps/agent/budget.py` | plafond de tokens mesure sur les appels reels, pas estime |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
 | `apps/evaluation/cv_factory.py` | genere des CV dont la verite terrain est connue par construction |
@@ -999,6 +1064,7 @@ tests/             suite pytest
 - [x] Accord entre recruteurs (kappa de Cohen) et ecart au score
 - [x] Traitement de l'arabe : normalisation, recherche, rapprochement de noms
 - [x] Configuration de deploiement verifiee hors ligne (sonde, statiques, securite)
+- [x] Agent d'orchestration : prepare un dossier, propose, sans le droit de decider
 
 ---
 
@@ -1027,3 +1093,10 @@ tests/             suite pytest
 - Le systeme reproduit les biais presents dans les criteres qu'on lui donne.
   Le mode screening a l'aveugle et l'audit d'ecart de score servent a les
   mesurer, pas a les supprimer.
+- L'agent d'orchestration deplace un risque plutot qu'il ne le supprime : il ne
+  peut pas decider, mais une recommandation posee sur un dossier **oriente**
+  celui qui la lit. Le motif chiffre et l'ecart au seuil sont affiches pour
+  qu'un recruteur puisse la contredire ; savoir s'il le fait vraiment
+  demanderait de mesurer le taux de recommandations non suivies, ce que le
+  modele de donnees permet mais que la demonstration n'a pas assez d'usage
+  reel pour renseigner.

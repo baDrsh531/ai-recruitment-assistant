@@ -17,6 +17,7 @@ urlpatterns = [
     path("cv/", include("apps.parsing.urls", namespace="parsing")),
     path("transparence/", include("apps.evaluation.urls", namespace="evaluation")),
     path("api/", include("apps.api.urls", namespace="api")),
+    path("agent/", include("apps.agent.urls", namespace="agent")),
     path("", include("apps.candidates.urls", namespace="candidates")),
 ]
 

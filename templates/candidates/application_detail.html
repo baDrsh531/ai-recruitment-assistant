@@ -25,6 +25,59 @@
 
 {% block content %}
 
+{% if recommendation %}
+  <section class="card">
+    <div class="card__head">
+      <h2 class="card__title">Proposition de l'agent</h2>
+      <span class="badge{% if recommendation.proposes_rejection %} badge--warn{% else %} badge--ok{% endif %}">
+        {{ recommendation.proposed_stage }}
+      </span>
+    </div>
+    <div class="card__body">
+      <p>{{ recommendation.rationale }}</p>
+      <p class="small subtle mt-4">
+        Proposee le {{ recommendation.created_at|date:"d/m/Y a H:i" }}, sur un
+        score de {{ recommendation.percentage }} % calcule par le moteur
+        {{ recommendation.engine_version }}.
+      </p>
+    </div>
+
+    {% if can_decide %}
+      <form method="post" action="{% url 'agent:resolve' recommendation.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="retour" value="{{ request.get_full_path }}">
+        <div class="card__body">
+          <div class="field">
+            <label class="label" for="note_agent">Votre motif</label>
+            <input class="input" type="text" name="note" id="note_agent"
+                   placeholder="Laisser vide pour reprendre le motif propose.">
+          </div>
+          <div class="row mt-4">
+            <button type="submit" name="action" value="accepter" class="btn btn--primary">
+              Suivre la proposition
+            </button>
+            <button type="submit" name="action" value="ecarter" class="btn">
+              Ne pas la suivre
+            </button>
+          </div>
+        </div>
+      </form>
+    {% else %}
+      <p class="card__note">
+        Votre role est en lecture seule : vous voyez la proposition, vous ne
+        pouvez pas la trancher.
+      </p>
+    {% endif %}
+
+    <p class="card__note">
+      <b>L'agent propose, il n'engage rien.</b> Tant que personne n'a tranche,
+      cette candidature n'a pas bouge. Si vous suivez la proposition, la
+      decision est enregistree <b>a votre nom</b> — c'est vous qui en repondez
+      devant le candidat, pas la machine qui l'a preparee.
+    </p>
+  </section>
+{% endif %}
+
 <section class="card">
   <div class="card__head">
     <h2 class="card__title">Decision</h2>

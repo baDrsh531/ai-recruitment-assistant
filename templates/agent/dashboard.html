@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Agent d'orchestration{% endblock %}
+{% block heading %}Agent d'orchestration{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ waiting }} dossier(s) en attente de preparation ·
+    {{ pending|length }} recommandation(s) en attente d'un recruteur.
+  </p>
+{% endblock %}
+{% block actions %}
+  <form method="post" action="{% url 'agent:run' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--primary" {% if not actif %}disabled{% endif %}>
+      Lancer une preparation
+    </button>
+  </form>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce que l'agent ne fait pas</h2>
+    {% if actif %}
+      <span class="badge badge--ok">en marche</span>
+    {% else %}
+      <span class="badge badge--warn">arrete</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      Il lit les CV, calcule les scores, redige les analyses, prepare les
+      questions d'entretien et <b>propose</b> une decision. Il ne fait avancer
+      aucune candidature et n'en ecarte aucune.
+    </p>
+    <p class="mt-4">
+      Ce n'est pas une consigne, c'est une propriete du systeme : le compte de
+      l'agent porte un role place hors des comptes habilites a decider. Un appel
+      direct a la fonction de decision avec ce compte est refuse, comme il le
+      serait pour un compte en lecture seule.
+    </p>
+  </div>
+  <p class="card__note">
+    Le tri de candidatures releve de l'annexe III.4 de l'AI Act, qui impose une
+    supervision humaine effective. Un agent qui ferait avancer des dossiers tout
+    seul ne serait pas seulement discutable : il retirerait au systeme ce qui le
+    rend defendable.
+  </p>
+</section>
+
+<div class="grid">
+  {% include "partials/stat_tile.html" with label="Dossiers prepares" value=totaux.traites %}
+  {% include "partials/stat_tile.html" with label="Recommandations" value=totaux.recommandations %}
+  {% include "partials/stat_tile.html" with label="Etapes en echec" value=totaux.echecs hint="serveur d'inference injoignable, le plus souvent" %}
+  {% include "partials/stat_tile.html" with label="Tokens consommes" value=totaux.tokens %}
+</div>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Budget du jour</h2>
+    {% if budget.epuise %}
+      <span class="badge badge--danger">epuise</span>
+    {% elif budget.illimite %}
+      <span class="badge badge--warn">sans limite</span>
+    {% else %}
+      <span class="badge badge--ok">{{ budget.restant }} tokens restants</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    {% if budget.illimite %}
+      <p class="muted">
+        Aucun plafond configure. A reserver au developpement : le mode d'echec
+        le plus courant n'est pas la depense volontaire, c'est la boucle de
+        reprise sur un dossier qui echoue.
+      </p>
+    {% else %}
+      {% widthratio budget.consomme budget.limite 100 as part %}
+      {% include "partials/meter.html" with percent=part|add:0 %}
+      <p class="hint mt-4">
+        {{ budget.consomme }} tokens sur {{ budget.limite }}, sur la journee
+        glissante. Entree et sortie comptent : un prompt de 4 000 tokens coute
+        meme si la reponse en fait 20.
+      </p>
+    {% endif %}
+  </div>
+  <p class="card__note">
+    Le plafond est dur. Au depassement l'agent s'arrete et le declare ; il ne
+    degrade pas et ne continue pas « juste ce dossier-la ». Une limite qu'on
+    peut franchir n'est pas une limite.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Recommandations en attente</h2>
+    {% if pending %}<span class="badge">{{ pending|length }}</span>{% endif %}
+  </div>
+  {% if pending %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Candidat</th><th>Offre</th><th class="num">Score</th>
+            <th>Proposition</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in pending %}
+            <tr>
+              <th scope="row">
+                <a href="{{ item.application.get_absolute_url }}">
+                  {{ item.application.candidate.full_name }}
+                </a>
+              </th>
+              <td class="muted">{{ item.application.offer.title }}</td>
+              <td class="num">{{ item.percentage }} %</td>
+              <td>
+                <span class="badge{% if item.proposes_rejection %} badge--warn{% endif %}">
+                  {{ item.proposed_stage }}
+                </span>
+              </td>
+              <td class="num">
+                <a class="btn btn--sm" href="{{ item.application.get_absolute_url }}">
+                  Examiner
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Une recommandation se tranche depuis le dossier, apres l'avoir lu — pas
+      depuis cette liste. Valider en série sans ouvrir les dossiers ferait de
+      l'humain une formalite, ce que la supervision est censee empecher.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune recommandation en attente" text="L'agent n'a rien a proposer, ou tout a deja ete tranche." %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Dernieres executions</h2></div>
+  {% if runs %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Declenchee par</th><th>Statut</th>
+            <th class="num">Dossiers</th><th class="num">Recos</th>
+            <th class="num">Echecs</th><th class="num">Tokens</th><th class="num">Duree</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+            <tr>
+              <td class="muted">{{ run.created_at|date:"d/m/Y H:i" }}</td>
+              <td class="muted small">{{ run.get_trigger_display }}</td>
+              <td>
+                <span class="badge{% if run.status == 'budget' %} badge--danger{% elif run.status == 'failed' %} badge--danger{% elif run.status == 'disabled' %} badge--warn{% elif run.ok %} badge--ok{% endif %}">
+                  {{ run.get_status_display }}
+                </span>
+              </td>
+              <td class="num">{{ run.applications_processed }}/{{ run.applications_seen }}</td>
+              <td class="num">{{ run.recommendations_made }}</td>
+              <td class="num{% if run.steps_failed %} danger{% endif %}">{{ run.steps_failed }}</td>
+              <td class="num muted">{{ run.tokens_used }}</td>
+              <td class="num muted">{{ run.duration_ms }} ms</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Une etape en echec n'arrete pas l'agent : le serveur d'inference tombe, le
+      score se calcule quand meme, et la reprise rattrapera l'etape manquante au
+      passage suivant sans refaire le reste.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune execution" text="L'agent n'a pas encore tourne. Le bouton en haut de page le lance, ou la commande python manage.py run_agent." %}
+  {% endif %}
+</section>
+{% endblock %}

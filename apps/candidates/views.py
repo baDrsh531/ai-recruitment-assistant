@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
+from apps.agent import pipeline as agent_pipeline
 from apps.ai.models import AIInvocation
 from apps.assistant import textsearch
 from apps.core import charts
@@ -447,4 +448,14 @@ class ApplicationDetailView(LoginRequiredMixin, DetailView):
         # Controles de coherence : des incoherences verifiables, jamais un
         # jugement. Aucun signalement ne touche au score.
         context["coherence"] = coherence.for_application(self.object)
+        # Proposition de l'agent, s'il y en a une en attente. On perime d'abord
+        # celles calculees sur un score qui n'est plus le dernier : presenter
+        # une recommandation fondee sur des chiffres perimes pousserait a
+        # decider sur autre chose que ce qui est affiche.
+        agent_pipeline.perimer_les_recommandations(self.object)
+        context["recommendation"] = (
+            self.object.recommendations.filter(status="pending")
+            .order_by("-created_at")
+            .first()
+        )
         return context
