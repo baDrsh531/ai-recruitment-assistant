@@ -907,6 +907,94 @@ change pas le seuil. Un agent qui ajusterait lui-meme ses propres criteres
 rendrait injustifiable chaque decision passee — le moteur resterait explicable,
 mais plus reproductible.
 
+### La supervision est-elle reelle, ou seulement prevue ?
+
+Que l'agent ne puisse pas decider se demontre en lisant le code. Que la
+supervision soit **effective** ne se demontre pas du tout : ca se mesure. Un
+recruteur qui suit toutes les propositions sans jamais en contredire une rend
+la garantie structurelle purement formelle — la decision lui est imputee, elle
+est prise par la machine.
+
+Le **taux de contradiction** est la part des propositions qu'un humain a
+ecartees. Sur le jeu de demonstration :
+
+| | tranchees | contredites | intervalle a 95 % |
+|---|---|---|---|
+| Toutes propositions | 26 | 27 % | 14 – 46 % |
+| Rejets proposes | 13 | **38 %** | 18 – 64 % |
+| Mises en entretien proposees | 13 | **15 %** | 4 – 42 % |
+
+**C'est la ventilation qui porte le resultat, pas le total.** Contredire les
+rejets deux fois plus souvent que les mises en entretien decrit une supervision
+qui se relache exactement la ou elle engage le moins : ecarter un candidat se
+discute, le faire avancer se signe sans relire.
+
+Aucune valeur n'est presentee comme la bonne. Ni 0 % ni 100 % ne sont
+defendables — le premier decrit un tampon, le second un agent inutile — et
+entre les deux cela releve du metier.
+
+**L'intervalle est affiche avec le chiffre, pas en note de bas de page.** Une
+contradiction sur quatre decisions donne 25 %, intervalle [5 %, 70 %] :
+compatible avec a peu pres tout, tampon compris. Il est calcule par la methode de
+Wilson et non par l'approximation normale, qui sur ces effectifs sort des
+bornes negatives — un intervalle affiche a −12 % se voit et decredibilise le
+reste de la page.
+
+L'alerte « agent jamais contredit » se declenche sur la **borne haute**, jamais
+sur le taux. Sans aucune contradiction cette borne vaut `z²/(n+z²)`, donc il
+faut **35 decisions** pour qu'elle passe sous 10 %. C'est le prix pour qu'une
+alerte veuille dire quelque chose : trois suivis sur trois ne prouvent rien.
+
+Le graphique n'est volontairement pas une jauge. Une jauge dit qu'aller vers la
+droite est bon ; ici les deux extremites sont mauvaises. L'intervalle y est
+trace plus large que le point, parce que c'est lui l'information quand
+l'effectif est petit.
+
+### Une veille qui survit a ce qu'elle surveille
+
+`monitoring.py` sait recalculer les ratios d'impact, les dater et alerter. Ce
+qui lui manquait, c'est quelqu'un pour l'appeler : un controle qui n'existe que
+sur une page qu'un responsable doit penser a ouvrir ne se declenche jamais
+entre deux audits — precisement la periode ou une ponderation nouvelle peut
+reintroduire un signal identitaire.
+
+```
+python manage.py agent_watch
+python manage.py agent_watch --strict   # sort en erreur s'il y a une alerte
+```
+
+Trois proprietes, et les deux premieres sont le seul interet de la tache :
+
+- **Elle ne coute aucun token.** Le ratio d'impact se calcule par le moteur
+  deterministe. Elle n'est donc pas soumise au plafond, et continue de tourner
+  quand le budget est epuise.
+- **Elle tourne meme quand l'agent est coupe.** `AGENT_ENABLED` protege la
+  depense, pas la surveillance. Un garde-fou qui s'arrete en meme temps que ce
+  qu'il surveille ne garde rien.
+- **Elle ne bloque rien**, comme le module qu'elle appelle : elle constate,
+  date et signale.
+
+Releve du jour sur le jeu annote : `localisation` 0.809, les trois autres
+dimensions a 1.000, aucune alerte. Le premier releve ne peut par construction
+detecter aucune derive — c'est le second passage qui commence a servir.
+
+### Quels dossiers sont restes a moitie
+
+Les executions comptent les etapes en echec, ce qui repond a « combien ». Un
+exploitant a besoin de « lesquels » : un compteur a 3 sans moyen de savoir
+quels dossiers sont concernes ne se traite pas.
+
+La liste ne montre que les dossiers **entames puis laisses a moitie**, pas ceux
+qui attendent simplement leur tour. Ce sont eux qui trompent : ils ont un
+score, ils s'affichent comme les autres, et il leur manque l'analyse sur
+laquelle un recruteur croit s'appuyer.
+
+Chaque ligne porte une cause probable, et la distinction est ce qui rend la
+liste exploitable : s'il ne manque que des etapes appelant le modele, c'est un
+serveur injoignable et la reprise suffira ; s'il manque le **score**, c'est un
+defaut, puisque ce calcul est local et deterministe et n'avait aucune raison
+d'echouer.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1022,6 +1110,8 @@ tests/             suite pytest
 | `apps/matching/explain.py` | le LLM ne voit que le detail chiffre, jamais le CV brut |
 | `apps/agent/pipeline.py` | les etapes de l'agent, et l'ordre qui evite de preparer un entretien qu'on propose de ne pas tenir |
 | `apps/agent/budget.py` | plafond de tokens mesure sur les appels reels, pas estime |
+| `apps/agent/adoption.py` | taux de contradiction et intervalle de Wilson : la mesure qui separe une supervision reelle d'un tampon |
+| `apps/agent/watch.py` | veille sans token, qui tourne meme quand l'agent est coupe |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
 | `apps/evaluation/cv_factory.py` | genere des CV dont la verite terrain est connue par construction |
@@ -1065,6 +1155,8 @@ tests/             suite pytest
 - [x] Traitement de l'arabe : normalisation, recherche, rapprochement de noms
 - [x] Configuration de deploiement verifiee hors ligne (sonde, statiques, securite)
 - [x] Agent d'orchestration : prepare un dossier, propose, sans le droit de decider
+- [x] Taux de contradiction avec intervalle de Wilson : mesurer la supervision, pas la supposer
+- [x] Veille de biais sans token, qui survit a la coupure de l'agent
 
 ---
 
@@ -1095,8 +1187,13 @@ tests/             suite pytest
   mesurer, pas a les supprimer.
 - L'agent d'orchestration deplace un risque plutot qu'il ne le supprime : il ne
   peut pas decider, mais une recommandation posee sur un dossier **oriente**
-  celui qui la lit. Le motif chiffre et l'ecart au seuil sont affiches pour
-  qu'un recruteur puisse la contredire ; savoir s'il le fait vraiment
-  demanderait de mesurer le taux de recommandations non suivies, ce que le
-  modele de donnees permet mais que la demonstration n'a pas assez d'usage
-  reel pour renseigner.
+  celui qui la lit. Le taux de contradiction est la pour le mesurer — mais les
+  chiffres affiches en demonstration proviennent d'un historique **genere**,
+  pas d'un usage reel. La mesure est eprouvee, la valeur ne l'est pas : elle
+  dira quelque chose sur un vrai service, pas ici.
+- Le taux de contradiction ne distingue pas un recruteur qui contredit apres
+  avoir lu d'un recruteur qui contredit par principe. Le delai median de
+  decision est affiche a cote, mais il est domine par le moment ou le
+  recruteur se connecte, pas par le temps qu'il passe a lire : un delai long
+  ne prouve pas l'attention. Seul un delai median de quelques secondes serait
+  un signal exploitable.

@@ -223,6 +223,7 @@ class Command(BaseCommand):
             )
 
         self._decisions(recruiter)
+        self._recommandations(recruiter)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -292,4 +293,85 @@ class Command(BaseCommand):
         self.stdout.write(
             f"{AuditLog.objects.filter(action='stage_changed').count()} decisions "
             "journalisees, par deux evaluateurs."
+        )
+
+    def _recommandations(self, premier) -> None:
+        """Historique de propositions deja tranchees par des humains.
+
+        Meme raison que pour les decisions ci-dessus : sans historique, la page
+        de l'agent affiche « rien ne permet de dire si la supervision est
+        effective », ce qui est exact et ne montre rien. Il faut au moins vingt
+        propositions tranchees pour que le taux devienne lisible.
+
+        La repartition est deliberee, et c'est elle qui fait la demonstration :
+        les recruteurs contredisent souvent les propositions de rejet et
+        valident presque toujours les mises en entretien. C'est exactement le
+        genre d'ecart que le taux global masque et que la ventilation par type
+        est faite pour montrer — une supervision qui se relache la ou elle
+        engage le moins.
+        """
+        import datetime as dt
+        import itertools
+
+        from django.utils import timezone
+
+        from apps.agent.models import Recommendation
+
+        if Recommendation.objects.exclude(
+            status=Recommendation.Status.PENDING
+        ).exists():
+            self.stdout.write("Historique de recommandations deja present.")
+            return
+
+        User = get_user_model()
+        second = User.objects.filter(username="manager").first() or premier
+
+        candidatures = list(Application.objects.select_related("candidate"))
+        if not candidatures:
+            return
+
+        # (etape proposee, suivie ?) — 26 propositions, assez pour que le taux
+        # sorte de la zone ou l'intervalle de confiance interdit de conclure.
+        PLAN = (
+            [("rejected", False)] * 5
+            + [("rejected", True)] * 8
+            + [("screening", True)] * 11
+            + [("screening", False)] * 2
+        )
+
+        maintenant = timezone.now()
+        roue = itertools.cycle(candidatures)
+        for index, (etape, suivie) in enumerate(PLAN):
+            candidature = next(roue)
+            propose = maintenant - dt.timedelta(days=30 - index, minutes=index * 7)
+            recommandation = Recommendation.objects.create(
+                application=candidature,
+                proposed_stage=etape,
+                rationale=(
+                    "Score sous le seuil, competences obligatoires incompletes."
+                    if etape == "rejected"
+                    else "Score au-dessus du seuil, competences obligatoires couvertes."
+                ),
+                score_at_time=0.42 if etape == "rejected" else 0.88,
+                threshold_at_time=0.85,
+                status=(
+                    Recommendation.Status.ACCEPTED
+                    if suivie
+                    else Recommendation.Status.REJECTED
+                ),
+                resolved_by=premier if index % 2 else second,
+                resolution_note=(
+                    "" if suivie else "Relu le CV complet : la proposition rate le contexte."
+                ),
+            )
+            # `created_at` est pose automatiquement ; il faut le reecrire pour
+            # que le delai median de decision ne soit pas nul partout.
+            Recommendation.objects.filter(pk=recommandation.pk).update(
+                created_at=propose,
+                resolved_at=propose + dt.timedelta(minutes=35 + (index % 7) * 25),
+            )
+
+        self.stdout.write(
+            f"{len(PLAN)} recommandations tranchees par un humain, dont "
+            f"{sum(1 for _, suivie in PLAN if not suivie)} contredites."
         )

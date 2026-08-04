@@ -292,6 +292,60 @@ def a_traiter():
     )
 
 
+@dataclass(frozen=True)
+class Dossier:
+    """Un dossier vu par la reprise : ce qui est fait, ce qui manque."""
+
+    application: Application
+    faites: list[str]
+    manquantes: list[str]
+
+    @property
+    def jamais_touche(self) -> bool:
+        """Simplement en attente, pas en echec."""
+        return not self.faites
+
+    @property
+    def bloque_sur_le_modele(self) -> bool:
+        """Ne manquent que des etapes qui appellent le modele.
+
+        C'est la distinction qui rend la liste exploitable. Un dossier auquel
+        il manque le score revele un defaut : le calcul est deterministe et
+        local, il n'avait aucune raison d'echouer. Un dossier auquel il ne
+        manque que l'analyse redigee revele un serveur d'inference injoignable
+        — rien a corriger, la reprise suffira.
+        """
+        if not self.manquantes:
+            return False
+        modele = {etape.nom for etape in ETAPES if etape.appelle_le_modele}
+        return set(self.manquantes) <= modele
+
+
+def incomplets(limit: int | None = None) -> list[Dossier]:
+    """Dossiers dont il reste au moins une etape a faire.
+
+    Les executions comptent les etapes en echec, ce qui repond a « combien ».
+    Un exploitant a besoin de « lesquels » : un compteur a 3 sans moyen de
+    savoir quels dossiers sont concernes ne se traite pas.
+
+    Les dossiers deja entames passent devant. Un dossier a moitie prepare est
+    ce qui trompe : il a un score, il s'affiche comme les autres, et il lui
+    manque l'analyse sur laquelle un recruteur croit s'appuyer.
+    """
+    dossiers: list[Dossier] = []
+    for application in a_traiter():
+        faites, manquantes = [], []
+        for etape in ETAPES:
+            (faites if etape.faite(application) else manquantes).append(etape.nom)
+        if manquantes:
+            dossiers.append(
+                Dossier(application=application, faites=faites, manquantes=manquantes)
+            )
+
+    dossiers.sort(key=lambda item: (item.jamais_touche, item.application.applied_at))
+    return dossiers[:limit] if limit else dossiers
+
+
 def run(
     *,
     applications=None,

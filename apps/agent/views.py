@@ -12,7 +12,7 @@ from django.views.generic import TemplateView
 from apps.core.permissions import ActionPermissionMixin
 from apps.matching.services import DecisionRefused
 
-from . import budget, pipeline
+from . import adoption, budget, pipeline, watch
 from .models import AgentRun, Recommendation
 
 
@@ -38,6 +38,16 @@ class AgentDashboardView(LoginRequiredMixin, TemplateView):
             .order_by("-created_at")[:15]
         )
         context["waiting"] = pipeline.a_traiter().count()
+        # Ce que les recruteurs font des propositions : la seule mesure qui
+        # separe une supervision reelle d'un tampon.
+        context["adoption"] = adoption.mesurer()
+        context["alertes"] = watch.alertes_en_cours()
+        context["derniere_veille"] = watch.dernier_controle()
+        # Les executions disent combien d'etapes ont echoue ; celle-ci dit
+        # lesquelles, ce qui est la seule forme exploitable.
+        context["incomplets"] = [
+            item for item in pipeline.incomplets(limit=40) if not item.jamais_touche
+        ][:10]
 
         totaux = AgentRun.objects.aggregate(
             tokens=Sum("tokens_used"),
@@ -86,6 +96,37 @@ class ResolveRecommendationView(ActionPermissionMixin, LoginRequiredMixin, View)
         return redirect(
             "candidates:application_detail", pk=recommandation.application_id
         )
+
+
+class WatchView(ActionPermissionMixin, LoginRequiredMixin, View):
+    """Relance la veille a la main.
+
+    Volontairement hors de `agent_actif()` : l'interrupteur protege la depense,
+    pas la surveillance. Couper l'agent pour economiser et perdre au passage le
+    controle de biais serait un mauvais echange — et cette tache ne coute aucun
+    token.
+    """
+
+    def post(self, request):
+        controle = watch.veiller(actor=request.user)
+
+        if not controle.alertes:
+            messages.success(
+                request,
+                f"Veille effectuee : aucune alerte, pire ratio "
+                f"{controle.pire_ratio:.3f}. Le releve est date de maintenant.",
+            )
+        else:
+            legales = sum(
+                1 for item in controle.alertes if item.niveau == "ecart_legal"
+            )
+            messages.warning(
+                request,
+                f"{len(controle.alertes)} alerte(s) dont {legales} ecart(s) au "
+                f"seuil legal. La veille ne bloque rien : corriger reste une "
+                f"decision humaine.",
+            )
+        return redirect("agent:dashboard")
 
 
 class RunAgentView(ActionPermissionMixin, LoginRequiredMixin, View):

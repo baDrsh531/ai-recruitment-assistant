@@ -54,6 +54,25 @@ def run_agent_task(application_id: str | None = None, trigger: str = "schedule")
     }
 
 
+@shared_task
+def watch_task(dataset_name: str = "ranking_v1") -> dict:
+    """Veille periodique sur la derive du biais.
+
+    Volontairement hors de `agent_actif()` et hors du budget : cette tache
+    n'appelle aucun modele, et un garde-fou qui s'arreterait en meme temps que
+    ce qu'il surveille ne garderait rien.
+    """
+    from . import watch
+
+    controle = watch.veiller(dataset_name=dataset_name)
+    return {
+        "alertes": len(controle.alertes),
+        "conforme": controle.conforme,
+        "stable": controle.stable,
+        "pire_ratio": controle.pire_ratio,
+    }
+
+
 def declencher(application=None, *, trigger: str = "upload") -> bool:
     """Lance l'agent en tache de fond si c'est possible.
 

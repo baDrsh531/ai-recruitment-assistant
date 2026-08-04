@@ -157,6 +157,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.candidates.tasks.purge_expired_task",
         "schedule": 24 * 60 * 60,
     },
+    # Meme raisonnement pour la surveillance du biais : un controle qui depend
+    # d'une page qu'un responsable doit penser a ouvrir ne se declenche jamais
+    # entre deux audits. Cette tache n'appelle aucun modele et ne consomme donc
+    # rien ; la programmer plus souvent ne coute que du temps de calcul.
+    "veille-derive-biais": {
+        "task": "apps.agent.tasks.watch_task",
+        "schedule": 12 * 60 * 60,
+    },
 }
 
 # --- Couche IA ------------------------------------------------------------
