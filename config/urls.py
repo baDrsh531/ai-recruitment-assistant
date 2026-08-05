@@ -18,6 +18,7 @@ urlpatterns = [
     path("transparence/", include("apps.evaluation.urls", namespace="evaluation")),
     path("api/", include("apps.api.urls", namespace="api")),
     path("agent/", include("apps.agent.urls", namespace="agent")),
+    path("echanges/", include("apps.outreach.urls", namespace="outreach")),
     path("", include("apps.candidates.urls", namespace="candidates")),
 ]
 

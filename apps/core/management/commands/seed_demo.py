@@ -224,6 +224,7 @@ class Command(BaseCommand):
 
         self._decisions(recruiter)
         self._recommandations(recruiter)
+        self._echanges(recruiter)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -374,4 +375,98 @@ class Command(BaseCommand):
         self.stdout.write(
             f"{len(PLAN)} recommandations tranchees par un humain, dont "
             f"{sum(1 for _, suivie in PLAN if not suivie)} contredites."
+        )
+
+    def _echanges(self, recruteur) -> None:
+        """Quelques echanges, et surtout quelques silences.
+
+        La page des echanges se lit mal a vide : un taux de silence de 0 % sur
+        zero dossier ressemble a un taux exemplaire. On seme donc les deux
+        etats — un candidat ecarte puis prevenu, un autre ecarte et laisse sans
+        reponse — pour que la mesure ait quelque chose a montrer et que le
+        contraste soit visible.
+
+        Les messages sont ecrits directement en base plutot qu'expedies : un
+        peuplement de demonstration n'a pas a passer par la couche courriel.
+        """
+        import datetime as dt
+
+        from django.utils import timezone
+
+        from apps.outreach import registry, services
+        from apps.outreach.models import Channel, Consent, Message
+
+        if Message.objects.exists():
+            self.stdout.write("Echanges deja presents.")
+            return
+
+        dossiers = list(
+            Application.objects.select_related("candidate", "offer").order_by(
+                "applied_at"
+            )
+        )
+        if not dossiers:
+            return
+
+        maintenant = timezone.now()
+
+        # Un accord explicite sur un canal ferme par defaut, et un retrait sur
+        # un canal presume ouvert : les deux sens de la regle sont visibles.
+        services.enregistrer_consentement(
+            dossiers[0].candidate, channel=Channel.WHATSAPP, granted=True,
+            actor=recruteur, source=Consent.Source.FORM,
+            note="Case cochee sur le formulaire de candidature.",
+        )
+        if len(dossiers) > 1:
+            services.enregistrer_consentement(
+                dossiers[1].candidate, channel=Channel.CALL, granted=False,
+                actor=recruteur, source=Consent.Source.WITHDRAWN,
+                note="Demande a ne plus etre appele pendant ses heures de travail.",
+            )
+
+        modele = registry.get("accuse_reception")
+        for candidature in dossiers[:3]:
+            rendu = modele.rendre(
+                **services.valeurs_par_defaut(candidature, actor=recruteur)
+            )
+            quand = maintenant - dt.timedelta(days=20, hours=3)
+            message = Message.objects.create(
+                application=candidature,
+                channel=Channel.EMAIL,
+                direction=Message.Direction.OUTBOUND,
+                status=Message.Status.SENT,
+                subject=rendu["subject"],
+                body=rendu["body"],
+                template_id=rendu["template_id"],
+                template_version=rendu["template_version"],
+                drafted_by=recruteur,
+                sent_by=recruteur,
+                sent_at=quand,
+            )
+            Message.objects.filter(pk=message.pk).update(created_at=quand)
+
+        # Un appel consigne : il compte comme une reponse au meme titre qu'un
+        # e-mail expedie, et c'est ce que la mesure du silence doit montrer.
+        ecartes = [
+            candidature for candidature in dossiers
+            if candidature.stage == Application.Stage.REJECTED
+            and candidature.decided_at
+        ]
+        if ecartes:
+            services.consigner(
+                ecartes[0],
+                channel=Channel.CALL,
+                body=(
+                    "Refus annonce par telephone. Le candidat a demande le "
+                    "detail des criteres ; explication envoyee dans la foulee."
+                ),
+                actor=recruteur,
+                direction=Message.Direction.OUTBOUND,
+            )
+
+        self.stdout.write(
+            f"{Message.objects.count()} echanges semes, "
+            f"{Consent.objects.count()} consentements. "
+            f"{len(ecartes[1:])} dossier(s) ecarte(s) volontairement laisse(s) "
+            f"sans reponse, pour que la mesure du silence montre les deux etats."
         )

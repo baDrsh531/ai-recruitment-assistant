@@ -35,6 +35,13 @@ AGENT_DAILY_TOKEN_BUDGET = env.int("AGENT_DAILY_TOKEN_BUDGET", default=200_000)
 AGENT_USERNAME = env("AGENT_USERNAME", default="agent")
 DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
 
+# --- Echanges avec les candidats -------------------------------------------
+# Nom qui signe les messages, et delai de reponse annonce dans les gabarits.
+# Annoncer un delai engage : `apps/outreach/silence.py` mesure ensuite les
+# dossiers restes muets au-dela.
+OUTREACH_ORGANISATION = env("OUTREACH_ORGANISATION", default="notre equipe")
+OUTREACH_RESPONSE_DAYS = env.int("OUTREACH_RESPONSE_DAYS", default=15)
+
 # --- Applications ---------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -63,6 +70,7 @@ LOCAL_APPS = [
     "apps.evaluation",
     "apps.api",
     "apps.agent",
+    "apps.outreach",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

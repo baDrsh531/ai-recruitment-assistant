@@ -47,6 +47,11 @@ class AuditLog(models.Model):
         AGENT_RAN = "agent_ran", "Execution de l'agent"
         AGENT_RECOMMENDED = "agent_recommended", "Recommandation de l'agent"
         AGENT_WATCHED = "agent_watched", "Veille de l'agent"
+        # Echanges avec les candidats. Un candidat qui exerce son droit d'acces
+        # demande d'abord ce qu'on lui a ecrit, et sur quelle base.
+        MESSAGE_SENT = "message_sent", "Message envoye"
+        MESSAGE_LOGGED = "message_logged", "Echange consigne"
+        CONSENT_RECORDED = "consent_recorded", "Consentement enregistre"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

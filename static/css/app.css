@@ -712,6 +712,27 @@ input[type="file"] {
   color: var(--text-muted);
 }
 
+/* Case a cocher et son libelle sur une meme ligne. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+}
+
+.check input {
+  width: auto;
+  margin: 0;
+}
+
+/* Bloc autonome a l'interieur d'une carte : un message dans un fil. */
+.panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
 .error {
   font-size: 0.75rem;
   color: var(--danger);
@@ -1043,6 +1064,10 @@ input[type="file"] {
 .muted   { color: var(--text-muted); }
 .subtle  { color: var(--text-subtle); }
 .small   { font-size: 0.75rem; }
+/* Utilisee de longue date sur les compteurs d'echecs sans avoir jamais ete
+   definie : la regle etait ecrite dans les gabarits et n'existait pas ici, si
+   bien qu'un chiffre en echec s'affichait comme un chiffre ordinaire. */
+.danger  { color: var(--danger); }
 .num     { font-variant-numeric: tabular-nums; }
 .stack   { display: flex; flex-direction: column; gap: var(--space-3); }
 .row     { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }

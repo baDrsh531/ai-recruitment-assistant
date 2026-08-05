@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Echanges — {{ application.candidate.full_name }}{% endblock %}
+{% block heading %}Echanges avec {{ application.candidate.full_name }}{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ application.offer.title }} · {{ application.get_stage_display }} ·
+    <a href="{{ application.get_absolute_url }}">revenir au dossier</a>
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Canaux et consentement</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Canal</th><th>Etat</th><th>Origine</th><th>Connecte</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for canal in canaux %}
+          <tr>
+            <th scope="row">{{ canal.libelle }}</th>
+            <td>
+              {% if canal.autorise %}
+                <span class="badge badge--ok">ouvert</span>
+              {% else %}
+                <span class="badge badge--warn">ferme</span>
+              {% endif %}
+            </td>
+            <td class="muted small">
+              {% if canal.explicite %}
+                {{ canal.enregistre.get_source_display }},
+                le {{ canal.enregistre.created_at|date:"d/m/Y" }}
+              {% elif canal.sur_accord %}
+                aucun accord enregistre
+              {% else %}
+                presume par le depot de la candidature
+              {% endif %}
+            </td>
+            <td>
+              {% if canal.etat == 'connecte' %}
+                <span class="badge badge--ok">connecte</span>
+              {% elif canal.etat == 'hors_logiciel' %}
+                <span class="badge">hors logiciel, se consigne</span>
+              {% else %}
+                <span class="badge">modelise, non connecte</span>
+              {% endif %}
+            </td>
+            <td class="num">
+              <form method="post" action="{% url 'outreach:consent' application.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="channel" value="{{ canal.channel }}">
+                <input type="hidden" name="granted" value="{% if canal.autorise %}0{% else %}1{% endif %}">
+                <button type="submit" class="btn btn--sm">
+                  {% if canal.autorise %}Enregistrer un retrait{% else %}Enregistrer un accord{% endif %}
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    L'e-mail et l'appel sont presumes ouverts : le candidat a donne ces
+    coordonnees <b>pour cet usage</b> et attend une reponse. WhatsApp et le SMS
+    arrivent sur un telephone personnel, souvent hors des heures de travail, et
+    demandent un accord explicite. Un retrait ferme un canal meme presume :
+    quelqu'un qui demande a ne plus etre appele doit etre entendu.
+    Colonne « connecte » : seul l'e-mail dispose d'un expediteur reel. Les
+    autres canaux sont modelises, consentis et journalises, sans fournisseur
+    derriere — ecrire un faux expediteur aurait donne un systeme qui ment.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Preparer un message</h2></div>
+  <div class="card__body">
+    <form method="post" action="{% url 'outreach:draft' application.pk %}" class="stack">
+      {% csrf_token %}
+      <div class="field">
+        <label class="label" for="modele">Modele</label>
+        <select class="select" id="modele" name="modele">
+          {% for modele in modeles %}
+            <option value="{{ modele.id }}">{{ modele.libelle }} (v{{ modele.version }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="channel">Canal</label>
+        <select class="select" id="channel" name="channel">
+          {% for canal in canaux %}
+            <option value="{{ canal.channel }}">{{ canal.libelle }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="question">Precision demandee, ou motif du refus</label>
+        <input class="input" id="question" name="question"
+               placeholder="Utilise seulement par les modeles qui en ont besoin">
+      </div>
+      <label class="check">
+        <input type="checkbox" name="sans_modele" value="1">
+        Gabarit seul, sans passer par le modele de langage
+      </label>
+      <button type="submit" class="btn btn--primary">Preparer un brouillon</button>
+    </form>
+  </div>
+  <p class="card__note">
+    Le modele de langage <b>n'ecrit pas</b> le message : il personnalise un
+    gabarit deja valide, a partir d'elements factuels tires du profil extrait.
+    Il ne voit jamais le CV brut. Le pire resultat possible est donc le texte
+    generique, jamais un courrier faux. En screening a l'aveugle, la formule
+    d'appel reste neutre et aucun element identifiant n'est transmis au modele.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Consigner un appel ou une reponse recue</h2></div>
+  <div class="card__body">
+    <form method="post" action="{% url 'outreach:log' application.pk %}" class="stack">
+      {% csrf_token %}
+      <div class="field">
+        <label class="label" for="log-channel">Canal</label>
+        <select class="select" id="log-channel" name="channel">
+          <option value="call">Appel telephonique</option>
+          <option value="email">E-mail</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="sms">SMS</option>
+          <option value="other">Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="direction">Sens</label>
+        <select class="select" id="direction" name="direction">
+          <option value="in">Recu du candidat</option>
+          <option value="out">Dit au candidat</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="log-body">Ce qui s'est dit</label>
+        <textarea class="input" id="log-body" name="body" rows="3"></textarea>
+      </div>
+      <button type="submit" class="btn">Consigner</button>
+    </form>
+  </div>
+  <p class="card__note">
+    Le statut sera « Consigne » et non « Envoye » : c'est une declaration
+    humaine, pas une trace technique. Les confondre donnerait au journal une
+    autorite qu'il n'a pas. Un appel consigne compte comme une reponse au
+    candidat, au meme titre qu'un e-mail expedie.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Fil des echanges</h2>
+    {% if messages_ %}<span class="badge">{{ messages_|length }}</span>{% endif %}
+  </div>
+  {% if messages_ %}
+    <div class="card__body stack">
+      {% for message in messages_ %}
+        <article class="panel">
+          <p>
+            <span class="badge">{{ message.get_channel_display }}</span>
+            <span class="badge{% if message.status == 'sent' %} badge--ok{% elif message.status == 'failed' %} badge--danger{% elif message.status == 'draft' %} badge--warn{% endif %}">
+              {{ message.get_status_display }}
+            </span>
+            <span class="muted small">
+              {{ message.get_direction_display }} ·
+              {{ message.created_at|date:"d/m/Y H:i" }}
+              {% if message.template_id %}
+                · {{ message.template_id }} v{{ message.template_version }}
+              {% endif %}
+            </span>
+            {% if message.redige_par_un_modele %}
+              <span class="badge badge--warn">redige par un modele</span>
+            {% endif %}
+          </p>
+
+          {% if message.error %}
+            <p class="alert alert--danger">{{ message.error }}</p>
+          {% endif %}
+
+          {% if message.modifiable %}
+            <form method="post" action="{% url 'outreach:send' message.pk %}" class="stack">
+              {% csrf_token %}
+              {% if message.subject %}
+                <input class="input" name="subject" value="{{ message.subject }}">
+              {% endif %}
+              <textarea class="input" name="body" rows="12">{{ message.body }}</textarea>
+              <button type="submit" class="btn btn--primary">Relu — envoyer</button>
+            </form>
+          {% else %}
+            {% if message.subject %}<p><b>{{ message.subject }}</b></p>{% endif %}
+            <p class="prose">{{ message.body }}</p>
+            <p class="muted small">
+              {% if message.sent_by %}par {{ message.sent_by.get_full_name|default:message.sent_by.username }}{% endif %}
+              {% if message.sent_at %} · {{ message.sent_at|date:"d/m/Y H:i" }}{% endif %}
+            </p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+    <p class="card__note">
+      Un message envoye ne se modifie plus. Corriger apres coup le texte d'un
+      courrier qu'une personne a deja lu transformerait ce journal en fiction ;
+      il faut en rediger un autre.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun echange" text="Rien n'a encore ete dit a ce candidat, ni recu de lui." %}
+  {% endif %}
+</section>
+{% endblock %}
