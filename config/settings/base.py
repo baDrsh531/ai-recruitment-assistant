@@ -44,6 +44,24 @@ DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
 OUTREACH_ORGANISATION = env("OUTREACH_ORGANISATION", default="")
 OUTREACH_RESPONSE_DAYS = env.int("OUTREACH_RESPONSE_DAYS", default=15)
 
+# Expedition reelle. Sans `EMAIL_HOST`, on reste sur le comportement du fichier
+# de reglages courant : console en developpement. Renseigner ces variables est
+# la seule chose a faire pour que les messages partent vraiment — aucun code
+# n'a a changer.
+EMAIL_HOST = env("EMAIL_HOST", default="")
+if EMAIL_HOST:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+    EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+    EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+    EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=20)
+
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="Recrutement.IA <ne-pas-repondre@example.com>"
+)
+
 # --- Applications ---------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.admin",

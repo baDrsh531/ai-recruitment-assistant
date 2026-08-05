@@ -184,6 +184,54 @@ def test_a_consent_never_overwrites_the_previous_one(candidature, recruteur):
     assert not services.autorise(candidat, Channel.WHATSAPP)
 
 
+def test_when_two_records_share_a_timestamp_the_refusal_wins(candidature, recruteur):
+    """L'horloge de Windows avance par paliers d'environ 15 ms, et la cle
+    primaire est un UUID : deux enregistrements poses dans le meme tic ne se
+    departagent pas. Trier sur la seule date rendait le resultat aleatoire, et
+    un retrait pouvait ne pas prendre effet.
+
+    Quand on ne sait pas lequel est arrive en second, on n'ecrit pas.
+    """
+    candidat = candidature.candidate
+    instant = timezone.now()
+    for accorde in (True, False):
+        consentement = services.enregistrer_consentement(
+            candidat, channel=Channel.EMAIL, granted=accorde, actor=recruteur
+        )
+        Consent.objects.filter(pk=consentement.pk).update(created_at=instant)
+
+    assert Consent.objects.filter(candidate=candidat).count() == 2
+    assert not services.autorise(candidat, Channel.EMAIL)
+
+    # Et dans l'autre ordre d'insertion : le resultat ne doit pas en dependre.
+    Consent.objects.filter(candidate=candidat).delete()
+    for accorde in (False, True):
+        consentement = services.enregistrer_consentement(
+            candidat, channel=Channel.EMAIL, granted=accorde, actor=recruteur
+        )
+        Consent.objects.filter(pk=consentement.pk).update(created_at=instant)
+
+    assert not services.autorise(candidat, Channel.EMAIL)
+
+
+def test_a_later_agreement_still_reopens_a_channel(candidature, recruteur):
+    """La preference au refus ne vaut qu'en cas d'egalite : un accord
+    posterieur doit continuer de rouvrir le canal, sinon un retrait serait
+    definitif."""
+    candidat = candidature.candidate
+    refus = services.enregistrer_consentement(
+        candidat, channel=Channel.EMAIL, granted=False, actor=recruteur
+    )
+    Consent.objects.filter(pk=refus.pk).update(
+        created_at=timezone.now() - dt.timedelta(days=1)
+    )
+    services.enregistrer_consentement(
+        candidat, channel=Channel.EMAIL, granted=True, actor=recruteur
+    )
+
+    assert services.autorise(candidat, Channel.EMAIL)
+
+
 def test_recording_a_consent_is_audited(candidature, recruteur):
     services.enregistrer_consentement(
         candidat := candidature.candidate, channel=Channel.SMS,
@@ -311,6 +359,42 @@ def test_every_template_renders_with_the_default_values(candidature, recruteur):
 
 
 # --- Envoi -------------------------------------------------------------------
+def test_every_subject_stays_ascii(candidature, recruteur):
+    """Un objet non-ASCII un peu long est replie par la RFC 2047, et certains
+    clients affichent alors le titre precede d'une espace.
+
+    Mesure : un objet ASCII de 84 caracteres ne se replie pas, un objet
+    non-ASCII de 61 caracteres se replie. Un tiret cadratin coutait donc une
+    espace parasite dans la boite de reception."""
+    for modele in registry.disponibles(Channel.EMAIL):
+        message = services.rediger(
+            candidature, modele_id=modele.id, actor=recruteur,
+        )
+        assert message.subject.isascii(), f"{modele.id} : {message.subject!r}"
+
+
+def test_a_long_ascii_subject_survives_a_round_trip(candidature, recruteur, settings):
+    """Le controle qui compte : ce que le destinataire lit reellement."""
+    import email
+    import email.policy
+
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+    candidature.offer.title = "Ingenieur Systemes et Reseaux Confirme, equipe Plateforme"
+    candidature.offer.save(update_fields=["title"])
+    mail.outbox.clear()
+
+    message = services.rediger(
+        candidature, modele_id="proposition", actor=recruteur
+    )
+    services.envoyer(message, actor=recruteur)
+
+    relu = email.message_from_bytes(
+        mail.outbox[0].message().as_bytes(), policy=email.policy.default
+    )["Subject"]
+    assert relu == message.subject
+    assert relu == relu.lstrip(), "objet precede d'une espace"
+
+
 def test_an_email_really_leaves(candidature, recruteur, settings):
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     mail.outbox.clear()

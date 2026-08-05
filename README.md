@@ -1016,6 +1016,14 @@ redaction aurait cache le probleme au lieu de le poser : le brouillon existe,
 le refus explique ce qui manque, et enregistrer l'accord debloque l'envoi sans
 reecrire le texte.
 
+**En cas d'egalite de date, le refus l'emporte.** L'horloge de Windows avance
+par paliers d'environ 15 ms, et la cle primaire est un UUID : deux
+enregistrements poses dans le meme tic ne se departagent pas. Trier sur la
+seule date rendait le resultat aleatoire — un retrait enregistre juste apres un
+accord pouvait ne pas prendre effet, et le systeme aurait ecrit a quelqu'un qui
+venait de demander le contraire. Le defaut a ete revele par un tirage de la
+suite de tests en ordre aleatoire, pas par une relecture.
+
 **Le modele de langage n'ecrit pas le message**, il personnalise un gabarit
 deja valide — meme parti que pour l'explication d'un score. La consequence
 compte plus que le principe : le pire resultat possible est le texte
@@ -1079,6 +1087,36 @@ Un nom entierement en capitales sur plusieurs mots — « BADR SAHRAOUI » comme
 « ALAOUI YOUSSEF » — ne porte **aucun** signal d'ordre : les deux s'ecrivent
 pareil et se lisent a l'envers l'un de l'autre. Le module renonce. Se tromper
 de prenom dans un courrier de recrutement est pire que de ne pas en mettre.
+
+#### Verifier que ca part vraiment
+
+```
+python manage.py outreach_selftest --to moi@example.com
+```
+
+Fabrique les trois messages qui comptent — invitation a un entretien, reponse
+positive, reponse negative — et les expedie. **Sans `EMAIL_HOST` dans le `.env`,
+rien ne peut partir** : la commande ecrit alors des fichiers `.eml` complets,
+ouvrables dans Gmail, Outlook ou Thunderbird. Le fichier contient le message tel
+qu'il serait recu, versions texte et HTML et marque liee comprises ; tout est
+eprouve sauf le saut SMTP.
+
+Ecrire un `.eml` plutot qu'annoncer « envoye » sans serveur suit la meme regle
+que le reste du module : on ne simule pas un envoi. La candidature d'essai est
+supprimee a la fin — une adresse reelle n'a rien a faire dans le jeu de
+demonstration une fois le controle passe.
+
+Pour envoyer pour de vrai, il suffit de renseigner `EMAIL_HOST`, `EMAIL_PORT`,
+`EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` et `DEFAULT_FROM_EMAIL`. Aucun code ne
+change : `base.py` bascule seul sur SMTP.
+
+**Un defaut trouve en relisant les en-tetes produits.** L'objet de la reponse
+positive arrivait precede d'une espace. Cause : un objet contenant un seul
+caractere hors ASCII est encode selon la RFC 2047, et s'il est un peu long il
+est replie sur deux lignes — `Subject:` reste vide et certains clients affichent
+l'espace. Mesure : un objet ASCII de 84 caracteres ne se replie pas, un objet
+non-ASCII de 61 caracteres se replie. Le tiret cadratin des objets est devenu
+deux-points, et un test refuse desormais tout objet non-ASCII.
 
 #### Le silence
 
@@ -1381,6 +1419,13 @@ tests/             suite pytest
   Le modele de donnees et l'interface d'expedition sont ecrits ; y brancher un
   fournisseur est l'affaire d'une classe. Tant que ce n'est pas fait, ces
   canaux ne sont pas une fonctionnalite livree.
+- Les objets de courriel ecrits par le projet sont en ASCII, ce qui evite le
+  repliement RFC 2047 et l'espace parasite qu'il laisse en tete du titre. Mais
+  l'**intitule du poste** est injecte dedans, et ce module ne le choisit pas :
+  une offre dont le nom porte un accent, dans un objet long, reproduira le
+  defaut. Django refuse un en-tete pre-encode multi-lignes — son garde-fou
+  contre l'injection — ce qui ferme la correction generale sans reecrire
+  l'assemblage du message.
 - Le taux de silence se calcule sur les messages que **ce** systeme connait. Un
   recruteur qui repond depuis sa boite personnelle sans rien consigner
   apparaitra comme silencieux. La mesure sous-estime donc les reponses et

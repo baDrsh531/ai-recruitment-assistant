@@ -42,12 +42,38 @@ CANAUX_COURTS = frozenset({Channel.SMS, Channel.WHATSAPP})
 
 # --- Consentement ------------------------------------------------------------
 def dernier_consentement(candidate: Candidate, channel: str) -> Consent | None:
-    """Dernier enregistrement pour ce canal. Les precedents restent en base."""
-    return (
+    """Dernier enregistrement pour ce canal. Les precedents restent en base.
+
+    **En cas d'egalite de date, le refus l'emporte.** L'horloge de Windows
+    avance par paliers d'environ 15 ms : deux enregistrements poses dans le
+    meme tic portent la meme date, et la cle primaire etant un UUID, rien ne
+    dit lequel est arrive en second. Trier sur la seule date rendait donc le
+    resultat aleatoire — un retrait enregistre juste apres un accord pouvait ne
+    pas prendre effet, et le systeme aurait ecrit a quelqu'un qui venait de
+    demander le contraire.
+
+    Departager vers le refus est le seul sens defendable : quand on ne sait
+    pas, on n'ecrit pas.
+    """
+    dernier = (
         Consent.objects.filter(candidate=candidate, channel=channel)
         .order_by("-created_at")
         .first()
     )
+    if dernier is None:
+        return None
+
+    refus = (
+        Consent.objects.filter(
+            candidate=candidate,
+            channel=channel,
+            created_at=dernier.created_at,
+            granted=False,
+        )
+        .order_by("-created_at")
+        .first()
+    )
+    return refus or dernier
 
 
 def autorise(candidate: Candidate, channel: str) -> bool:
@@ -153,6 +179,12 @@ def valeurs_par_defaut(application: Application, *, actor=None, blind: bool = Fa
         "duree": 45,
         "question": "Pourriez-vous nous preciser ce point ?",
         "motif": "votre profil ne correspond pas aux attendus du poste.",
+        # Volontairement vague : le gabarit n'invente ni salaire, ni date, ni
+        # statut. Ce que le recruteur n'a pas saisi n'est pas annonce.
+        "conditions": (
+            "Nous reviendrons vers vous tres vite avec les modalites pratiques "
+            "— date de demarrage, conditions et rattachement."
+        ),
     }
 
 

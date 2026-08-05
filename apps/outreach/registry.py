@@ -14,6 +14,17 @@ vide.
 Deux longueurs par modele, et ce n'est pas cosmetique : coller cinq paragraphes
 d'e-mail dans un WhatsApp produit un message que personne ne lit. Les canaux
 courts recoivent une version courte, ecrite pour eux.
+
+**Les objets restent en ASCII.** Ce n'est pas une coquetterie. Un objet qui
+contient un seul caractere hors ASCII est encode selon la RFC 2047, et s'il est
+un peu long il est alors replie sur deux lignes : `Subject:` reste vide, et
+certains clients affichent le titre precede d'une espace. Mesure sur ce projet :
+un objet ASCII de 84 caracteres ne se replie pas, un objet non-ASCII de 61
+caracteres se replie. Un tiret cadratin dans un objet coutait donc une espace
+parasite dans la boite de reception ; deux-points ne coutent rien.
+
+La limite subsiste pour un intitule de poste accentue dans un objet long, que
+ce module ne choisit pas — c'est signale dans les limites du README.
 """
 
 from __future__ import annotations
@@ -137,9 +148,11 @@ Bien cordialement,
 DEMANDE_INFORMATION = enregistrer(
     Modele(
         id="demande_information",
-        version="1.0.0",
+        # 1.0.1 : le tiret cadratin de l'objet est devenu deux-points. Mesure a
+        # l'appui — voir la note sur les objets en tete de fichier.
+        version="1.0.1",
         libelle="Demande de precision",
-        objet="Votre candidature au poste de {poste} — une precision",
+        objet="Votre candidature au poste de {poste} : une precision",
         corps="""
 {salutation}
 
@@ -185,6 +198,37 @@ Bien cordialement,
             "toujours a l'etude. Le processus prend plus de temps que prevu, je "
             "ne voulais pas vous laisser sans nouvelles. {signataire}."
         ),
+    )
+)
+
+# Le seul message qui engage l'employeur. D'ou trois precautions absentes des
+# autres : il n'annonce aucune condition que le recruteur n'a pas saisie, il
+# dit que rien n'est definitif avant un ecrit signe, et il ne part pas par SMS.
+# Un « c'est bon pour vous » envoye trop vite se retracte tres mal.
+PROPOSITION = enregistrer(
+    Modele(
+        id="proposition",
+        version="1.0.0",
+        libelle="Reponse positive",
+        objet="Votre candidature au poste de {poste} : suite favorable",
+        corps="""
+{salutation}
+
+Nous avons le plaisir de vous annoncer que votre candidature au poste de
+{poste} est retenue.
+
+{conditions}
+
+Ces elements vous seront confirmes par ecrit ; rien n'est definitif avant la
+signature. Si un point demande a etre discute, dites-le-moi simplement en
+repondant a ce message.
+
+Nous sommes ravis de vous compter parmi nous.
+
+{signataire}
+{entreprise}
+""",
+        canaux=frozenset({Channel.EMAIL}),
     )
 )
 
