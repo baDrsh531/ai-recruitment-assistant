@@ -79,6 +79,15 @@ def ingest(
 def _attach_to_offer(document: CVDocument, offer: JobOffer | None, actor) -> None:
     if offer is None or document.candidate_id is None:
         return
-    Application.objects.get_or_create(candidate=document.candidate, offer=offer, defaults={
-        "document": document,
-    })
+    candidature, _ = Application.objects.get_or_create(
+        candidate=document.candidate, offer=offer, defaults={"document": document}
+    )
+
+    # L'agent prend la suite si un broker le permet. Sans broker, on ne
+    # declenche rien : Celery s'executerait en synchrone et le depot du CV
+    # resterait bloque pendant que le modele redige. Le travail attend alors
+    # la commande `run_agent`, et un traitement differe vaut mieux qu'une page
+    # qui se fige.
+    from apps.agent.tasks import declencher
+
+    declencher(candidature, trigger="upload")

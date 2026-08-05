@@ -1,0 +1,23 @@
+{% comment %}
+Une proportion et son intervalle de confiance. `taux` est un objet `Taux`
+(apps/agent/adoption.py) : pourcentage, borne_basse, borne_haute, tranchees.
+
+Pas une jauge : ici le « bon » n'est pas a droite. Un taux de contradiction de
+0 % decrit un tampon, 100 % un agent inutile. Peindre en vert ce qui va vers la
+droite ferait dire au graphique le contraire de ce que la page explique.
+
+L'intervalle est dessine plus large que le point parce que c'est lui
+l'information quand l'effectif est petit.
+{% endcomment %}
+<div class="range" role="img"
+     aria-label="{{ taux.pourcentage }} % sur {{ taux.tranchees }} decision(s), intervalle de confiance a 95 % de {{ taux.borne_basse }} a {{ taux.borne_haute }} %">
+  <div class="range__track">
+    <div class="range__band"
+         style="left: {{ taux.borne_basse }}%; width: {{ taux.largeur }}%"></div>
+    <div class="range__point" style="left: {{ taux.pourcentage }}%"></div>
+  </div>
+  <span class="range__value">
+    <b>{{ taux.pourcentage }}&nbsp;%</b>
+    <span class="muted small">[{{ taux.borne_basse }}–{{ taux.borne_haute }}]</span>
+  </span>
+</div>

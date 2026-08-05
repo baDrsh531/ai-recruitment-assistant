@@ -42,6 +42,11 @@ class AuditLog(models.Model):
         DATA_PURGED = "data_purged", "Donnees purgees"
         CANDIDATES_MERGED = "candidates_merged", "Dossiers fusionnes"
         BIAS_MONITORED = "bias_monitored", "Controle de biais"
+        # Actions de l'agent d'orchestration. Distinctes de celles d'un humain :
+        # un auditeur doit pouvoir les separer sans lire les metadonnees.
+        AGENT_RAN = "agent_ran", "Execution de l'agent"
+        AGENT_RECOMMENDED = "agent_recommended", "Recommandation de l'agent"
+        AGENT_WATCHED = "agent_watched", "Veille de l'agent"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)

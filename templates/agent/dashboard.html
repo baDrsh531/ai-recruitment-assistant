@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}Agent d'orchestration{% endblock %}
+{% block heading %}Agent d'orchestration{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ waiting }} dossier(s) en attente de preparation ·
+    {{ pending|length }} recommandation(s) en attente d'un recruteur.
+  </p>
+{% endblock %}
+{% block actions %}
+  <form method="post" action="{% url 'agent:watch' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn">Relancer la veille</button>
+  </form>
+  <form method="post" action="{% url 'agent:run' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--primary" {% if not actif %}disabled{% endif %}>
+      Lancer une preparation
+    </button>
+  </form>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce que l'agent ne fait pas</h2>
+    {% if actif %}
+      <span class="badge badge--ok">en marche</span>
+    {% else %}
+      <span class="badge badge--warn">arrete</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      Il lit les CV, calcule les scores, redige les analyses, prepare les
+      questions d'entretien et <b>propose</b> une decision. Il ne fait avancer
+      aucune candidature et n'en ecarte aucune.
+    </p>
+    <p class="mt-4">
+      Ce n'est pas une consigne, c'est une propriete du systeme : le compte de
+      l'agent porte un role place hors des comptes habilites a decider. Un appel
+      direct a la fonction de decision avec ce compte est refuse, comme il le
+      serait pour un compte en lecture seule.
+    </p>
+  </div>
+  <p class="card__note">
+    Le tri de candidatures releve de l'annexe III.4 de l'AI Act, qui impose une
+    supervision humaine effective. Un agent qui ferait avancer des dossiers tout
+    seul ne serait pas seulement discutable : il retirerait au systeme ce qui le
+    rend defendable.
+  </p>
+</section>
+
+<div class="grid">
+  {% include "partials/stat_tile.html" with label="Dossiers prepares" value=totaux.traites %}
+  {% include "partials/stat_tile.html" with label="Recommandations" value=totaux.recommandations %}
+  {% include "partials/stat_tile.html" with label="Etapes en echec" value=totaux.echecs hint="serveur d'inference injoignable, le plus souvent" %}
+  {% include "partials/stat_tile.html" with label="Tokens consommes" value=totaux.tokens %}
+</div>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Budget du jour</h2>
+    {% if budget.epuise %}
+      <span class="badge badge--danger">epuise</span>
+    {% elif budget.illimite %}
+      <span class="badge badge--warn">sans limite</span>
+    {% else %}
+      <span class="badge badge--ok">{{ budget.restant }} tokens restants</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    {% if budget.illimite %}
+      <p class="muted">
+        Aucun plafond configure. A reserver au developpement : le mode d'echec
+        le plus courant n'est pas la depense volontaire, c'est la boucle de
+        reprise sur un dossier qui echoue.
+      </p>
+    {% else %}
+      {% widthratio budget.consomme budget.limite 100 as part %}
+      {% include "partials/meter.html" with percent=part|add:0 %}
+      <p class="hint mt-4">
+        {{ budget.consomme }} tokens sur {{ budget.limite }}, sur la journee
+        glissante. Entree et sortie comptent : un prompt de 4 000 tokens coute
+        meme si la reponse en fait 20.
+      </p>
+    {% endif %}
+  </div>
+  <p class="card__note">
+    Le plafond est dur. Au depassement l'agent s'arrete et le declare ; il ne
+    degrade pas et ne continue pas « juste ce dossier-la ». Une limite qu'on
+    peut franchir n'est pas une limite.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">La supervision est-elle reelle ?</h2>
+    {% if adoption.tampon_possible %}
+      <span class="badge badge--warn">a verifier</span>
+    {% elif adoption.assez_de_recul %}
+      <span class="badge badge--ok">{{ adoption.global_.tranchees }} decisions</span>
+    {% else %}
+      <span class="badge">{{ adoption.global_.tranchees }} decisions</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      Que l'agent ne puisse pas decider est verifiable dans le code. Que la
+      supervision soit <b>effective</b> est une autre affirmation, et elle ne se
+      demontre pas en lisant le code : elle se mesure. Un recruteur qui suit
+      toutes les propositions sans jamais en contredire une rend la garantie
+      formelle.
+    </p>
+
+    {% if adoption.global_.tranchees %}
+      <p class="mt-4"><b>Taux de contradiction</b></p>
+      {% include "partials/range.html" with taux=adoption.global_ %}
+
+      {% if adoption.par_type|length > 1 %}
+        <div class="table-wrap mt-4">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type de proposition</th><th class="num">Tranchees</th>
+                <th class="num">Suivies</th><th>Contredites</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for taux in adoption.par_type %}
+                <tr>
+                  <th scope="row">{{ taux.libelle }}</th>
+                  <td class="num muted">{{ taux.tranchees }}</td>
+                  <td class="num muted">{{ taux.suivies }}</td>
+                  <td>{% include "partials/range.html" with taux=taux %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="hint mt-4">
+          La ventilation compte plus que le total : contredire les rejets mais
+          valider sans broncher les mises en entretien decrit une supervision
+          qui se relache exactement la ou elle engage le moins.
+        </p>
+      {% endif %}
+    {% endif %}
+
+    <p class="alert alert--info mt-4">{{ adoption.lecture }}</p>
+
+    <p class="hint mt-4">
+      {{ adoption.en_attente }} en attente · {{ adoption.perimees }} perimee(s)
+      {% if adoption.delai_median_min is not None %}
+        · delai median de decision {{ adoption.delai_median_min }} min
+      {% endif %}
+    </p>
+    {% if adoption.note_delai %}
+      <p class="hint">{{ adoption.note_delai }}</p>
+    {% endif %}
+  </div>
+  <p class="card__note">
+    Le chiffre est affiche avec son intervalle de confiance a 95 %, et non seul.
+    Un taux mesure sur quelques decisions est compatible avec a peu pres tout :
+    le publier sans sa fourchette rassurerait un comite sans rien prouver.
+    Aucune valeur n'est presentee comme la bonne — ni 0 % ni 100 % ne sont
+    defendables, et entre les deux cela releve du metier, pas de cette page.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Veille sur la derive</h2>
+    {% if alertes %}
+      <span class="badge badge--danger">{{ alertes|length }} alerte(s)</span>
+    {% elif derniere_veille %}
+      <span class="badge badge--ok">stable</span>
+    {% else %}
+      <span class="badge badge--warn">jamais controle</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    {% if derniere_veille %}
+      <p class="muted small">
+        Dernier controle le {{ derniere_veille.created_at|date:"d/m/Y H:i" }} ·
+        pire ratio d'impact {{ derniere_veille.metadata.pire_ratio|floatformat:3 }}
+      </p>
+    {% endif %}
+
+    {% if alertes %}
+      <ul class="mt-4">
+        {% for alerte in alertes %}
+          <li class="mt-4">
+            <span class="badge{% if alerte.niveau == 'ecart_legal' %} badge--danger{% else %} badge--warn{% endif %}">
+              {% if alerte.niveau == 'ecart_legal' %}ecart legal{% else %}derive{% endif %}
+            </span>
+            {{ alerte.message }}
+          </li>
+        {% endfor %}
+      </ul>
+    {% elif derniere_veille %}
+      <p class="mt-4">
+        Aucun ratio d'impact sous le seuil des quatre cinquiemes, aucune baisse
+        superieure au bruit de mesure depuis le releve precedent.
+      </p>
+    {% else %}
+      {% include "partials/empty.html" with title="Aucun controle enregistre" text="La veille n'a jamais tourne. Le bouton en haut de page la lance, ou la commande python manage.py agent_watch." %}
+    {% endif %}
+  </div>
+  <p class="card__note">
+    Cette tache ne coute aucun token : le ratio d'impact se calcule par le
+    moteur deterministe, sans appeler de modele. Elle tourne donc meme quand
+    l'agent est coupe et meme quand le budget est epuise — un garde-fou qui
+    s'arrete en meme temps que ce qu'il surveille ne garde rien. Elle ne bloque
+    rien non plus : elle constate, date et signale.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Dossiers restes incomplets</h2>
+    {% if incomplets %}<span class="badge badge--warn">{{ incomplets|length }}</span>{% endif %}
+  </div>
+  {% if incomplets %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Candidat</th><th>Fait</th><th>Manque</th><th>Cause probable</th></tr>
+        </thead>
+        <tbody>
+          {% for item in incomplets %}
+            <tr>
+              <th scope="row">
+                <a href="{{ item.application.get_absolute_url }}">
+                  {{ item.application.candidate.full_name }}
+                </a>
+              </th>
+              <td class="muted small">{{ item.faites|join:", " }}</td>
+              <td class="small">{{ item.manquantes|join:", " }}</td>
+              <td>
+                {% if item.bloque_sur_le_modele %}
+                  <span class="badge">serveur d'inference</span>
+                {% else %}
+                  <span class="badge badge--danger">a regarder</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Ne sont listes que les dossiers <b>entames puis laisses a moitie</b> — ce
+      sont eux qui trompent : ils ont un score, ils s'affichent comme les
+      autres, et il leur manque l'analyse sur laquelle un recruteur croit
+      s'appuyer. Un dossier auquel il ne manque que des etapes appelant le
+      modele signale un serveur injoignable, rien a corriger ; un dossier
+      auquel il manque le score revele un defaut, puisque ce calcul est local
+      et deterministe.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun dossier a moitie prepare" text="Chaque dossier entame est alle au bout de ses etapes." %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Recommandations en attente</h2>
+    {% if pending %}<span class="badge">{{ pending|length }}</span>{% endif %}
+  </div>
+  {% if pending %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Candidat</th><th>Offre</th><th class="num">Score</th>
+            <th>Proposition</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in pending %}
+            <tr>
+              <th scope="row">
+                <a href="{{ item.application.get_absolute_url }}">
+                  {{ item.application.candidate.full_name }}
+                </a>
+              </th>
+              <td class="muted">{{ item.application.offer.title }}</td>
+              <td class="num">{{ item.percentage }} %</td>
+              <td>
+                <span class="badge{% if item.proposes_rejection %} badge--warn{% endif %}">
+                  {{ item.proposed_stage }}
+                </span>
+              </td>
+              <td class="num">
+                <a class="btn btn--sm" href="{{ item.application.get_absolute_url }}">
+                  Examiner
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Une recommandation se tranche depuis le dossier, apres l'avoir lu — pas
+      depuis cette liste. Valider en série sans ouvrir les dossiers ferait de
+      l'humain une formalite, ce que la supervision est censee empecher.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune recommandation en attente" text="L'agent n'a rien a proposer, ou tout a deja ete tranche." %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Dernieres executions</h2></div>
+  {% if runs %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Declenchee par</th><th>Statut</th>
+            <th class="num">Dossiers</th><th class="num">Recos</th>
+            <th class="num">Echecs</th><th class="num">Tokens</th><th class="num">Duree</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+            <tr>
+              <td class="muted">{{ run.created_at|date:"d/m/Y H:i" }}</td>
+              <td class="muted small">{{ run.get_trigger_display }}</td>
+              <td>
+                <span class="badge{% if run.status == 'budget' %} badge--danger{% elif run.status == 'failed' %} badge--danger{% elif run.status == 'disabled' %} badge--warn{% elif run.ok %} badge--ok{% endif %}">
+                  {{ run.get_status_display }}
+                </span>
+              </td>
+              <td class="num">{{ run.applications_processed }}/{{ run.applications_seen }}</td>
+              <td class="num">{{ run.recommendations_made }}</td>
+              <td class="num{% if run.steps_failed %} danger{% endif %}">{{ run.steps_failed }}</td>
+              <td class="num muted">{{ run.tokens_used }}</td>
+              <td class="num muted">{{ run.duration_ms }} ms</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Une etape en echec n'arrete pas l'agent : le serveur d'inference tombe, le
+      score se calcule quand meme, et la reprise rattrapera l'etape manquante au
+      passage suivant sans refaire le reste.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune execution" text="L'agent n'a pas encore tourne. Le bouton en haut de page le lance, ou la commande python manage.py run_agent." %}
+  {% endif %}
+</section>
+{% endblock %}

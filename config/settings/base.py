@@ -19,6 +19,20 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 # ne peut pas, plutot que de laisser un visiteur conclure qu'une fonctionnalite
 # est cassee alors qu'elle demande un serveur d'inference prive.
 DEMO_MODE = env.bool("DEMO_MODE", default=False)
+
+# --- Agent d'orchestration ------------------------------------------------
+# Interrupteur d'arret. Desactive par defaut : un systeme qui appelle un modele
+# de langage tout seul ne doit pas se mettre en marche parce qu'on a deploye.
+AGENT_ENABLED = env.bool("AGENT_ENABLED", default=False)
+
+# Plafond dur de tokens sur la journee glissante, entree et sortie confondues.
+# 0 = pas de limite, a n'utiliser qu'en developpement. Le mode d'echec le plus
+# courant n'est pas la depense volontaire, c'est la boucle de reprise.
+AGENT_DAILY_TOKEN_BUDGET = env.int("AGENT_DAILY_TOKEN_BUDGET", default=200_000)
+
+# Compte sous lequel l'agent agit. Son role le place hors de `can_decide` :
+# c'est la garantie structurelle qu'il ne peut pas trancher.
+AGENT_USERNAME = env("AGENT_USERNAME", default="agent")
 DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
 
 # --- Applications ---------------------------------------------------------
@@ -48,6 +62,7 @@ LOCAL_APPS = [
     "apps.assistant",
     "apps.evaluation",
     "apps.api",
+    "apps.agent",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -141,6 +156,14 @@ CELERY_BEAT_SCHEDULE = {
     "purge-dossiers-expires": {
         "task": "apps.candidates.tasks.purge_expired_task",
         "schedule": 24 * 60 * 60,
+    },
+    # Meme raisonnement pour la surveillance du biais : un controle qui depend
+    # d'une page qu'un responsable doit penser a ouvrir ne se declenche jamais
+    # entre deux audits. Cette tache n'appelle aucun modele et ne consomme donc
+    # rien ; la programmer plus souvent ne coute que du temps de calcul.
+    "veille-derive-biais": {
+        "task": "apps.agent.tasks.watch_task",
+        "schedule": 12 * 60 * 60,
     },
 }
 

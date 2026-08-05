@@ -588,6 +588,51 @@ code {
   font-weight: 500;
 }
 
+/* Proportion avec son intervalle de confiance.
+   Distincte de .meter volontairement : une jauge suggere qu'aller vers la
+   droite est bon. Ici les deux extremites sont mauvaises (0 % = tampon,
+   100 % = agent inutile), donc pas de palier de couleur, et l'intervalle
+   occupe plus de place que le point — c'est lui l'information. */
+.range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.range__track {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+}
+
+.range__band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+
+.range__point {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 16px;
+  border-radius: 1px;
+  background: var(--brand);
+  /* Centre la marque sur sa valeur. Sans cela, un taux de 100 % dessinerait
+     son repere entierement a droite du cadre. */
+  transform: translateX(-50%);
+}
+
+.range__value {
+  min-width: 7rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Score en vedette */
 .score {
   font-size: 2.75rem;
