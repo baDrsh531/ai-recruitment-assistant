@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}Assistant IA de recrutement{% endblock %}</title>
+  {% comment %}
+    Le SVG porte sa propre regle `prefers-color-scheme` : la marque reste
+    lisible sur un onglet clair comme sur un onglet sombre.
+  {% endcomment %}
+  <link rel="icon" href="{% static 'img/mark.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'img/mark.svg' %}">
+  <meta name="theme-color" content="#4f46e5">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="{% static 'js/charts.js' %}" defer></script>
 </head>
@@ -13,7 +20,8 @@
 <div class="app">
   <aside class="sidebar">
     <a class="sidebar__brand" href="{% url 'candidates:dashboard' %}">
-      Recrutement<span>.IA</span>
+      {% include "partials/logo.html" %}
+      <span class="sidebar__brand-nom">Recrutement<span>.IA</span></span>
     </a>
 
     <nav class="sidebar__nav">

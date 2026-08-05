@@ -1,0 +1,62 @@
+{% comment %}
+Version HTML d'un message deja redige. Elle ne dit rien de plus que la version
+texte : `corps` est le texte enregistre, decoupe en paragraphes. Un HTML qui
+raconterait autre chose que le texte enregistre rendrait le journal faux.
+
+Contraintes propres au courriel, et elles expliquent la mise en page :
+- styles **en ligne** uniquement, les blocs `<style>` etant retires par Gmail ;
+- disposition en tableau, seule construction que le rendu d'Outlook honore ;
+- image en piece jointe liee (`cid:`), les images distantes etant bloquees par
+  defaut et trahissant l'ouverture du message ;
+- largeur bornee a 600 px, au-dela de quoi les clients coupent.
+{% endcomment %}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+       style="background:{{ marque.fond }};margin:0;padding:24px 0;">
+  <tr>
+    <td align="center" style="padding:0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"
+             style="max-width:600px;width:100%;background:{{ marque.surface }};
+                    border:1px solid {{ marque.bordure }};border-radius:10px;">
+        <tr>
+          <td style="padding:20px 28px 16px 28px;border-bottom:1px solid {{ marque.bordure }};">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:0 10px 0 0;vertical-align:middle;">
+                  <img src="cid:{{ marque.cid }}" width="22" height="22" alt=""
+                       style="display:block;border:0;">
+                </td>
+                <td style="vertical-align:middle;font-family:Segoe UI,Helvetica,Arial,sans-serif;
+                           font-size:15px;font-weight:600;color:{{ marque.encre }};">
+                  {{ marque.racine }}<span style="color:{{ marque.brand }};">{{ marque.suffixe }}</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:26px 28px 8px 28px;font-family:Segoe UI,Helvetica,Arial,sans-serif;
+                     font-size:14px;line-height:1.55;color:{{ marque.texte }};">
+            {% for paragraphe in paragraphes %}
+              <p style="margin:0 0 14px 0;">
+                {% for ligne in paragraphe %}{{ ligne }}{% if not forloop.last %}<br>{% endif %}
+                {% endfor %}
+              </p>
+            {% endfor %}
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:12px 28px 22px 28px;border-top:1px solid {{ marque.bordure }};
+                     font-family:Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;
+                     line-height:1.5;color:{{ marque.attenue }};">
+            {{ marque.organisation }} · message relatif a votre candidature.
+            Un outil d'aide au tri intervient dans notre processus ; il classe et
+            prepare, il ne decide pas. Vous pouvez repondre directement a ce
+            message.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

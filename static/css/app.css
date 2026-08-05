@@ -173,7 +173,9 @@ code {
 }
 
 .sidebar__brand {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--sidebar-border);
   color: var(--sidebar-text-strong);
@@ -181,11 +183,21 @@ code {
   letter-spacing: -0.01em;
 }
 
+/* La marque hérite de `color`, donc blanche ici. Le meme fichier sert sur
+   fond clair sans variante a maintenir. */
+.logo {
+  flex: none;
+  display: block;
+}
+
 .sidebar__brand:hover {
   text-decoration: none;
 }
 
-.sidebar__brand span {
+/* Seul le suffixe « .IA » prend la couleur de marque. Le selecteur vise le
+   span interieur : `.sidebar__brand span` teindrait aussi le nom entier,
+   maintenant qu'il est lui-meme enveloppe. */
+.sidebar__brand-nom span {
   color: var(--brand);
 }
 

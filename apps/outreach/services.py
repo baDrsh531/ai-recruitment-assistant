@@ -26,6 +26,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.candidates.models import Application, Candidate
+from apps.core import brand
 from apps.core.models import AuditLog
 from apps.core.services import record_audit
 
@@ -145,7 +146,7 @@ def valeurs_par_defaut(application: Application, *, actor=None, blind: bool = Fa
     return {
         "salutation": _salutation(application.candidate, blind=blind),
         "poste": application.offer.title,
-        "entreprise": getattr(settings, "OUTREACH_ORGANISATION", "notre equipe"),
+        "entreprise": brand.organisation(),
         "signataire": signataire or "l'equipe recrutement",
         "delai": getattr(settings, "OUTREACH_RESPONSE_DAYS", 15),
         "retention": getattr(settings, "DATA_RETENTION_DAYS", 365),

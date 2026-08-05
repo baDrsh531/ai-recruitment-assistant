@@ -39,7 +39,9 @@ DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
 # Nom qui signe les messages, et delai de reponse annonce dans les gabarits.
 # Annoncer un delai engage : `apps/outreach/silence.py` mesure ensuite les
 # dossiers restes muets au-dela.
-OUTREACH_ORGANISATION = env("OUTREACH_ORGANISATION", default="notre equipe")
+# Vide = on retombe sur le nom de la marque (voir apps/core/brand.py). Mettre
+# « notre equipe » en defaut donnait un pied de courriel qui se lisait mal.
+OUTREACH_ORGANISATION = env("OUTREACH_ORGANISATION", default="")
 OUTREACH_RESPONSE_DAYS = env.int("OUTREACH_RESPONSE_DAYS", default=15)
 
 # --- Applications ---------------------------------------------------------

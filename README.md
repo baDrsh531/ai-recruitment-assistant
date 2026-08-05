@@ -1110,6 +1110,65 @@ du plus ancien au plus recent — un taux sans la liste ne se traite pas.
 Un message envoye ne se modifie plus : corriger apres coup le texte d'un
 courrier qu'une personne a deja lu transformerait le journal en fiction.
 
+### Une marque, trois sorties
+
+L'ecran, le PDF et le courriel puisent au **meme fichier** — `static/img/mark.svg` —
+via `apps/core/brand.py`. Une identite recopiee a la main dans chaque gabarit
+derive : l'ecran finit par dire une chose, le PDF une autre.
+
+**Le concept vient d'un logo fourni** : deux documents, un CV et une offre,
+relies. Deux choses ont change, et les deux viennent de l'avoir regarde aux
+tailles reelles plutot qu'a 1400 px.
+
+Les mots « CV » et « Offre » ont disparu. Lisibles en grand, ils formaient une
+bouillie a 16 px — la taille a laquelle une favicon passe le plus clair de son
+temps. Et les deux pages, d'abord posees cote a cote avec un connecteur entre
+elles, se lisaient comme des **crochets** : le connecteur mangeait leurs bords
+interieurs. En les faisant se recouvrir, la marque devient une silhouette
+franche a 16 px — et dit quelque chose de juste, puisque l'intersection entre un
+CV et une offre est exactement ce que le moteur calcule.
+
+L'encre suit `currentColor` : un seul fichier sert sur fond clair et sur la
+barre laterale sombre, sans variante a garder d'accord. Le SVG porte sa propre
+regle `prefers-color-scheme`, pour rester lisible sur un onglet sombre.
+
+**Les PNG ne sont pas stockes, ils sont rendus** depuis le SVG a la demande et
+gardes en memoire. Ranger des PNG a cote du SVG aurait cree autant d'occasions
+de les laisser diverger.
+
+#### Ce que le courriel impose
+
+Trois contraintes, et elles expliquent toute la mise en page :
+
+- **Gmail et Outlook retirent les SVG.** La marque part en PNG.
+- **Les images distantes sont bloquees par defaut**, et trahissent l'ouverture
+  du message. La marque voyage donc en piece jointe liee (`cid:`), sans aucune
+  requete sortante — verifie par un test qui refuse tout `http://` dans le HTML.
+- **Les blocs `<style>` sont retires**, et le rendu d'Outlook n'honore que les
+  tableaux. D'ou les styles en ligne et la disposition en tableau, bornee a
+  600 px.
+
+Le texte reste la **version de reference** : c'est lui qui est enregistre, relu
+et journalise. Le HTML n'en est qu'une presentation, construite mecaniquement a
+partir du meme corps — un test verifie qu'aucun mot du texte ne manque au HTML.
+
+Un defaut trouve en regardant le rendu : les gabarits sont replies autour de 75
+caracteres, pour un courriel texte. Transformer chacun de ces retours en `<br>`
+figeait la coupure, et le lecteur voyait « Votre profil a retenu notre
+attention » puis, a la ligne, « pour le poste de Data Engineer », quelle que
+soit la largeur de son ecran. Les paragraphes se recomposent maintenant — mais
+la signature garde ses retours. Le depart se fait sur la longueur de la ligne
+precedente, comme le `format=flowed` du courrier electronique : une ligne pleine
+a ete repliee, une ligne courte a ete voulue courte.
+
+#### Dans les PDF
+
+Bandeau en tete de la premiere page — marque, nom, filet — et **marque en pied
+de chaque page**, pas seulement de la premiere : une page de rapport se
+photocopie, se transfere et s'imprime seule, et doit dire d'ou elle vient sans
+le reste du document. Les trois documents en beneficient : rapport d'evaluation,
+dossier de candidature, explication destinee au candidat.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1233,6 +1292,8 @@ tests/             suite pytest
 | `apps/outreach/silence.py` | ce qu'on n'a pas dit aux candidats — la mesure qui manque a la plupart des ATS |
 | `apps/outreach/salutation.py` | par quel prenom appeler quelqu'un, ou renoncer plutot que de se tromper |
 | `apps/outreach/backends.py` | quels canaux partent vraiment, et lesquels le disent au lieu de le simuler |
+| `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
+| `static/img/mark.svg` | le dessin, et pourquoi il ne porte plus de texte |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
 | `apps/evaluation/cv_factory.py` | genere des CV dont la verite terrain est connue par construction |
@@ -1280,6 +1341,7 @@ tests/             suite pytest
 - [x] Veille de biais sans token, qui survit a la coupure de l'agent
 - [x] Echanges avec les candidats : consentement par canal, gabarits versionnes, suggestion IA
 - [x] Mesure du silence : les candidats ecartes que personne n'a prevenus
+- [x] Identite visuelle unique : ecran, PDF et courriel rendus depuis un seul SVG
 
 ---
 
