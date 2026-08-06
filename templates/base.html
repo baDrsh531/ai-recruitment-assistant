@@ -1,10 +1,10 @@
-{% load static %}<!DOCTYPE html>
-<html lang="fr">
+{% load i18n static %}{% get_current_language as LANGUE %}{% get_current_language_bidi as DROITE_A_GAUCHE %}<!DOCTYPE html>
+<html lang="{{ LANGUE }}" dir="{% if DROITE_A_GAUCHE %}rtl{% else %}ltr{% endif %}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>{% block title %}Assistant IA de recrutement{% endblock %}</title>
+  <title>{% block title %}{% translate "Assistant IA de recrutement" %}{% endblock %}</title>
   {% comment %}
     Le SVG porte sa propre regle `prefers-color-scheme` : la marque reste
     lisible sur un onglet clair comme sur un onglet sombre.
@@ -25,31 +25,31 @@
     </a>
 
     <nav class="sidebar__nav">
-      {% include "partials/nav_link.html" with url_name="candidates:dashboard" label="Tableau de bord" icon="grid" %}
+      {% include "partials/nav_link.html" with url_name="candidates:dashboard" label=_("Tableau de bord") icon="grid" %}
 
-      <p class="sidebar__section">Recrutement</p>
-      {% include "partials/nav_link.html" with url_name="jobs:list" label="Offres d'emploi" icon="briefcase" %}
-      {% include "partials/nav_link.html" with url_name="candidates:list" label="Candidats" icon="users" %}
-      {% include "partials/nav_link.html" with url_name="candidates:duplicates" label="Doublons" icon="users" %}
-      {% include "partials/nav_link.html" with url_name="candidates:plagiarism" label="CV similaires" icon="file" %}
-      {% include "partials/nav_link.html" with url_name="outreach:silence" label="Echanges" icon="file" %}
+      <p class="sidebar__section">{% translate "Recrutement" %}</p>
+      {% include "partials/nav_link.html" with url_name="jobs:list" label=_("Offres d'emploi") icon="briefcase" %}
+      {% include "partials/nav_link.html" with url_name="candidates:list" label=_("Candidats") icon="users" %}
+      {% include "partials/nav_link.html" with url_name="candidates:duplicates" label=_("Doublons") icon="users" %}
+      {% include "partials/nav_link.html" with url_name="candidates:plagiarism" label=_("CV similaires") icon="file" %}
+      {% include "partials/nav_link.html" with url_name="outreach:silence" label=_("Echanges") icon="file" %}
 
-      <p class="sidebar__section">Documents</p>
-      {% include "partials/nav_link.html" with url_name="parsing:upload" label="Deposer un CV" icon="upload" %}
-      {% include "partials/nav_link.html" with url_name="parsing:documents" label="CV deposes" icon="file" %}
+      <p class="sidebar__section">{% translate "Documents" %}</p>
+      {% include "partials/nav_link.html" with url_name="parsing:upload" label=_("Deposer un CV") icon="upload" %}
+      {% include "partials/nav_link.html" with url_name="parsing:documents" label=_("CV deposes") icon="file" %}
 
-      <p class="sidebar__section">Systeme</p>
-      {% include "partials/nav_link.html" with url_name="evaluation:invocations" label="Appels modele" icon="chart" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:bias_report" label="Transparence" icon="grid" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:threshold" label="Seuil de tri" icon="chart" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:agreement" label="Accord recruteurs" icon="users" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:replay" label="Rejeu des decisions" icon="chart" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:variance" label="Variance du modele" icon="chart" %}
-      {% include "partials/nav_link.html" with url_name="evaluation:audit_trail" label="Journal d'audit" icon="file" %}
-      {% include "partials/nav_link.html" with url_name="agent:dashboard" label="Agent" icon="settings" %}
+      <p class="sidebar__section">{% translate "Systeme" %}</p>
+      {% include "partials/nav_link.html" with url_name="evaluation:invocations" label=_("Appels modele") icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:bias_report" label=_("Transparence") icon="grid" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:threshold" label=_("Seuil de tri") icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:agreement" label=_("Accord recruteurs") icon="users" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:replay" label=_("Rejeu des decisions") icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:variance" label=_("Variance du modele") icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:audit_trail" label=_("Journal d'audit") icon="file" %}
+      {% include "partials/nav_link.html" with url_name="agent:dashboard" label=_("Agent") icon="settings" %}
       <a class="nav-link" href="/admin/">
         {% include "partials/icon.html" with name="settings" %}
-        Administration
+        {% translate "Administration" %}
       </a>
     </nav>
 
@@ -57,11 +57,29 @@
       <p class="sidebar__user">{{ user.get_full_name|default:user.username }}</p>
       <p class="sidebar__role">{{ user.get_role_display }}</p>
       {% if user.blind_screening %}
-        <p class="mt-4"><span class="badge badge--warn">Screening a l'aveugle</span></p>
+        <p class="mt-4"><span class="badge badge--warn">{% translate "Screening a l'aveugle" %}</span></p>
       {% endif %}
+      <form method="post" action="{% url 'set_language' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <label class="visually-hidden" for="langue">{% translate "Langue" %}</label>
+        <select class="select" id="langue" name="language"
+                onchange="this.form.submit()">
+          {% get_available_languages as LANGUES %}
+          {% for code, nom in LANGUES %}
+            <option value="{{ code }}"{% if code == LANGUE %} selected{% endif %}>
+              {{ nom }}
+            </option>
+          {% endfor %}
+        </select>
+        <noscript>
+          <button type="submit" class="link-plain">{% translate "Changer" %}</button>
+        </noscript>
+      </form>
+
       <form method="post" action="{% url 'accounts:logout' %}">
         {% csrf_token %}
-        <button type="submit" class="link-plain">Se deconnecter</button>
+        <button type="submit" class="link-plain">{% translate "Se deconnecter" %}</button>
       </form>
     </div>
   </aside>

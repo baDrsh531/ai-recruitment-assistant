@@ -1380,6 +1380,61 @@ pire : elle affichait le nom **et** le fichier sans tenir aucun compte du mode
 aveugle. L'attenuation du biais etait annulee par une liste de depots, page en
 apparence anodine.
 
+### L'interface en arabe, de droite a gauche
+
+L'application savait deja **lire** les CV en arabe — normalisation, formes de
+presentation, ordre logique, rapprochement de noms — mais son interface ne le
+parlait pas. Ce n'est pas une affaire de mots : l'ecriture va de droite a
+gauche, et c'est la **mise en page** qui change.
+
+```
+python manage.py compile_messages
+```
+
+**Pas de gettext.** `django-admin compilemessages` appelle `msgfmt`, un binaire
+de la suite GNU gettext, absent d'une machine Windows ordinaire. Demander une
+chaine d'outils C pour afficher une interface en arabe serait disproportionne :
+le format `.mo` tient en quelques dizaines de lignes — un en-tete, deux tables
+de decalages, les chaines a la suite — et il est ecrit ici en Python pur. Meme
+parti que le BM25 ecrit a la main ou les PDF produits par PyMuPDF.
+
+Le controle qui compte n'est pas que notre lecteur relise notre ecriture, mais
+que **le `gettext` de Python** lise ce qu'on a ecrit : un test le verifie.
+
+L'analyseur `.po` est volontairement etroit — ni pluriel, ni contexte, absents
+des catalogues du projet — et il **leve une erreur** sur ce qu'il ne sait pas
+faire, plutot que de l'avaler en silence.
+
+#### Le retournement
+
+Vingt-six declarations directionnelles sur 1096 lignes de CSS : le systeme etait
+deja bati sur flex et grid. Elles sont passees en proprietes logiques —
+`padding-inline-start`, `border-inline-end`, `text-align: start`. Un test
+echoue si une propriete physique revient : elle placerait l'element du mauvais
+cote, **en silence**.
+
+Deux cas ne se convertissent pas mecaniquement, et ce sont les interessants.
+
+`box-shadow` n'a pas de variante logique : le lisere de l'entree active resterait
+a gauche. C'est la seule regle du fichier qui demande une inversion explicite.
+
+Et surtout : **les echelles de mesure ne suivent pas le sens de lecture.** Une
+jauge, un intervalle de confiance, un axe de graphique portent une grandeur de 0
+a 100 % ecrite en chiffres occidentaux. Les retourner ferait voir les memes
+donnees en miroir a deux lecteurs de la meme page, et ce sont les donnees qui
+seraient mal lues. Le texte autour suit la langue ; la geometrie qui porte un
+nombre reste stable.
+
+#### Ce qui est traduit, et ce qui ne l'est pas
+
+La **coquille** de l'application : navigation, en-tetes, actions communes — 25
+chaines. Le contenu des pages reste en francais.
+
+C'est un choix, pas un oubli. Traduire quelques centaines de chaines a moitie
+donnerait une interface bilingue par accident, qui se lit plus mal qu'une
+interface monolingue. La mecanique est complete et eprouvee ; y ajouter des
+chaines ne demande que de les marquer et de les traduire.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1453,6 +1508,7 @@ Tout passe par le `.env` (voir `.env.example`).
 | `OUTREACH_RESPONSE_DAYS` | delai de reponse annonce — et mesure ensuite |
 | `DATA_RETENTION_DAYS` | duree de conservation des donnees candidat (RGPD) |
 | `BLIND_SCREENING_DEFAULT` | masquage des attributs identitaires par defaut |
+| `LANGUAGES` | francais et arabe ; la bascule est dans la barre laterale |
 
 Le projet tourne **sans Docker, sans PostgreSQL et sans Redis** en
 developpement. Ces composants ne deviennent necessaires qu'en production.
@@ -1507,6 +1563,8 @@ tests/             suite pytest
 | `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
 | `apps/evaluation/variance.py` | le modele invente-t-il un chiffre ? la seule faute grave qu'il puisse commettre ici |
 | `apps/candidates/plagiarism.py` | CV distincts au contenu commun, et le retrait du tout-venant qui rend la mesure lisible |
+| `apps/core/management/commands/compile_messages.py` | le format `.mo` ecrit en Python pur, pour ne pas dependre de gettext |
+| `locale/ar/LC_MESSAGES/django.po` | l'interface en arabe, et la portee assumee de la traduction |
 | `static/img/mark.svg` | le dessin, et pourquoi il ne porte plus de texte |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
@@ -1560,6 +1618,7 @@ tests/             suite pytest
 - [x] Journal d'audit consultable et filtrable, machine separee de l'humain
 - [x] Variance du modele mesuree : le score ne bouge pas, la redaction si
 - [x] CV distincts au contenu commun, tout-venant retire, sans accusation
+- [x] Interface en arabe, de droite a gauche, sans dependre de gettext
 
 ---
 

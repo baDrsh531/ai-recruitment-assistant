@@ -46,6 +46,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Catalogues de traduction. La commande n'utilise pas gettext : rien a
+REM installer, et l'interface en arabe fonctionne des le premier demarrage.
+REM Un echec ici n'empeche pas de travailler en francais.
+"%PYTHON%" manage.py compile_messages >nul 2>&1
+
 echo [4/4] Demarrage du serveur sur le port %PORT%...
 echo.
 echo     http://127.0.0.1:%PORT%/

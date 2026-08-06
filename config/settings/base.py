@@ -99,6 +99,10 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Apres les sessions, avant CommonMiddleware : la langue est lue dans la
+    # session puis dans l'en-tete du navigateur, et doit etre connue avant
+    # toute reecriture d'URL.
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -147,10 +151,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- Internationalisation -------------------------------------------------
-LANGUAGE_CODE = "fr-fr"
+LANGUAGE_CODE = "fr"
 TIME_ZONE = "Europe/Paris"
 USE_I18N = True
 USE_TZ = True
+
+# L'arabe est la seconde langue, et pas par hasard : l'application sait deja
+# lire les CV en arabe — normalisation, formes de presentation, ordre logique
+# — mais son interface ne le parlait pas. Elle s'ecrit de droite a gauche, ce
+# qui change la mise en page et non seulement les mots.
+LANGUAGES = [
+    ("fr", "Francais"),
+    ("ar", "العربية"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# Langues dont l'ecriture va de droite a gauche. `django.utils.translation`
+# sait deja le dire, mais la liste sert aussi aux controles hors requete.
+RTL_LANGUAGES = {"ar", "he", "fa", "ur"}
 
 # --- Fichiers statiques et media ------------------------------------------
 STATIC_URL = "static/"

@@ -168,7 +168,7 @@ code {
   display: flex;
   flex-direction: column;
   background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+  border-inline-end: 1px solid var(--sidebar-border);
   color: var(--sidebar-text);
 }
 
@@ -238,6 +238,13 @@ code {
   background: var(--sidebar-hover);
   color: var(--sidebar-text-strong);
   box-shadow: inset 2px 0 0 var(--brand);
+}
+
+/* `box-shadow` n'a pas de variante logique : le liseré de l'entrée active
+   resterait a gauche en lecture de droite a gauche, c'est-a-dire du mauvais
+   cote. C'est la seule regle du fichier qui demande une inversion explicite. */
+[dir="rtl"] .nav-link.is-active {
+  box-shadow: inset -2px 0 0 var(--brand);
 }
 
 .nav-link svg {
@@ -462,7 +469,7 @@ code {
    comparatif. */
 .table thead th {
   padding: var(--space-3) var(--space-5);
-  text-align: left;
+  text-align: start;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -475,7 +482,7 @@ code {
 
 .table tbody th {
   padding: var(--space-3) var(--space-5);
-  text-align: left;
+  text-align: start;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
@@ -511,14 +518,14 @@ code {
 
 .table .num {
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
 }
 
 .table--flush th,
 .table--flush td {
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
 }
 
 /* Badges et pastilles */
@@ -595,9 +602,25 @@ code {
 
 .meter__value {
   width: 3rem;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
+}
+
+/* Les echelles de mesure ne suivent PAS le sens de lecture.
+
+   Une jauge, un intervalle, un axe de graphique portent une grandeur de 0 a
+   100 %, ecrite en chiffres occidentaux. Les retourner en arabe ferait voir
+   les memes donnees en miroir a deux lecteurs de la meme page, et ce sont les
+   donnees qui seraient mal lues. Le texte autour suit la langue ; la geometrie
+   qui porte un nombre reste stable.
+
+   `direction: ltr` fige donc l'interieur de ces composants, et leurs `left`
+   poses en pourcentage gardent le sens qu'ils ont a l'ecriture. */
+.meter,
+.range,
+.chart {
+  direction: ltr;
 }
 
 /* Proportion avec son intervalle de confiance.
@@ -641,7 +664,7 @@ code {
 
 .range__value {
   min-width: 7rem;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
@@ -675,14 +698,14 @@ code {
 .alert {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--text-subtle);
+  border-inline-start: 3px solid var(--text-subtle);
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
-.alert--success { border-left-color: var(--ok); }
-.alert--warning { border-left-color: var(--warn); }
-.alert--error   { border-left-color: var(--danger); }
+.alert--success { border-inline-start-color: var(--ok); }
+.alert--warning { border-inline-start-color: var(--warn); }
+.alert--error   { border-inline-start-color: var(--danger); }
 
 /* Formulaires */
 .field {
@@ -758,8 +781,8 @@ input[type="file"] {
 }
 
 .timeline__item {
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--border-strong);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-strong);
 }
 
 .timeline__title {
@@ -1010,11 +1033,11 @@ input[type="file"] {
 .chart__table td {
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: start;
 }
 .chart__table td.num,
 .chart__table th.num {
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1092,5 +1115,5 @@ input[type="file"] {
   .sidebar__nav { flex-direction: row; }
   .sidebar__section, .sidebar__footer { display: none; }
   .grid--main { grid-template-columns: 1fr; }
-  .page-head, .content { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .page-head, .content { padding-inline-start: var(--space-4); padding-inline-end: var(--space-4); }
 }

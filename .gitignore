@@ -28,6 +28,11 @@ db.sqlite3-journal
 /staticfiles/
 /rapports/
 
+# Catalogues compiles. Le `.po` est la source et vit dans le depot ; le `.mo`
+# est un binaire regenere par `python manage.py compile_messages`, appele au
+# demarrage et a la construction. Le committer inviterait a le laisser diverger.
+*.mo
+
 # === Outils ================================================================
 .pytest_cache/
 .coverage

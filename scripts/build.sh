@@ -9,6 +9,11 @@ pip install --upgrade pip
 pip install -e .
 pip install "gunicorn==23.0.*"
 
+# Les catalogues de traduction sont compilees ici plutot que committees : un
+# `.mo` est un artefact binaire, et le garder dans le depot invite a le laisser
+# diverger de son `.po`. La commande n'utilise pas gettext, rien a installer.
+python manage.py compile_messages
+
 python manage.py collectstatic --no-input
 python manage.py migrate --no-input
 
