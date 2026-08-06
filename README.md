@@ -1226,6 +1226,73 @@ photocopie, se transfere et s'imprime seule, et doit dire d'ou elle vient sans
 le reste du document. Les trois documents en beneficient : rapport d'evaluation,
 dossier de candidature, explication destinee au candidat.
 
+### Rejouer les decisions passees
+
+Le projet affirme partout que le score est **deterministe et reproductible**.
+Cette page cesse de l'affirmer : elle reprend les dossiers reellement tranches,
+les recalcule avec le moteur d'aujourd'hui, et compare.
+
+```
+python manage.py replay_decisions --strict   # echoue si un score a bouge
+                                             # a version de moteur egale
+```
+
+C'est le seul controle du projet qui eprouve la reproductibilite sur des
+**decisions reelles** plutot que sur un jeu annote.
+
+**La difficulte n'est pas de recalculer, elle est d'attribuer l'ecart.** Un
+score qui change six mois plus tard peut venir de deux causes sans rapport : le
+moteur a change de version — ce qu'on mesure — ou les donnees ont change, CV
+re-extrait, competence corrigee, ponderation revue. Dans ce second cas le
+moteur est innocent et le rejeu ne prouve rien. Chaque dossier porte donc la
+mention `concluant`, et le rapport ne compte comme divergence que ce qui l'est.
+
+Trois decisions de conception, toutes destinees a ne pas mesurer autre chose
+que ce qu'on annonce :
+
+- **On compare moteur a moteur.** Si un recruteur avait corrige le score a la
+  main, confronter ce chiffre humain au chiffre recalcule ferait apparaitre
+  tout dossier corrige comme une divergence du moteur.
+- **On retient le dernier score calcule AVANT la decision**, pas le plus
+  recent : rejouer contre un score posterieur comparerait le moteur a lui-meme.
+- **Une divergence a version egale est un defaut, entre deux versions une
+  evolution.** `reproductible` ne porte que sur la premiere — c'est
+  l'affirmation exacte que le projet fait.
+
+Ce qui interesse un auditeur n'est d'ailleurs pas l'ecart de score mais son
+effet : **la decision aurait-elle bascule ?** Un dossier qui passe de 0,91 a
+0,90 n'a rien change ; un dossier qui passe de 0,86 a 0,84 sous un seuil a 0,85
+a tout change.
+
+Releve sur le jeu de demonstration : 2 decisions rejouables, 1 identique au
+chiffre pres, 1 ecart de 4 points imputable au passage du moteur 1.1.0 a 1.2.0,
+qui aurait fait basculer le dossier. **Aucun ecart a version egale.**
+
+La tolerance est de 0,05 point : le moteur additionne des flottants, et deux
+executions peuvent differer sur le dernier bit sans que rien n'ait change. Elle
+reste tres en dessous de ce qui ferait basculer une decision, et un test le
+verifie.
+
+### Le journal d'audit, enfin consultable
+
+Le modele existait depuis l'origine — immuable, complet, alimente par chaque
+action — et **aucune page ne l'affichait**. Pour un systeme classe a haut
+risque, « montrez-moi tout ce qui est arrive a ce candidat » est la premiere
+demande d'un auditeur comme d'un candidat exercant son droit d'acces. Un
+journal qu'on ne peut pas lire ne prouve rien.
+
+Filtrable par action, par auteur, par objet, par texte — et par **origine** :
+machine ou humain. C'est la distinction qu'un auditeur cherche a etablir en
+premier, et celle sur laquelle repose l'exigence de supervision humaine de
+l'AI Act. Cliquer sur le type d'un objet ramene tout ce qui lui est arrive :
+depot, extraction, scores, consultations, decisions, messages, purge.
+
+Un piege trouve en testant ce filtre : `exclude(metadata__agent=True)` ne rend
+pas « les entrees humaines ». Sur une entree ou la cle est absente, la
+comparaison vaut `NULL`, sa negation vaut `NULL`, et la ligne disparait — le
+filtre « humain seul » ne renvoyait **rien**, c'est-a-dire l'inverse de ce
+qu'il annonce.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1350,6 +1417,7 @@ tests/             suite pytest
 | `apps/outreach/salutation.py` | par quel prenom appeler quelqu'un, ou renoncer plutot que de se tromper |
 | `apps/outreach/backends.py` | quels canaux partent vraiment, et lesquels le disent au lieu de le simuler |
 | `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
+| `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
 | `static/img/mark.svg` | le dessin, et pourquoi il ne porte plus de texte |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
@@ -1399,6 +1467,8 @@ tests/             suite pytest
 - [x] Echanges avec les candidats : consentement par canal, gabarits versionnes, suggestion IA
 - [x] Mesure du silence : les candidats ecartes que personne n'a prevenus
 - [x] Identite visuelle unique : ecran, PDF et courriel rendus depuis un seul SVG
+- [x] Rejeu des decisions passees : la reproductibilite verifiee, plus seulement affirmee
+- [x] Journal d'audit consultable et filtrable, machine separee de l'humain
 
 ---
 

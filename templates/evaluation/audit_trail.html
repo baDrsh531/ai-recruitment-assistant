@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Journal d'audit{% endblock %}
+{% block heading %}Journal d'audit{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ total }} entree(s){% if actifs %} sur {{ total_general }}{% endif %} ·
+    journal immuable, ni modifiable ni effacable.
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Filtrer</h2></div>
+  <div class="card__body">
+    <form method="get" class="stack">
+      <div class="field">
+        <label class="label" for="q">Recherche</label>
+        <input class="input" id="q" name="q" value="{{ filtres.q }}"
+               placeholder="Nom dans le resume, ou identifiant d'objet">
+      </div>
+      <div class="field">
+        <label class="label" for="action">Action</label>
+        <select class="select" id="action" name="action">
+          <option value="">Toutes</option>
+          {% for valeur, libelle in actions %}
+            <option value="{{ valeur }}"{% if filtres.action == valeur %} selected{% endif %}>
+              {{ libelle }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="acteur">Auteur</label>
+        <select class="select" id="acteur" name="acteur">
+          <option value="">Tous</option>
+          {% for compte in acteurs %}
+            <option value="{{ compte.pk }}"{% if filtres.acteur == compte.pk|stringformat:"s" %} selected{% endif %}>
+              {{ compte.get_full_name|default:compte.username }} ({{ compte.get_role_display }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="machine">Origine</label>
+        <select class="select" id="machine" name="machine">
+          <option value="">Humain et machine</option>
+          <option value="0"{% if filtres.machine == "0" %} selected{% endif %}>Humain seul</option>
+          <option value="1"{% if filtres.machine == "1" %} selected{% endif %}>Machine seule</option>
+        </select>
+      </div>
+      <div class="row">
+        <button type="submit" class="btn btn--primary">Filtrer</button>
+        {% if actifs %}
+          <a class="btn" href="{% url 'evaluation:audit_trail' %}">Tout afficher</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+  <p class="card__note">
+    Le filtre « origine » separe ce qu'a fait l'agent de ce qu'a fait un humain
+    sans avoir a lire les metadonnees. C'est la premiere distinction qu'un
+    auditeur cherche a etablir, et celle sur laquelle repose l'exigence de
+    supervision humaine de l'AI Act.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Entrees</h2>
+    <span class="badge">page {{ page.number }} / {{ page.paginator.num_pages }}</span>
+  </div>
+  {% if page.object_list %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Action</th><th>Auteur</th>
+            <th>Objet</th><th>Resume</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entree in page.object_list %}
+            <tr>
+              <td class="muted small">{{ entree.created_at|date:"d/m/Y H:i:s" }}</td>
+              <td>
+                <span class="badge{% if entree.metadata.agent %} badge--warn{% endif %}">
+                  {{ entree.get_action_display }}
+                </span>
+              </td>
+              <td class="muted small">
+                {% if entree.actor %}
+                  {{ entree.actor.get_full_name|default:entree.actor.username }}
+                {% else %}
+                  <span class="subtle">compte supprime</span>
+                {% endif %}
+              </td>
+              <td class="muted small">
+                {% if entree.object_id %}
+                  <a href="?objet={{ entree.object_id }}"
+                     title="Tout ce qui est arrive a cet objet">
+                    {{ entree.object_type }}
+                  </a>
+                {% else %}
+                  <span class="subtle">—</span>
+                {% endif %}
+              </td>
+              <td class="small">{{ entree.summary }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page.has_other_pages %}
+      <div class="row card__body">
+        {% if page.has_previous %}
+          <a class="btn btn--sm" href="?{{ request.GET.urlencode }}&page={{ page.previous_page_number }}">
+            Precedente
+          </a>
+        {% endif %}
+        {% if page.has_next %}
+          <a class="btn btn--sm" href="?{{ request.GET.urlencode }}&page={{ page.next_page_number }}">
+            Suivante
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <p class="card__note">
+      Cliquer sur le type d'un objet ramene <b>tout</b> ce qui lui est arrive :
+      depot, extraction, scores, consultations, decisions, messages, purge. Un
+      candidat qui exerce son droit d'acces demande exactement cela, et c'est
+      aussi ce qu'un auditeur reclame en premier. Le journal existait depuis
+      l'origine, immuable et complet — il n'etait simplement affiche nulle part,
+      et un journal qu'on ne peut pas lire ne prouve rien.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucune entree" text="Aucune entree ne correspond a ces filtres." %}
+  {% endif %}
+</section>
+{% endblock %}

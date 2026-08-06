@@ -225,6 +225,7 @@ class Command(BaseCommand):
         self._decisions(recruiter)
         self._recommandations(recruiter)
         self._echanges(recruiter)
+        self._historique_moteur()
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -375,6 +376,62 @@ class Command(BaseCommand):
         self.stdout.write(
             f"{len(PLAN)} recommandations tranchees par un humain, dont "
             f"{sum(1 for _, suivie in PLAN if not suivie)} contredites."
+        )
+
+    def _historique_moteur(self) -> None:
+        """Une decision prise sous une version anterieure du moteur.
+
+        Sans elle, la page de rejeu n'affiche qu'un seul de ses deux resultats :
+        « aucun ecart ». C'est le bon resultat, mais il ne montre pas ce que la
+        page sait diagnostiquer — d'ou vient un ecart quand il y en a un.
+
+        Le score enregistre est donc recule de quelques points et estampille
+        1.1.0. Cela represente ce qui arrive vraiment : une application qui a
+        traverse un changement de moteur, et des dossiers tranches avant. Le
+        chiffre est fabrique, comme le reste du jeu de demonstration, et le
+        README le dit.
+        """
+        from apps.matching.models import MatchScore
+
+        ancien = (
+            MatchScore.objects.filter(engine_version="1.1.0").exists()
+        )
+        if ancien:
+            self.stdout.write("Historique de moteur deja present.")
+            return
+
+        candidature = (
+            Application.objects.filter(
+                stage__in=("rejected", "withdrawn", "hired"),
+                decided_at__isnull=False,
+            )
+            .order_by("decided_at")
+            .first()
+        )
+        if candidature is None:
+            return
+
+        # Le dernier score calcule AVANT la decision : c'est celui-la que le
+        # rejeu retient, pas le plus ancien ni le plus recent. Viser un autre
+        # laisserait le semis sans effet visible.
+        score = (
+            candidature.scores.filter(created_at__lte=candidature.decided_at)
+            .order_by("-created_at")
+            .first()
+        )
+        if score is None:
+            return
+
+        MatchScore.objects.filter(pk=score.pk).update(
+            engine_version="1.1.0",
+            # Assez pour se voir, trop peu pour franchir le seuil : la page
+            # distingue un ecart d'une bascule, et les deux meritent d'etre
+            # illustres separement.
+            overall=max(0.0, score.overall - 0.04),
+        )
+        self.stdout.write(
+            "1 decision estampillee moteur 1.1.0, pour que le rejeu ait une "
+            "transition de version a diagnostiquer."
         )
 
     def _echanges(self, recruteur) -> None:

@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import TemplateView
 
+from apps.core.models import AuditLog
 from apps.core.permissions import ActionPermissionMixin
 from apps.matching.engine import ENGINE_VERSION
 
@@ -14,6 +15,7 @@ from . import (
     bias,
     harness,
     monitoring,
+    replay,
     report_pdf,
     search_eval,
     threshold,
@@ -186,6 +188,98 @@ class ExportReportView(LoginRequiredMixin, View):
             f'attachment; filename="{report_pdf.filename()}"'
         )
         return reponse
+
+
+class ReplayView(LoginRequiredMixin, TemplateView):
+    """Les decisions passees, recalculees avec le moteur d'aujourd'hui.
+
+    Le projet affirme que le score est reproductible. Cette page cesse de
+    l'affirmer et le verifie sur les vraies decisions.
+    """
+
+    template_name = "evaluation/replay.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rapport = replay.rejouer(limit=200)
+        context["rapport"] = rapport
+        # Ce qui merite d'etre lu en premier : ce qui aurait bascule, puis ce
+        # qui a bouge, puis ce qu'on ne peut pas trancher.
+        context["a_regarder"] = sorted(
+            rapport.bascules + rapport.divergents + rapport.non_concluants,
+            key=lambda item: (not item.bascule, -abs(item.ecart)),
+        )[:30]
+        context["tolerance_points"] = round(replay.TOLERANCE * 100, 3)
+        return context
+
+
+class AuditTrailView(LoginRequiredMixin, TemplateView):
+    """Le journal d'audit, enfin consultable.
+
+    Le modele existait depuis l'origine, immuable et complet — et aucune page
+    ne l'affichait. Pour un systeme classe a haut risque, « montrez-moi tout ce
+    qui est arrive a ce candidat » est la premiere demande d'un auditeur comme
+    d'un candidat exercant son droit d'acces. Un journal qu'on ne peut pas lire
+    ne prouve rien.
+    """
+
+    template_name = "evaluation/audit_trail.html"
+    PAR_PAGE = 60
+
+    def get_context_data(self, **kwargs):
+        from django.contrib.auth import get_user_model
+        from django.core.paginator import Paginator
+        from django.db.models import Q
+
+        context = super().get_context_data(**kwargs)
+        entrees = AuditLog.objects.select_related("actor")
+
+        action = self.request.GET.get("action", "")
+        acteur = self.request.GET.get("acteur", "")
+        objet = self.request.GET.get("objet", "")
+        recherche = self.request.GET.get("q", "").strip()
+        machine = self.request.GET.get("machine", "")
+
+        if action:
+            entrees = entrees.filter(action=action)
+        if acteur:
+            entrees = entrees.filter(actor_id=acteur)
+        if objet:
+            entrees = entrees.filter(object_id=objet)
+        if recherche:
+            entrees = entrees.filter(
+                Q(summary__icontains=recherche) | Q(object_id__icontains=recherche)
+            )
+        # Separer la machine de l'humain sans avoir a lire les metadonnees :
+        # c'est la premiere chose qu'un auditeur veut distinguer.
+        #
+        # `exclude(metadata__agent=True)` ne convient pas : sur une entree ou
+        # la cle est absente, la comparaison vaut NULL, sa negation vaut NULL,
+        # et la ligne disparait. Le filtre « humain seul » ne renvoyait alors
+        # rien — c'est-a-dire l'inverse de ce qu'il annonce. On passe donc par
+        # l'ensemble des identifiants marques.
+        if machine in ("0", "1"):
+            marquees = AuditLog.objects.filter(metadata__agent=True).values("pk")
+            entrees = (
+                entrees.filter(pk__in=marquees)
+                if machine == "1"
+                else entrees.exclude(pk__in=marquees)
+            )
+
+        pages = Paginator(entrees, self.PAR_PAGE)
+        page = pages.get_page(self.request.GET.get("page"))
+
+        context["page"] = page
+        context["actions"] = AuditLog.Action.choices
+        context["acteurs"] = get_user_model().objects.order_by("username")
+        context["filtres"] = {
+            "action": action, "acteur": acteur, "objet": objet,
+            "q": recherche, "machine": machine,
+        }
+        context["actifs"] = any([action, acteur, objet, recherche, machine])
+        context["total"] = pages.count
+        context["total_general"] = AuditLog.objects.count()
+        return context
 
 
 class InvocationDashboardView(LoginRequiredMixin, TemplateView):
