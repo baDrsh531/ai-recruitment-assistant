@@ -1110,6 +1110,25 @@ Pour envoyer pour de vrai, il suffit de renseigner `EMAIL_HOST`, `EMAIL_PORT`,
 `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` et `DEFAULT_FROM_EMAIL`. Aucun code ne
 change : `base.py` bascule seul sur SMTP.
 
+```
+python manage.py check_email
+```
+
+Diagnostique la configuration **sans rien envoyer**, et sans jamais afficher le
+secret — quatre caracteres d'une cle sont quatre caracteres de moins a deviner.
+Chaque cause a son message et sa correction.
+
+La distinction qui compte : **525 n'est pas 535**. Le premier dit « le serveur
+a reconnu vos identifiants et refuse le compte », le second « vos identifiants
+sont faux ». Les confondre fait regenerer en boucle une cle qui etait bonne. Le
+cas s'est presente sur ce projet, sur un compte Brevo neuf en attente de
+validation.
+
+Et un piege trouve en ecrivant la commande elle-meme : sans identifiants,
+Django n'appelle pas `login()`, la connexion s'ouvre, et l'outil annoncait
+« prete » alors que rien n'avait ete verifie. **Un controle qui reussit a vide
+est pire qu'absent** — il refuse desormais.
+
 **Un defaut trouve en relisant les en-tetes produits.** L'objet de la reponse
 positive arrivait precede d'une espace. Cause : un objet contenant un seul
 caractere hors ASCII est encode selon la RFC 2047, et s'il est un peu long il

@@ -659,6 +659,89 @@ def test_the_median_notification_delay_is_measured(offre, recruteur, settings):
     assert mesure.delai_median_jours == pytest.approx(10, abs=0.1)
 
 
+# --- Diagnostic de la configuration ------------------------------------------
+def test_the_check_refuses_to_conclude_without_credentials(db, settings):
+    """Sans identifiants, Django n'appelle pas `login()` : la connexion s'ouvre
+    et l'outil annoncerait « prete » alors que rien n'a ete verifie. Un
+    controle qui reussit a vide est pire qu'absent."""
+    settings.EMAIL_HOST = "smtp.example.com"
+    settings.EMAIL_HOST_USER = ""
+    settings.EMAIL_HOST_PASSWORD = ""
+
+    with pytest.raises(SystemExit):
+        call_command("check_email")
+
+
+def test_the_check_says_nothing_when_no_server_is_configured(db, settings, capsys):
+    settings.EMAIL_HOST = ""
+
+    call_command("check_email")
+
+    assert "EMAIL_HOST est vide" in capsys.readouterr().out
+
+
+def _serveur_qui_refuse(settings, monkeypatch, code: int):
+    """Configure un vrai backend SMTP dont la connexion echoue sur `code`.
+
+    Le backend en memoire ne convient pas ici : son `open()` reussit toujours,
+    et le monkeypatch pose sur le backend SMTP ne serait jamais atteint — le
+    test passerait sans rien eprouver.
+    """
+    import smtplib
+
+    from django.core.mail.backends.smtp import EmailBackend
+
+    settings.EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    settings.EMAIL_HOST = "smtp-relay.example.com"
+    settings.EMAIL_HOST_USER = "compte@example.com"
+
+    def _refuse(self):
+        raise smtplib.SMTPAuthenticationError(code, b"refuse")
+
+    monkeypatch.setattr(EmailBackend, "open", _refuse)
+
+
+def test_the_check_never_prints_the_secret(db, settings, monkeypatch, capsys):
+    """Quatre caracteres d'un secret sont quatre caracteres de moins a deviner."""
+    _serveur_qui_refuse(settings, monkeypatch, 535)
+    settings.EMAIL_HOST_PASSWORD = "un-secret-reconnaissable"
+
+    with pytest.raises(SystemExit):
+        call_command("check_email")
+
+    sortie = capsys.readouterr().out
+    assert "un-secret-reconnaissable" not in sortie
+    assert "renseigne" in sortie
+
+
+def test_a_blocked_account_is_not_reported_as_a_wrong_key(
+    db, settings, monkeypatch, capsys
+):
+    """525 n'est pas 535. Confondre les deux fait regenerer une cle correcte en
+    boucle, sans jamais toucher la vraie cause."""
+    _serveur_qui_refuse(settings, monkeypatch, 525)
+    settings.EMAIL_HOST_PASSWORD = "une-cle"
+
+    with pytest.raises(SystemExit):
+        call_command("check_email")
+
+    sortie = capsys.readouterr().out
+    assert "n'a pas le droit d'envoyer" in sortie
+    assert "regenerer ne changera rien" in sortie
+
+
+def test_wrong_credentials_are_reported_as_such(db, settings, monkeypatch, capsys):
+    _serveur_qui_refuse(settings, monkeypatch, 535)
+    settings.EMAIL_HOST_PASSWORD = "une-cle"
+
+    with pytest.raises(SystemExit):
+        call_command("check_email")
+
+    sortie = capsys.readouterr().out
+    assert "refuse les identifiants" in sortie
+    assert "n'a pas le droit d'envoyer" not in sortie
+
+
 def test_the_report_command_runs(candidature, recruteur):
     _ecarter(candidature, recruteur, il_y_a_jours=30)
     call_command("outreach_report")
