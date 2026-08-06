@@ -1293,6 +1293,93 @@ comparaison vaut `NULL`, sa negation vaut `NULL`, et la ligne disparait — le
 filtre « humain seul » ne renvoyait **rien**, c'est-a-dire l'inverse de ce
 qu'il annonce.
 
+### Ce que le modele fait varier, et ce qu'il ne touche jamais
+
+L'argument central du projet tient en une phrase : le modele de langage
+n'attribue aucune note, il commente un chiffre deja calcule. Tant qu'elle reste
+une phrase, elle vaut ce que vaut une phrase.
+
+```
+python manage.py measure_variance --tirages 3
+```
+
+Trois analyses du **meme** score, contre le serveur d'inference reel :
+
+| | Resultat |
+|---|---|
+| Score | **0,8535 sur les trois tirages** |
+| Vocabulaire commun entre deux tirages | 0,404 — **60 % des mots changent** |
+| Longueurs | 290, 387, 361 mots |
+| Amplitude | 97 mots |
+
+Le score ne peut pas bouger : il n'est pas recalcule, il est passe en entree au
+modele, qui ne peut que le mettre en mots. C'est une propriete **structurelle**,
+pas statistique — la mesure ne la decouvre pas, elle la donne a voir.
+
+La mesure qui apprend vraiment quelque chose est ailleurs : **le modele
+invente-t-il des chiffres ?** Une analyse qui ecrirait « 72 % sur les
+competences » quand le moteur a calcule 68 % donnerait au recruteur un chiffre
+faux avec l'autorite d'un chiffre calcule. Tous les pourcentages du texte sont
+donc releves et confrontes au detail du score.
+
+**Et voici le resultat honnete : sur les trois tirages, le modele n'a cite aucun
+pourcentage.** Le controle passe donc sans avoir ete eprouve — un controle qui
+ne se declenche jamais ne prouve rien. Ce sont les tests unitaires, sur des
+textes fabriques pour l'occasion, qui verifient qu'il attrape bien un chiffre
+absent du score.
+
+Le recouvrement de vocabulaire n'est pas une mesure de sens : deux textes
+peuvent dire la meme chose avec d'autres mots, et la mesure les dira differents.
+Il repond a « le modele repete-t-il sa copie ou reformule-t-il », pas a « le
+texte est-il bon ».
+
+La page ne mesure **jamais au chargement**, seulement sur un bouton : chaque
+tirage appelle le modele. Une page qui mesurerait a chaque visite serait une
+facture qui court toute seule.
+
+### CV distincts au contenu commun
+
+A ne pas confondre avec « Doublons », qui cherche une meme personne sous deux
+dossiers. Ici les candidats sont **differents** et le texte se ressemble : un CV
+recopie, un modele partage dans une promotion, une agence qui reformate le meme
+profil pour deux clients.
+
+```
+python manage.py check_plagiarism
+```
+
+Le fichier strictement identique est deja traite ailleurs — l'empreinte du
+contenu est unique. Reste le cas difficile : deux fichiers differents dont le
+texte se recouvre.
+
+**Le tout-venant fausse tout.** « Experience professionnelle », « Langues :
+francais, anglais », « Permis B » se retrouvent dans un CV sur deux ; une mesure
+naive rapproche tout le monde de tout le monde. Deux garde-fous :
+
+- des empreintes de **huit mots consecutifs**, qui ne se retrouvent identiques
+  que si deux textes partagent une phrase entiere — un fait, pas un hasard ;
+- le **retrait des empreintes presentes dans plus de 30 % du corpus**, soit
+  l'equivalent, au niveau de la phrase, de ce qu'un mot vide est au niveau du
+  mot.
+
+Le seuil de signalement est volontairement haut : ici un faux positif porte une
+accusation, un faux negatif ne fait rien perdre.
+
+**Le module n'accuse personne.** Un fort recouvrement peut venir d'une copie
+comme d'un modele d'ecole partage entre camarades de promotion. Il produit une
+liste a regarder ; un humain tranche.
+
+La comparaison est quadratique : instantanee sous quelques milliers de CV, elle
+demanderait un pre-filtrage par empreintes minimales au-dela. La limite est
+connue et n'est pas franchie ici.
+
+**Une fuite trouvee en ecrivant cette page.** Le screening a l'aveugle masquait
+les noms, et la page affichait juste en dessous `Alice Martin.pdf` — un CV
+s'appelle presque toujours du nom de son auteur. La page « CV deposes » faisait
+pire : elle affichait le nom **et** le fichier sans tenir aucun compte du mode
+aveugle. L'attenuation du biais etait annulee par une liste de depots, page en
+apparence anodine.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1418,6 +1505,8 @@ tests/             suite pytest
 | `apps/outreach/backends.py` | quels canaux partent vraiment, et lesquels le disent au lieu de le simuler |
 | `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
 | `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
+| `apps/evaluation/variance.py` | le modele invente-t-il un chiffre ? la seule faute grave qu'il puisse commettre ici |
+| `apps/candidates/plagiarism.py` | CV distincts au contenu commun, et le retrait du tout-venant qui rend la mesure lisible |
 | `static/img/mark.svg` | le dessin, et pourquoi il ne porte plus de texte |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
@@ -1469,6 +1558,8 @@ tests/             suite pytest
 - [x] Identite visuelle unique : ecran, PDF et courriel rendus depuis un seul SVG
 - [x] Rejeu des decisions passees : la reproductibilite verifiee, plus seulement affirmee
 - [x] Journal d'audit consultable et filtrable, machine separee de l'humain
+- [x] Variance du modele mesuree : le score ne bouge pas, la redaction si
+- [x] CV distincts au contenu commun, tout-venant retire, sans accusation
 
 ---
 

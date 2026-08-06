@@ -8,7 +8,9 @@ from .views import (
     InvocationDashboardView,
     RefreshBiasReportView,
     ReplayView,
+    RunVarianceView,
     ThresholdView,
+    VarianceView,
 )
 
 app_name = "evaluation"
@@ -22,4 +24,6 @@ urlpatterns = [
     path("appels/", InvocationDashboardView.as_view(), name="invocations"),
     path("rejeu/", ReplayView.as_view(), name="replay"),
     path("journal/", AuditTrailView.as_view(), name="audit_trail"),
+    path("variance/", VarianceView.as_view(), name="variance"),
+    path("variance/mesurer/", RunVarianceView.as_view(), name="run_variance"),
 ]

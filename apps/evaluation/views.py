@@ -19,6 +19,7 @@ from . import (
     report_pdf,
     search_eval,
     threshold,
+    variance,
 )
 
 DATASET = "ranking_v1"
@@ -211,6 +212,69 @@ class ReplayView(LoginRequiredMixin, TemplateView):
         )[:30]
         context["tolerance_points"] = round(replay.TOLERANCE * 100, 3)
         return context
+
+
+class VarianceView(LoginRequiredMixin, TemplateView):
+    """Ce que le modele fait varier, et ce qu'il ne touche jamais.
+
+    La mesure appelle le modele plusieurs fois : elle ne part **jamais au
+    chargement**, seulement sur une action explicite. Une page qui consommerait
+    des tokens a chaque visite serait une facture qui court toute seule.
+    """
+
+    template_name = "evaluation/variance.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.candidates.models import Application
+
+        context = super().get_context_data(**kwargs)
+        context["candidatures"] = (
+            Application.objects.filter(scores__isnull=False)
+            .select_related("candidate", "offer")
+            .distinct()[:40]
+        )
+        context["mesure"] = self.request.session.pop("variance", None)
+        return context
+
+
+class RunVarianceView(ActionPermissionMixin, LoginRequiredMixin, View):
+    """Lance la mesure. Le resultat transite par la session, pas par l'URL."""
+
+    def post(self, request):
+        from django.contrib import messages as flash
+
+        from apps.candidates.models import Application
+
+        candidature = Application.objects.filter(
+            pk=request.POST.get("candidature")
+        ).select_related("candidate", "offer").first()
+        if candidature is None:
+            flash.error(request, "Candidature introuvable.")
+            return redirect("evaluation:variance")
+
+        try:
+            tirages = max(2, min(5, int(request.POST.get("tirages", 3))))
+        except ValueError:
+            tirages = 3
+
+        mesure = variance.mesurer(candidature, tirages=tirages)
+        request.session["variance"] = {
+            "candidat": candidature.candidate.full_name,
+            "offre": candidature.offer.title,
+            "score": round(mesure.score, 4),
+            "nombre": mesure.nombre,
+            "recouvrement": mesure.recouvrement_median,
+            "longueurs": mesure.longueurs,
+            "amplitude": mesure.ecart_de_longueur,
+            "attendus": sorted(mesure.chiffres_attendus),
+            "cites": [tirage.pourcentages_cites for tirage in mesure.tirages],
+            "inventes": mesure.chiffres_inventes,
+            "fidele": mesure.fidele,
+            "lecture": mesure.lecture,
+            "indisponible": mesure.indisponible,
+            "textes": [tirage.texte for tirage in mesure.tirages],
+        }
+        return redirect("evaluation:variance")
 
 
 class AuditTrailView(LoginRequiredMixin, TemplateView):

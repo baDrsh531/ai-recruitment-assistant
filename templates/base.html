@@ -31,6 +31,7 @@
       {% include "partials/nav_link.html" with url_name="jobs:list" label="Offres d'emploi" icon="briefcase" %}
       {% include "partials/nav_link.html" with url_name="candidates:list" label="Candidats" icon="users" %}
       {% include "partials/nav_link.html" with url_name="candidates:duplicates" label="Doublons" icon="users" %}
+      {% include "partials/nav_link.html" with url_name="candidates:plagiarism" label="CV similaires" icon="file" %}
       {% include "partials/nav_link.html" with url_name="outreach:silence" label="Echanges" icon="file" %}
 
       <p class="sidebar__section">Documents</p>
@@ -43,6 +44,7 @@
       {% include "partials/nav_link.html" with url_name="evaluation:threshold" label="Seuil de tri" icon="chart" %}
       {% include "partials/nav_link.html" with url_name="evaluation:agreement" label="Accord recruteurs" icon="users" %}
       {% include "partials/nav_link.html" with url_name="evaluation:replay" label="Rejeu des decisions" icon="chart" %}
+      {% include "partials/nav_link.html" with url_name="evaluation:variance" label="Variance du modele" icon="chart" %}
       {% include "partials/nav_link.html" with url_name="evaluation:audit_trail" label="Journal d'audit" icon="file" %}
       {% include "partials/nav_link.html" with url_name="agent:dashboard" label="Agent" icon="settings" %}
       <a class="nav-link" href="/admin/">
