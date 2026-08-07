@@ -1425,6 +1425,17 @@ donnees en miroir a deux lecteurs de la meme page, et ce sont les donnees qui
 seraient mal lues. Le texte autour suit la langue ; la geometrie qui porte un
 nombre reste stable.
 
+Un defaut vu **sur une capture d'ecran**, pas devine : un paragraphe francais
+pose dans une page arabe herite de la direction de la page, et sa ponctuation
+part en tete — « Vue d'ensemble du pipeline. » s'affiche « .Vue d'ensemble du
+pipeline ». Il se voit sur toute page dont le contenu n'est pas encore traduit,
+c'est-a-dire la plupart.
+
+`unicode-bidi: plaintext` fait ce que fait `dir="auto"`, mais depuis la feuille
+de style : la direction se deduit du premier caractere fort de chaque bloc, sans
+toucher a un seul gabarit. Le francais se lit de gauche a droite avec sa
+ponctuation en place, l'arabe de droite a gauche, sur la meme page.
+
 #### Ce qui est traduit, et ce qui ne l'est pas
 
 La **coquille** de l'application : navigation, en-tetes, actions communes — 25

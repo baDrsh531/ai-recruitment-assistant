@@ -247,6 +247,24 @@ code {
   box-shadow: inset -2px 0 0 var(--brand);
 }
 
+/* Chaque bloc de texte choisit sa direction d'apres son contenu.
+
+   Sans cette regle, un paragraphe francais pose dans une page arabe herite de
+   la direction de la page et sa ponctuation part en tete : « Vue d'ensemble du
+   pipeline. » s'affiche « .Vue d'ensemble du pipeline ». Le defaut se voit sur
+   toute page dont le contenu n'est pas encore traduit — c'est-a-dire, ici, la
+   plupart.
+
+   `unicode-bidi: plaintext` fait ce que fait `dir="auto"`, mais depuis la
+   feuille de style : la direction se deduit du premier caractere fort de
+   chaque bloc, sans toucher a un seul gabarit. Le francais se lit de gauche a
+   droite avec sa ponctuation en place, l'arabe de droite a gauche, sur la meme
+   page. */
+[dir="rtl"] :is(h1, h2, h3, p, li, td, th, caption, label, option,
+                figcaption, summary, blockquote, dt, dd) {
+  unicode-bidi: plaintext;
+}
+
 .nav-link svg {
   width: 1rem;
   height: 1rem;

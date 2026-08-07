@@ -180,6 +180,20 @@ def test_measurement_scales_stay_left_to_right():
     assert ".meter,\n.range,\n.chart {\n  direction: ltr;\n}" in contenu
 
 
+def test_untranslated_text_keeps_its_own_direction():
+    """Un paragraphe francais pose dans une page arabe herite sinon de la
+    direction de la page, et sa ponctuation part en tete : « Vue d'ensemble du
+    pipeline. » s'affiche « .Vue d'ensemble du pipeline ».
+
+    Le defaut se voit sur toute page dont le contenu n'est pas encore traduit,
+    c'est-a-dire la plupart. Constate sur une capture reelle, pas devine.
+    """
+    contenu = CSS.read_text(encoding="utf-8")
+
+    assert "unicode-bidi: plaintext" in contenu
+    assert '[dir="rtl"] :is(h1, h2, h3, p, li, td, th' in contenu
+
+
 def test_the_active_link_marker_is_flipped():
     """`box-shadow` n'a pas de variante logique : c'est la seule regle du
     fichier qui demande une inversion explicite."""
