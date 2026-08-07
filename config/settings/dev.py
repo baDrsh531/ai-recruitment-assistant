@@ -9,7 +9,11 @@ ALLOWED_HOSTS = ["*"]
 # Le hachage manifeste de WhiteNoise casse `runserver` sans collectstatic.
 STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Console par defaut. Renseigner `EMAIL_HOST` dans le `.env` bascule sur SMTP —
+# `base.py` s'en charge, et la condition ci-dessous evite que ce fichier ne
+# reprenne la main dessus.
+if not EMAIL_HOST:  # noqa: F405
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # django-debug-toolbar a ete retiree. Elle recouvrait le tiers droit de chaque
 # page et son enregistrement d'URLs, oublie, avait un jour casse toutes les

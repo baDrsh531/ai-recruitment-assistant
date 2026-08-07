@@ -35,6 +35,33 @@ AGENT_DAILY_TOKEN_BUDGET = env.int("AGENT_DAILY_TOKEN_BUDGET", default=200_000)
 AGENT_USERNAME = env("AGENT_USERNAME", default="agent")
 DEMO_READONLY_USERNAME = env("DEMO_READONLY_USERNAME", default="observateur")
 
+# --- Echanges avec les candidats -------------------------------------------
+# Nom qui signe les messages, et delai de reponse annonce dans les gabarits.
+# Annoncer un delai engage : `apps/outreach/silence.py` mesure ensuite les
+# dossiers restes muets au-dela.
+# Vide = on retombe sur le nom de la marque (voir apps/core/brand.py). Mettre
+# « notre equipe » en defaut donnait un pied de courriel qui se lisait mal.
+OUTREACH_ORGANISATION = env("OUTREACH_ORGANISATION", default="")
+OUTREACH_RESPONSE_DAYS = env.int("OUTREACH_RESPONSE_DAYS", default=15)
+
+# Expedition reelle. Sans `EMAIL_HOST`, on reste sur le comportement du fichier
+# de reglages courant : console en developpement. Renseigner ces variables est
+# la seule chose a faire pour que les messages partent vraiment — aucun code
+# n'a a changer.
+EMAIL_HOST = env("EMAIL_HOST", default="")
+if EMAIL_HOST:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+    EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+    EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+    EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+    EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=20)
+
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="Recrutement.IA <ne-pas-repondre@example.com>"
+)
+
 # --- Applications ---------------------------------------------------------
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -63,6 +90,7 @@ LOCAL_APPS = [
     "apps.evaluation",
     "apps.api",
     "apps.agent",
+    "apps.outreach",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -71,6 +99,10 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Apres les sessions, avant CommonMiddleware : la langue est lue dans la
+    # session puis dans l'en-tete du navigateur, et doit etre connue avant
+    # toute reecriture d'URL.
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -119,10 +151,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- Internationalisation -------------------------------------------------
-LANGUAGE_CODE = "fr-fr"
+LANGUAGE_CODE = "fr"
 TIME_ZONE = "Europe/Paris"
 USE_I18N = True
 USE_TZ = True
+
+# L'arabe est la seconde langue, et pas par hasard : l'application sait deja
+# lire les CV en arabe — normalisation, formes de presentation, ordre logique
+# — mais son interface ne le parlait pas. Elle s'ecrit de droite a gauche, ce
+# qui change la mise en page et non seulement les mots.
+LANGUAGES = [
+    ("fr", "Francais"),
+    ("ar", "العربية"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# Langues dont l'ecriture va de droite a gauche. `django.utils.translation`
+# sait deja le dire, mais la liste sert aussi aux controles hors requete.
+RTL_LANGUAGES = {"ar", "he", "fa", "ur"}
 
 # --- Fichiers statiques et media ------------------------------------------
 STATIC_URL = "static/"

@@ -20,7 +20,7 @@ from apps.matching import counterfactual, services
 from apps.matching import redirect as redirect_offers
 from apps.matching.models import MatchScore
 
-from . import coherence, duplicates, retention
+from . import coherence, duplicates, plagiarism, retention
 from .models import Application, Candidate, CandidateLanguage, CandidateSkill, CVDocument
 
 # Tranches d'anciennete, dans un ordre qui porte du sens : elles ne sont pas
@@ -267,6 +267,31 @@ class CandidateDetailView(LoginRequiredMixin, DetailView):
         return Candidate.objects.prefetch_related(
             "skills", "experiences", "education", "languages", "certifications", "documents"
         )
+
+
+class PlagiarismView(LoginRequiredMixin, TemplateView):
+    """CV de candidats **differents** dont le texte se recouvre.
+
+    A ne pas confondre avec la page « Doublons », qui cherche une meme personne
+    sous deux dossiers. Ici les candidats sont distincts et le texte se
+    ressemble : copie, modele partage dans une promotion, agence qui reformate
+    le meme profil.
+
+    La page signale, elle n'accuse pas. Un humain tranche.
+    """
+
+    template_name = "candidates/plagiarism.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        rapport = plagiarism.analyser()
+        context["rapport"] = rapport
+        context["paires"] = rapport.paires[:40]
+        context["seuil"] = plagiarism.SEUIL_SIGNALEMENT
+        context["taille_empreinte"] = plagiarism.TAILLE_EMPREINTE
+        context["part_commune"] = round(plagiarism.PART_TROP_COMMUNE * 100)
+        context["blind"] = self.request.user.blind_screening
+        return context
 
 
 class DuplicateListView(LoginRequiredMixin, TemplateView):

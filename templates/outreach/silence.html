@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Echanges avec les candidats{% endblock %}
+{% block heading %}Ce qu'on n'a pas dit aux candidats{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ mesure.ecartes }} dossier(s) ecarte(s) ·
+    {{ mesure.ouverts_anciens }} ouvert(s) depuis plus de {{ jours_avant_silence }} jours.
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Le silence</h2>
+    {% if mesure.irreprochable %}
+      <span class="badge badge--ok">aucun oubli</span>
+    {% else %}
+      <span class="badge badge--danger">{{ mesure.oublis|length }} dossier(s)</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      La plainte la plus repandue sur le recrutement n'est pas le refus, c'est
+      l'absence de reponse. Outiller l'envoi de messages sans mesurer ceux
+      qu'on n'envoie pas outillerait surtout le confort du recruteur.
+    </p>
+    <p class="alert alert--info mt-4">{{ mesure.lecture }}</p>
+  </div>
+
+  <div class="grid">
+    {% include "partials/stat_tile.html" with label="Ecartes sans reponse" value=mesure.ecartes_sans_reponse hint="le motif est ecrit dans leur dossier, il n'est pas parti" %}
+    {% include "partials/stat_tile.html" with label="Ecartes prevenus" value=mesure.ecartes_prevenus %}
+    {% include "partials/stat_tile.html" with label="Ouverts sans un message" value=mesure.ouverts_sans_message hint="ils ignorent que leur candidature est arrivee" %}
+    {% include "partials/stat_tile.html" with label="Delai median de reponse" value=mesure.delai_median_jours|default:"—" hint="jours entre la decision et la notification" %}
+  </div>
+
+  <p class="card__note">
+    Deux silences distincts, et les confondre perdrait le plus grave. Apres une
+    decision : l'information existe, elle est ecrite, elle n'est pas transmise.
+    Avant toute decision : le candidat ne sait meme pas si sa candidature est
+    arrivee. Un appel telephonique consigne compte comme une reponse — la
+    question est « cette personne a-t-elle eu une reponse », pas « le logiciel
+    a-t-il expedie quelque chose ».
+  </p>
+</section>
+
+{% if oublis %}
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Dossiers a reprendre</h2>
+    <span class="badge badge--warn">le plus ancien d'abord</span>
+  </div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Candidat</th><th>Offre</th><th class="num">Jours</th><th>Situation</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for oubli in oublis %}
+          <tr>
+            <th scope="row">
+              <a href="{{ oubli.application.get_absolute_url }}">{{ oubli.candidat }}</a>
+            </th>
+            <td class="muted">{{ oubli.application.offer.title }}</td>
+            <td class="num{% if oubli.jours > 30 %} danger{% endif %}">{{ oubli.jours }}</td>
+            <td>
+              {% if oubli.apres_decision %}
+                <span class="badge badge--danger">ecarte, jamais prevenu</span>
+              {% else %}
+                <span class="badge badge--warn">ouvert, aucun message</span>
+              {% endif %}
+            </td>
+            <td class="num">
+              <a class="btn btn--sm" href="{% url 'outreach:thread' oubli.application.pk %}">
+                Ecrire
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    Un taux sans la liste ne se traite pas. Les dossiers sont ranges du plus
+    ancien au plus recent : c'est l'anciennete du silence qui coute, pas le
+    nombre.
+  </p>
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Canaux</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Canal</th><th>Accord requis</th><th>Expediteur reel</th></tr></thead>
+      <tbody>
+        {% for canal in canaux %}
+          <tr>
+            <th scope="row">{{ canal.libelle }}</th>
+            <td>
+              {% if canal.sur_accord %}
+                <span class="badge badge--warn">accord explicite</span>
+              {% else %}
+                <span class="badge">presume par la candidature</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if canal.etat == 'connecte' %}
+                <span class="badge badge--ok">connecte</span>
+              {% elif canal.etat == 'hors_logiciel' %}
+                <span class="badge">hors logiciel, se consigne</span>
+              {% else %}
+                <span class="badge">modelise, non connecte</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    Seul l'e-mail dispose d'un expediteur reel, par la couche courriel de
+    Django. WhatsApp et le SMS demanderaient un compte WhatsApp Business avec
+    des gabarits valides par Meta, et un contrat operateur. Ils sont modelises,
+    consentis, journalises et redigeables — tout sauf le cable. Ecrire un faux
+    expediteur qui journalise « envoye » aurait donne une demonstration plus
+    flatteuse et un systeme qui ment : le jour ou les identifiants arrivent,
+    personne ne saurait plus quels messages sont reellement partis.
+  </p>
+</section>
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Derniers echanges</h2></div>
+  {% if recents %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Date</th><th>Candidat</th><th>Canal</th><th>Statut</th><th>Par</th><th>Apercu</th></tr>
+        </thead>
+        <tbody>
+          {% for message in recents %}
+            <tr>
+              <td class="muted small">{{ message.created_at|date:"d/m H:i" }}</td>
+              <th scope="row">
+                <a href="{% url 'outreach:thread' message.application.pk %}">
+                  {{ message.application.candidate.full_name }}
+                </a>
+              </th>
+              <td class="muted">{{ message.get_channel_display }}</td>
+              <td>
+                <span class="badge{% if message.status == 'sent' %} badge--ok{% elif message.status == 'failed' %} badge--danger{% endif %}">
+                  {{ message.get_status_display }}
+                </span>
+                {% if message.redige_par_un_modele %}
+                  <span class="badge badge--warn">modele</span>
+                {% endif %}
+              </td>
+              <td class="muted small">
+                {% if message.sent_by %}{{ message.sent_by.get_full_name|default:message.sent_by.username }}{% endif %}
+              </td>
+              <td class="muted small">{{ message.apercu }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "partials/empty.html" with title="Aucun echange" text="Rien n'a encore ete envoye ni consigne." %}
+  {% endif %}
+</section>
+{% endblock %}
