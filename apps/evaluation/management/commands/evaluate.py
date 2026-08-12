@@ -106,8 +106,12 @@ class Command(BaseCommand):
         self.stdout.write("-" * len(header))
 
         for case in report.cases:
+            # Une metrique indefinie s'affiche en tiret, jamais en zero :
+            # zero se lit « mauvais resultat », le tiret dit « sans objet ».
             row = f"{case.id:<28}" + "".join(
-                f"{getattr(case, key):>10.3f}" for key in LABELS
+                f"{'sans objet':>10}" if getattr(case, key) is None
+                else f"{getattr(case, key):>10.3f}"
+                for key in LABELS
             )
             self.stdout.write(row)
 

@@ -1,8 +1,8 @@
 {
   "name": "ranking_v1",
   "kind": "ranking",
-  "version": "1.0.0",
-  "description": "Jeu d'evaluation du moteur de classement. Cinq offres, 28 candidats. La note de pertinence (0 a 3) est attribuee a la main, en raisonnant comme un recruteur : 3 = a recevoir sans hesitation, 2 = merite un entretien, 1 = profil eloigne mais pas absurde, 0 = hors sujet. Les cas sont choisis pour eprouver des mecanismes precis du moteur : implication dirigee, competences voisines, criteres non applicables, anciennete.",
+  "version": "1.1.0",
+  "description": "Jeu d'evaluation du moteur de classement. Cinq offres, 28 candidats. La note de pertinence (0 a 3) est attribuee a la main, en raisonnant comme un recruteur : 3 = a recevoir sans hesitation, 2 = merite un entretien, 1 = profil eloigne mais pas absurde, 0 = hors sujet. Les cas sont choisis pour eprouver des mecanismes precis du moteur : implication dirigee, competences voisines, criteres non applicables, anciennete. Etoffe a trente cas : ontologie dirigee, fraicheur, recevabilite multiplicative, renormalisation, paliers de langue, teletravail, certifications, cas limites et proprietes de non-discrimination. La pertinence est jugee du point de vue d'un recruteur, jamais alignee sur la sortie du moteur — sans quoi la mesure ne mesurerait que sa propre coherence.",
   "cases": [
     {
       "id": "backend_python_senior",
@@ -14,100 +14,251 @@
         "experience_min_years": 4,
         "education_level": 3,
         "required_skills": [
-          {"name": "Python", "weight": 2.0, "min_years": 4},
-          {"name": "Django", "weight": 1.8, "min_years": 3},
-          {"name": "PostgreSQL", "weight": 1.2, "min_years": 2}
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 4
+          },
+          {
+            "name": "Django",
+            "weight": 1.8,
+            "min_years": 3
+          },
+          {
+            "name": "PostgreSQL",
+            "weight": 1.2,
+            "min_years": 2
+          }
         ],
         "preferred_skills": [
-          {"name": "Docker", "weight": 1.0},
-          {"name": "Celery", "weight": 0.8}
+          {
+            "name": "Docker",
+            "weight": 1.0
+          },
+          {
+            "name": "Celery",
+            "weight": 0.8
+          }
         ],
         "languages": [
-          {"language": "Francais", "min_level": "C1"},
-          {"language": "Anglais", "min_level": "B2"}
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          },
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
         ]
       },
       "candidates": [
         {
-          "id": "bps_ideal", "name": "Profil ideal", "relevance": 3,
-          "years": 7, "education": 5, "location": "Casablanca",
+          "id": "bps_ideal",
+          "name": "Profil ideal",
+          "relevance": 3,
+          "years": 7,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 7, "last_used_year": 2026},
-            {"name": "Django", "years": 6, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 5, "last_used_year": 2026},
-            {"name": "Docker", "years": 4, "last_used_year": 2026},
-            {"name": "Celery", "years": 3, "last_used_year": 2025}
+            {
+              "name": "Python",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Celery",
+              "years": 3,
+              "last_used_year": 2025
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "C1"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
           ]
         },
         {
-          "id": "bps_solide", "name": "Backend solide sans Docker", "relevance": 3,
-          "years": 6, "education": 5, "location": "Casablanca",
+          "id": "bps_solide",
+          "name": "Backend solide sans Docker",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "Django", "years": 5, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 4, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "C2"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "C2"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         },
         {
-          "id": "bps_drf", "name": "Profil declarant DRF uniquement", "relevance": 2,
-          "years": 5, "education": 3, "location": "Casablanca",
+          "id": "bps_drf",
+          "name": "Profil declarant DRF uniquement",
+          "relevance": 2,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "DRF", "years": 5, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 3, "last_used_year": 2026}
+            {
+              "name": "DRF",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 3,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         },
         {
-          "id": "bps_flask", "name": "Python Flask, pas de Django", "relevance": 2,
-          "years": 5, "education": 3, "location": "Casablanca",
+          "id": "bps_flask",
+          "name": "Python Flask, pas de Django",
+          "relevance": 2,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "Flask", "years": 4, "last_used_year": 2026},
-            {"name": "MySQL", "years": 3, "last_used_year": 2025}
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Flask",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "MySQL",
+              "years": 3,
+              "last_used_year": 2025
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "C1"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "C1"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         },
         {
-          "id": "bps_junior", "name": "Junior Python", "relevance": 1,
-          "years": 1, "education": 3, "location": "Casablanca",
+          "id": "bps_junior",
+          "name": "Junior Python",
+          "relevance": 1,
+          "years": 1,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 1, "last_used_year": 2026},
-            {"name": "Django", "years": 1, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 1,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 1,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B1"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B1"
+            }
           ]
         },
         {
-          "id": "bps_hors_sujet", "name": "Comptable", "relevance": 0,
-          "years": 12, "education": 5, "location": "Casablanca",
+          "id": "bps_hors_sujet",
+          "name": "Comptable",
+          "relevance": 0,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Comptabilite", "years": 12, "last_used_year": 2026},
-            {"name": "Excel", "years": 12, "last_used_year": 2026}
+            {
+              "name": "Comptabilite",
+              "years": 12,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Excel",
+              "years": 12,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         }
       ]
     },
-
     {
       "id": "data_engineer_sql",
       "tests": "Implication dirigee : PostgreSQL implique SQL, mais SQL seul ne vaut pas PostgreSQL.",
@@ -118,69 +269,192 @@
         "experience_min_years": 3,
         "education_level": 5,
         "required_skills": [
-          {"name": "SQL", "weight": 2.0, "min_years": 3},
-          {"name": "Python", "weight": 1.5, "min_years": 2},
-          {"name": "Airflow", "weight": 1.2, "min_years": 1}
+          {
+            "name": "SQL",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "Python",
+            "weight": 1.5,
+            "min_years": 2
+          },
+          {
+            "name": "Airflow",
+            "weight": 1.2,
+            "min_years": 1
+          }
         ],
         "preferred_skills": [
-          {"name": "Spark", "weight": 1.0},
-          {"name": "dbt", "weight": 0.8}
+          {
+            "name": "Spark",
+            "weight": 1.0
+          },
+          {
+            "name": "dbt",
+            "weight": 0.8
+          }
         ],
-        "languages": [{"language": "Anglais", "min_level": "B2"}]
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
       },
       "candidates": [
         {
-          "id": "de_complet", "name": "Data engineer complet", "relevance": 3,
-          "years": 5, "education": 5, "location": "Rabat",
+          "id": "de_complet",
+          "name": "Data engineer complet",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Rabat",
           "skills": [
-            {"name": "SQL", "years": 5, "last_used_year": 2026},
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "Airflow", "years": 3, "last_used_year": 2026},
-            {"name": "Spark", "years": 2, "last_used_year": 2025},
-            {"name": "dbt", "years": 2, "last_used_year": 2026}
+            {
+              "name": "SQL",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Airflow",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Spark",
+              "years": 2,
+              "last_used_year": 2025
+            },
+            {
+              "name": "dbt",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "de_postgres", "name": "PostgreSQL sans mention de SQL", "relevance": 3,
-          "years": 5, "education": 5, "location": "Rabat",
+          "id": "de_postgres",
+          "name": "PostgreSQL sans mention de SQL",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Rabat",
           "skills": [
-            {"name": "PostgreSQL", "years": 5, "last_used_year": 2026},
-            {"name": "Python", "years": 4, "last_used_year": 2026},
-            {"name": "Airflow", "years": 2, "last_used_year": 2026}
+            {
+              "name": "PostgreSQL",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Python",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Airflow",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "de_sans_airflow", "name": "SQL et Python, pas d'orchestrateur", "relevance": 2,
-          "years": 4, "education": 5, "location": "Rabat",
+          "id": "de_sans_airflow",
+          "name": "SQL et Python, pas d'orchestrateur",
+          "relevance": 2,
+          "years": 4,
+          "education": 5,
+          "location": "Rabat",
           "skills": [
-            {"name": "SQL", "years": 4, "last_used_year": 2026},
-            {"name": "Python", "years": 4, "last_used_year": 2026}
+            {
+              "name": "SQL",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Python",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "de_analyste", "name": "Analyste SQL sans Python", "relevance": 1,
-          "years": 6, "education": 3, "location": "Rabat",
+          "id": "de_analyste",
+          "name": "Analyste SQL sans Python",
+          "relevance": 1,
+          "years": 6,
+          "education": 3,
+          "location": "Rabat",
           "skills": [
-            {"name": "SQL", "years": 6, "last_used_year": 2026},
-            {"name": "Excel", "years": 6, "last_used_year": 2026}
+            {
+              "name": "SQL",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Excel",
+              "years": 6,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B1"
+            }
+          ]
         },
         {
-          "id": "de_front", "name": "Developpeur front", "relevance": 0,
-          "years": 5, "education": 3, "location": "Rabat",
+          "id": "de_front",
+          "name": "Developpeur front",
+          "relevance": 0,
+          "years": 5,
+          "education": 3,
+          "location": "Rabat",
           "skills": [
-            {"name": "React", "years": 5, "last_used_year": 2026},
-            {"name": "CSS", "years": 5, "last_used_year": 2026}
+            {
+              "name": "React",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "CSS",
+              "years": 5,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         }
       ]
     },
-
     {
       "id": "frontend_react",
       "tests": "Competences voisines : Vue et Angular sont transferables vers React, sans equivalence.",
@@ -191,66 +465,188 @@
         "experience_min_years": 3,
         "education_level": 3,
         "required_skills": [
-          {"name": "React", "weight": 2.0, "min_years": 3},
-          {"name": "TypeScript", "weight": 1.5, "min_years": 2},
-          {"name": "CSS", "weight": 1.0, "min_years": 2}
+          {
+            "name": "React",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "TypeScript",
+            "weight": 1.5,
+            "min_years": 2
+          },
+          {
+            "name": "CSS",
+            "weight": 1.0,
+            "min_years": 2
+          }
         ],
-        "preferred_skills": [{"name": "Next.js", "weight": 1.0}],
-        "languages": [{"language": "Francais", "min_level": "B2"}]
+        "preferred_skills": [
+          {
+            "name": "Next.js",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "B2"
+          }
+        ]
       },
       "candidates": [
         {
-          "id": "fr_expert", "name": "Expert React", "relevance": 3,
-          "years": 6, "education": 3, "location": "Casablanca",
+          "id": "fr_expert",
+          "name": "Expert React",
+          "relevance": 3,
+          "years": 6,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "React", "years": 6, "last_used_year": 2026},
-            {"name": "TypeScript", "years": 5, "last_used_year": 2026},
-            {"name": "CSS", "years": 6, "last_used_year": 2026},
-            {"name": "Next.js", "years": 3, "last_used_year": 2026}
+            {
+              "name": "React",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "TypeScript",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "CSS",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Next.js",
+              "years": 3,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Francais", "level": "NAT"}]
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            }
+          ]
         },
         {
-          "id": "fr_nextjs", "name": "Next.js sans mention de React", "relevance": 3,
-          "years": 5, "education": 3, "location": "Casablanca",
+          "id": "fr_nextjs",
+          "name": "Next.js sans mention de React",
+          "relevance": 3,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Next.js", "years": 5, "last_used_year": 2026},
-            {"name": "TypeScript", "years": 4, "last_used_year": 2026},
-            {"name": "CSS", "years": 5, "last_used_year": 2026}
+            {
+              "name": "Next.js",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "TypeScript",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "CSS",
+              "years": 5,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Francais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "fr_vue", "name": "Developpeur Vue", "relevance": 2,
-          "years": 5, "education": 3, "location": "Casablanca",
+          "id": "fr_vue",
+          "name": "Developpeur Vue",
+          "relevance": 2,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Vue", "years": 5, "last_used_year": 2026},
-            {"name": "TypeScript", "years": 3, "last_used_year": 2026},
-            {"name": "CSS", "years": 5, "last_used_year": 2026}
+            {
+              "name": "Vue",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "TypeScript",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "CSS",
+              "years": 5,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Francais", "level": "NAT"}]
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            }
+          ]
         },
         {
-          "id": "fr_js_ancien", "name": "JavaScript ancien, sans framework", "relevance": 1,
-          "years": 8, "education": 3, "location": "Casablanca",
+          "id": "fr_js_ancien",
+          "name": "JavaScript ancien, sans framework",
+          "relevance": 1,
+          "years": 8,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "JavaScript", "years": 8, "last_used_year": 2018},
-            {"name": "CSS", "years": 8, "last_used_year": 2018}
+            {
+              "name": "JavaScript",
+              "years": 8,
+              "last_used_year": 2018
+            },
+            {
+              "name": "CSS",
+              "years": 8,
+              "last_used_year": 2018
+            }
           ],
-          "languages": [{"language": "Francais", "level": "NAT"}]
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            }
+          ]
         },
         {
-          "id": "fr_backend", "name": "Backend Java", "relevance": 0,
-          "years": 7, "education": 5, "location": "Casablanca",
+          "id": "fr_backend",
+          "name": "Backend Java",
+          "relevance": 0,
+          "years": 7,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Java", "years": 7, "last_used_year": 2026},
-            {"name": "Spring Boot", "years": 6, "last_used_year": 2026}
+            {
+              "name": "Java",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Spring Boot",
+              "years": 6,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Francais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "B2"
+            }
+          ]
         }
       ]
     },
-
     {
       "id": "devops_teletravail",
       "tests": "Criteres non applicables : poste en teletravail total, aucune exigence de diplome. La localisation et la formation doivent etre exclues et les poids renormalises.",
@@ -261,66 +657,188 @@
         "experience_min_years": 4,
         "education_level": 0,
         "required_skills": [
-          {"name": "Kubernetes", "weight": 2.0, "min_years": 3},
-          {"name": "Terraform", "weight": 1.5, "min_years": 2},
-          {"name": "CI-CD", "weight": 1.5, "min_years": 3}
+          {
+            "name": "Kubernetes",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "Terraform",
+            "weight": 1.5,
+            "min_years": 2
+          },
+          {
+            "name": "CI-CD",
+            "weight": 1.5,
+            "min_years": 3
+          }
         ],
-        "preferred_skills": [{"name": "AWS", "weight": 1.2}],
-        "languages": [{"language": "Anglais", "min_level": "B2"}]
+        "preferred_skills": [
+          {
+            "name": "AWS",
+            "weight": 1.2
+          }
+        ],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
       },
       "candidates": [
         {
-          "id": "do_senior", "name": "DevOps confirme", "relevance": 3,
-          "years": 8, "education": 0, "location": "Marrakech",
+          "id": "do_senior",
+          "name": "DevOps confirme",
+          "relevance": 3,
+          "years": 8,
+          "education": 0,
+          "location": "Marrakech",
           "skills": [
-            {"name": "Kubernetes", "years": 5, "last_used_year": 2026},
-            {"name": "Terraform", "years": 4, "last_used_year": 2026},
-            {"name": "GitHub Actions", "years": 5, "last_used_year": 2026},
-            {"name": "AWS", "years": 6, "last_used_year": 2026}
+            {
+              "name": "Kubernetes",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Terraform",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "GitHub Actions",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "AWS",
+              "years": 6,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "do_docker", "name": "Docker sans Kubernetes", "relevance": 1,
-          "years": 5, "education": 3, "location": "Casablanca",
+          "id": "do_docker",
+          "name": "Docker sans Kubernetes",
+          "relevance": 1,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Docker", "years": 5, "last_used_year": 2026},
-            {"name": "Jenkins", "years": 4, "last_used_year": 2026}
+            {
+              "name": "Docker",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Jenkins",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "do_sysadmin", "name": "Administrateur systeme", "relevance": 1,
-          "years": 10, "education": 1, "location": "Fes",
+          "id": "do_sysadmin",
+          "name": "Administrateur systeme",
+          "relevance": 1,
+          "years": 10,
+          "education": 1,
+          "location": "Fes",
           "skills": [
-            {"name": "Linux", "years": 10, "last_used_year": 2026},
-            {"name": "Bash", "years": 10, "last_used_year": 2026}
+            {
+              "name": "Linux",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Bash",
+              "years": 10,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B1"
+            }
+          ]
         },
         {
-          "id": "do_complet", "name": "Plateforme complete", "relevance": 3,
-          "years": 6, "education": 5, "location": "Tanger",
+          "id": "do_complet",
+          "name": "Plateforme complete",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Tanger",
           "skills": [
-            {"name": "Kubernetes", "years": 4, "last_used_year": 2026},
-            {"name": "Terraform", "years": 3, "last_used_year": 2026},
-            {"name": "GitLab CI", "years": 4, "last_used_year": 2026},
-            {"name": "Azure", "years": 3, "last_used_year": 2025}
+            {
+              "name": "Kubernetes",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Terraform",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "GitLab CI",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Azure",
+              "years": 3,
+              "last_used_year": 2025
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "do_data", "name": "Data scientist", "relevance": 0,
-          "years": 5, "education": 8, "location": "Rabat",
+          "id": "do_data",
+          "name": "Data scientist",
+          "relevance": 0,
+          "years": 5,
+          "education": 8,
+          "location": "Rabat",
           "skills": [
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "PyTorch", "years": 4, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PyTorch",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         }
       ]
     },
-
     {
       "id": "ml_engineer_certifie",
       "tests": "Certifications exigees et competences voisines PyTorch/TensorFlow.",
@@ -330,71 +848,203 @@
         "remote_policy": "hybrid",
         "experience_min_years": 3,
         "education_level": 5,
-        "required_certifications": ["AWS Machine Learning"],
-        "required_skills": [
-          {"name": "Python", "weight": 2.0, "min_years": 3},
-          {"name": "PyTorch", "weight": 1.8, "min_years": 2},
-          {"name": "LLM", "weight": 1.5, "min_years": 1}
+        "required_certifications": [
+          "AWS Machine Learning"
         ],
-        "preferred_skills": [{"name": "RAG", "weight": 1.0}],
-        "languages": [{"language": "Anglais", "min_level": "B2"}]
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "PyTorch",
+            "weight": 1.8,
+            "min_years": 2
+          },
+          {
+            "name": "LLM",
+            "weight": 1.5,
+            "min_years": 1
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "RAG",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
       },
       "candidates": [
         {
-          "id": "ml_ideal", "name": "ML certifie", "relevance": 3,
-          "years": 5, "education": 5, "location": "Casablanca",
+          "id": "ml_ideal",
+          "name": "ML certifie",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "PyTorch", "years": 4, "last_used_year": 2026},
-            {"name": "LLM", "years": 2, "last_used_year": 2026},
-            {"name": "RAG", "years": 2, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PyTorch",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "RAG",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
-          "certifications": ["AWS Machine Learning Specialty"],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "certifications": [
+            "AWS Machine Learning Specialty"
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "ml_sans_certif", "name": "ML sans certification", "relevance": 2,
-          "years": 5, "education": 5, "location": "Casablanca",
+          "id": "ml_sans_certif",
+          "name": "ML sans certification",
+          "relevance": 2,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "PyTorch", "years": 4, "last_used_year": 2026},
-            {"name": "LLM", "years": 2, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PyTorch",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "ml_tensorflow", "name": "TensorFlow au lieu de PyTorch", "relevance": 2,
-          "years": 5, "education": 5, "location": "Casablanca",
+          "id": "ml_tensorflow",
+          "name": "TensorFlow au lieu de PyTorch",
+          "relevance": 2,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 5, "last_used_year": 2026},
-            {"name": "TensorFlow", "years": 5, "last_used_year": 2026},
-            {"name": "LLM", "years": 1, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "TensorFlow",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 1,
+              "last_used_year": 2026
+            }
           ],
-          "certifications": ["AWS Machine Learning Specialty"],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "certifications": [
+            "AWS Machine Learning Specialty"
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "ml_data_analyst", "name": "Analyste de donnees", "relevance": 1,
-          "years": 4, "education": 5, "location": "Casablanca",
+          "id": "ml_data_analyst",
+          "name": "Analyste de donnees",
+          "relevance": 1,
+          "years": 4,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 4, "last_used_year": 2026},
-            {"name": "pandas", "years": 4, "last_used_year": 2026},
-            {"name": "SQL", "years": 4, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "pandas",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "ml_chef_projet", "name": "Chef de projet", "relevance": 0,
-          "years": 10, "education": 5, "location": "Casablanca",
+          "id": "ml_chef_projet",
+          "name": "Chef de projet",
+          "relevance": 0,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Gestion de projet", "years": 10, "last_used_year": 2026},
-            {"name": "Scrum", "years": 8, "last_used_year": 2026}
+            {
+              "name": "Gestion de projet",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Scrum",
+              "years": 8,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         }
       ]
     },
-
     {
       "id": "arbitrage_competences_anciennete",
       "tests": "Cas difficile. Le recruteur prefere ici la maitrise technique a l'anciennete : un profil pointu de 3 ans passe avant un generaliste de 12 ans. Le moteur, qui pondere l'anciennete a 20 %, a tendance a faire l'inverse. Ce cas existe pour mesurer cet ecart, pas pour le masquer.",
@@ -405,66 +1055,188 @@
         "experience_min_years": 5,
         "education_level": 3,
         "required_skills": [
-          {"name": "Python", "weight": 1.5, "min_years": 3},
-          {"name": "LLM", "weight": 2.5, "min_years": 2},
-          {"name": "RAG", "weight": 2.0, "min_years": 1}
+          {
+            "name": "Python",
+            "weight": 1.5,
+            "min_years": 3
+          },
+          {
+            "name": "LLM",
+            "weight": 2.5,
+            "min_years": 2
+          },
+          {
+            "name": "RAG",
+            "weight": 2.0,
+            "min_years": 1
+          }
         ],
-        "preferred_skills": [{"name": "Kubernetes", "weight": 0.8}],
-        "languages": [{"language": "Anglais", "min_level": "B2"}]
+        "preferred_skills": [
+          {
+            "name": "Kubernetes",
+            "weight": 0.8
+          }
+        ],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
       },
       "candidates": [
         {
-          "id": "arb_pointu_jeune", "name": "Specialiste LLM, 3 ans", "relevance": 3,
-          "years": 3, "education": 5, "location": "Casablanca",
+          "id": "arb_pointu_jeune",
+          "name": "Specialiste LLM, 3 ans",
+          "relevance": 3,
+          "years": 3,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 3, "last_used_year": 2026},
-            {"name": "LLM", "years": 3, "last_used_year": 2026},
-            {"name": "RAG", "years": 2, "last_used_year": 2026},
-            {"name": "Transformers", "years": 3, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "RAG",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Transformers",
+              "years": 3,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "arb_generaliste_senior", "name": "Generaliste, 12 ans, LLM debutant", "relevance": 2,
-          "years": 12, "education": 5, "location": "Casablanca",
+          "id": "arb_generaliste_senior",
+          "name": "Generaliste, 12 ans, LLM debutant",
+          "relevance": 2,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 12, "last_used_year": 2026},
-            {"name": "LLM", "years": 1, "last_used_year": 2026},
-            {"name": "Kubernetes", "years": 6, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 12,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 1,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kubernetes",
+              "years": 6,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C1"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
         },
         {
-          "id": "arb_equilibre", "name": "Profil equilibre, 6 ans", "relevance": 3,
-          "years": 6, "education": 5, "location": "Casablanca",
+          "id": "arb_equilibre",
+          "name": "Profil equilibre, 6 ans",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "LLM", "years": 2, "last_used_year": 2026},
-            {"name": "RAG", "years": 2, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "LLM",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "RAG",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "arb_python_seul", "name": "Python senior sans IA", "relevance": 1,
-          "years": 10, "education": 5, "location": "Casablanca",
+          "id": "arb_python_seul",
+          "name": "Python senior sans IA",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 10, "last_used_year": 2026},
-            {"name": "Django", "years": 8, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 8,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "B2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
         },
         {
-          "id": "arb_hors_sujet", "name": "Commercial bien situe et diplome", "relevance": 0,
-          "years": 15, "education": 5, "location": "Casablanca",
+          "id": "arb_hors_sujet",
+          "name": "Commercial bien situe et diplome",
+          "relevance": 0,
+          "years": 15,
+          "education": 5,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Vente", "years": 15, "last_used_year": 2026},
-            {"name": "Negociation", "years": 15, "last_used_year": 2026}
+            {
+              "name": "Vente",
+              "years": 15,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Negociation",
+              "years": 15,
+              "last_used_year": 2026
+            }
           ],
-          "languages": [{"language": "Anglais", "level": "C2"}]
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C2"
+            }
+          ]
         }
       ]
     },
-
     {
       "id": "profils_proches",
       "tests": "Cas difficile. Quatre profils tres voisins que seules des nuances separent : fraicheur d'une competence, un palier de langue, une competence souhaitee. Mesure la finesse du moteur la ou les ecarts sont faibles.",
@@ -475,88 +1247,3589 @@
         "experience_min_years": 4,
         "education_level": 3,
         "required_skills": [
-          {"name": "Python", "weight": 2.0, "min_years": 4},
-          {"name": "Django", "weight": 2.0, "min_years": 3},
-          {"name": "PostgreSQL", "weight": 1.0, "min_years": 2}
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 4
+          },
+          {
+            "name": "Django",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "PostgreSQL",
+            "weight": 1.0,
+            "min_years": 2
+          }
         ],
         "preferred_skills": [
-          {"name": "Docker", "weight": 1.0},
-          {"name": "Redis", "weight": 0.6}
+          {
+            "name": "Docker",
+            "weight": 1.0
+          },
+          {
+            "name": "Redis",
+            "weight": 0.6
+          }
         ],
         "languages": [
-          {"language": "Francais", "min_level": "B2"},
-          {"language": "Anglais", "min_level": "B2"}
+          {
+            "language": "Francais",
+            "min_level": "B2"
+          },
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
         ]
       },
       "candidates": [
         {
-          "id": "pp_complet", "name": "Complet et a jour", "relevance": 3,
-          "years": 6, "education": 3, "location": "Casablanca",
+          "id": "pp_complet",
+          "name": "Complet et a jour",
+          "relevance": 3,
+          "years": 6,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "Django", "years": 5, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 4, "last_used_year": 2026},
-            {"name": "Docker", "years": 3, "last_used_year": 2026},
-            {"name": "Redis", "years": 2, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Redis",
+              "years": 2,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "C1"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
           ]
         },
         {
-          "id": "pp_sans_extras", "name": "Meme socle, sans Docker ni Redis", "relevance": 2,
-          "years": 6, "education": 3, "location": "Casablanca",
+          "id": "pp_sans_extras",
+          "name": "Meme socle, sans Docker ni Redis",
+          "relevance": 2,
+          "years": 6,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "Django", "years": 5, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 4, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 4,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         },
         {
-          "id": "pp_django_ancien", "name": "Meme socle mais Django date de 2019", "relevance": 2,
-          "years": 6, "education": 3, "location": "Casablanca",
+          "id": "pp_django_ancien",
+          "name": "Meme socle mais Django date de 2019",
+          "relevance": 2,
+          "years": 6,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "Django", "years": 5, "last_used_year": 2019},
-            {"name": "PostgreSQL", "years": 4, "last_used_year": 2026},
-            {"name": "Docker", "years": 3, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2019
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 3,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         },
         {
-          "id": "pp_anglais_faible", "name": "Socle complet mais anglais A2", "relevance": 2,
-          "years": 6, "education": 3, "location": "Casablanca",
+          "id": "pp_anglais_faible",
+          "name": "Socle complet mais anglais A2",
+          "relevance": 2,
+          "years": 6,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 6, "last_used_year": 2026},
-            {"name": "Django", "years": 5, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 4, "last_used_year": 2026},
-            {"name": "Docker", "years": 3, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 3,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "A2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "A2"
+            }
           ]
         },
         {
-          "id": "pp_junior_motive", "name": "Deux ans d'experience", "relevance": 1,
-          "years": 2, "education": 3, "location": "Casablanca",
+          "id": "pp_junior_motive",
+          "name": "Deux ans d'experience",
+          "relevance": 1,
+          "years": 2,
+          "education": 3,
+          "location": "Casablanca",
           "skills": [
-            {"name": "Python", "years": 2, "last_used_year": 2026},
-            {"name": "Django", "years": 2, "last_used_year": 2026},
-            {"name": "PostgreSQL", "years": 1, "last_used_year": 2026},
-            {"name": "Docker", "years": 1, "last_used_year": 2026}
+            {
+              "name": "Python",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 1,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 1,
+              "last_used_year": 2026
+            }
           ],
           "languages": [
-            {"language": "Francais", "level": "NAT"},
-            {"language": "Anglais", "level": "B2"}
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "implication_transitive",
+      "tests": "Django implique Python sans que Python soit declare. Un profil qui ne cite que Django doit recevoir le credit de Python, mais moins qu'un profil qui maitrise les deux explicitement.",
+      "offer": {
+        "title": "Developpeur Python",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "Django",
+            "weight": 1.5,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "it_deux_explicites",
+          "name": "Python et Django declares",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "it_django_seul",
+          "name": "Django seul, Python implicite",
+          "relevance": 2,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Django",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "it_python_seul",
+          "name": "Python seul, sans cadre applicatif",
+          "relevance": 1,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "it_hors_sujet",
+          "name": "Comptable",
+          "relevance": 0,
+          "years": 8,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Sage",
+              "years": 8,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Excel",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "implication_non_reversible",
+      "tests": "L'ontologie est dirigee : PostgreSQL implique SQL, SQL n'implique pas PostgreSQL. Un profil SQL generique ne doit pas etre credite d'une expertise PostgreSQL exigee.",
+      "offer": {
+        "title": "Administrateur PostgreSQL",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "PostgreSQL",
+            "weight": 2.0,
+            "min_years": 4
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "inr_postgres",
+          "name": "PostgreSQL confirme",
+          "relevance": 3,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PostgreSQL",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "inr_sql_generique",
+          "name": "SQL generique, aucun moteur precis",
+          "relevance": 1,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SQL",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "inr_mysql",
+          "name": "MySQL, moteur voisin",
+          "relevance": 1,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "MySQL",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "inr_hors_sujet",
+          "name": "Graphiste",
+          "relevance": 0,
+          "years": 8,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Photoshop",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "intitules_synonymes",
+      "tests": "« DRF » et « Django REST Framework » designent la meme chose. Deux profils identiques a l'intitule pres doivent obtenir le meme score : un ecart signalerait une normalisation defaillante.",
+      "offer": {
+        "title": "Developpeur API",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Django REST Framework",
+            "weight": 2.0,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "is_complet",
+          "name": "Intitule complet",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Django REST Framework",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "is_sigle",
+          "name": "Sigle",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "DRF",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "is_django_seul",
+          "name": "Django sans la couche API",
+          "relevance": 1,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "is_hors_sujet",
+          "name": "Cuisinier",
+          "relevance": 0,
+          "years": 5,
+          "education": 3,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Patisserie",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "competence_perimee",
+      "tests": "Meme competence, meme duree, mais l'une abandonnee depuis huit ans. Un recruteur prefere nettement la competence entretenue.",
+      "offer": {
+        "title": "Developpeur Java",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Java",
+            "weight": 2.0,
+            "min_years": 5
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "cp_recente",
+          "name": "Java pratique cette annee",
+          "relevance": 3,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Java",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "cp_ancienne",
+          "name": "Java abandonne en 2018",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Java",
+              "years": 8,
+              "last_used_year": 2018
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "cp_intermediaire",
+          "name": "Java repris il y a deux ans",
+          "relevance": 2,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Java",
+              "years": 8,
+              "last_used_year": 2024
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "cp_hors_sujet",
+          "name": "Juriste",
+          "relevance": 0,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Droit social",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obligatoire_absente",
+      "tests": "Une seule competence obligatoire manquante doit peser lourd, meme sur un profil excellent partout ailleurs. C'est le facteur de recevabilite, multiplicatif et non additif.",
+      "offer": {
+        "title": "Ingenieur Cloud",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "AWS",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "Terraform",
+            "weight": 2.0,
+            "min_years": 2
+          },
+          {
+            "name": "Docker",
+            "weight": 1.5,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "oa_complet",
+          "name": "Les trois competences",
+          "relevance": 3,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "AWS",
+              "years": 8,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Terraform",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "oa_sans_terraform",
+          "name": "Excellent, mais sans Terraform",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "AWS",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "oa_sans_aws",
+          "name": "Excellent, mais sans AWS",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Terraform",
+              "years": 9,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "oa_hors_sujet",
+          "name": "Vendeur",
+          "relevance": 0,
+          "years": 10,
+          "education": 3,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Relation client",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deux_ecarts_obligatoires",
+      "tests": "Deux competences obligatoires manquantes ne coutent pas deux fois une : le facteur etant multiplicatif, l'ecart se creuse plus vite que la somme. Le classement doit refleter cette accentuation.",
+      "offer": {
+        "title": "Architecte donnees",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Spark",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "Kafka",
+            "weight": 2.0,
+            "min_years": 2
+          },
+          {
+            "name": "Python",
+            "weight": 1.5,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "deo_complet",
+          "name": "Les trois",
+          "relevance": 3,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Spark",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kafka",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Python",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "deo_un_manque",
+          "name": "Sans Kafka",
+          "relevance": 2,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Spark",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Python",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "deo_deux_manquent",
+          "name": "Sans Kafka ni Spark",
+          "relevance": 1,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "deo_hors_sujet",
+          "name": "Chauffeur",
+          "relevance": 0,
+          "years": 9,
+          "education": 2,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Conduite",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "annees_minimum_non_atteintes",
+      "tests": "La competence est presente mais l'anciennete exigee n'est pas atteinte. Un recruteur la compte partiellement, pas comme un manque total.",
+      "offer": {
+        "title": "Lead Kubernetes",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Kubernetes",
+            "weight": 2.0,
+            "min_years": 5
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "amna_experimente",
+          "name": "Sept ans de Kubernetes",
+          "relevance": 3,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Kubernetes",
+              "years": 7,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "amna_limite",
+          "name": "Cinq ans, juste au seuil",
+          "relevance": 3,
+          "years": 7,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Kubernetes",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "amna_insuffisant",
+          "name": "Deux ans seulement",
+          "relevance": 1,
+          "years": 4,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Kubernetes",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "amna_absent",
+          "name": "Aucune experience Kubernetes",
+          "relevance": 0,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Ansible",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "offre_sans_exigence_de_langue",
+      "tests": "L'offre n'exprime aucune exigence de langue : le critere est non applicable et son poids doit etre redistribue. Un profil sans langue declaree ne doit pas etre penalise.",
+      "offer": {
+        "title": "Developpeur systeme",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "C",
+            "weight": 2.0,
+            "min_years": 4
+          },
+          {
+            "name": "Linux",
+            "weight": 1.5,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": []
+      },
+      "candidates": [
+        {
+          "id": "osel_fort",
+          "name": "Fort techniquement, aucune langue declaree",
+          "relevance": 3,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "C",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Linux",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": []
+        },
+        {
+          "id": "osel_fort_polyglotte",
+          "name": "Meme profil, langues declarees",
+          "relevance": 3,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "C",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Linux",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "osel_faible",
+          "name": "Linux seul",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Linux",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "osel_hors_sujet",
+          "name": "Infirmier",
+          "relevance": 0,
+          "years": 10,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Soins",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "offre_minimale",
+      "tests": "Offre reduite a ses competences : ni diplome, ni anciennete, ni langue, ni localisation contraignante. Tout le poids doit se reporter sur les competences, et le classement ne dependre que d'elles.",
+      "offer": {
+        "title": "Developpeur",
+        "location": "Casablanca",
+        "remote_policy": "remote",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Go",
+            "weight": 2.0,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "gRPC",
+            "weight": 1.0
+          }
+        ],
+        "languages": []
+      },
+      "candidates": [
+        {
+          "id": "om_expert",
+          "name": "Go et gRPC",
+          "relevance": 3,
+          "years": 3,
+          "education": 2,
+          "location": "Tanger",
+          "skills": [
+            {
+              "name": "Go",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "gRPC",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "om_go_seul",
+          "name": "Go seul",
+          "relevance": 2,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Go",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "om_debutant",
+          "name": "Go depuis un an",
+          "relevance": 1,
+          "years": 1,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Go",
+              "years": 1,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "om_hors_sujet",
+          "name": "Traducteur",
+          "relevance": 0,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Traduction",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "palier_de_langue",
+      "tests": "Un palier de langue separe deux profils techniquement identiques. L'exigence est C1 : B2 ne suffit pas tout a fait, A2 pas du tout.",
+      "offer": {
+        "title": "Consultant international",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "SAP",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "pdl_c2",
+          "name": "Anglais C2",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SAP",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "C2"
+            }
+          ]
+        },
+        {
+          "id": "pdl_c1",
+          "name": "Anglais C1, au seuil",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SAP",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
+        },
+        {
+          "id": "pdl_b2",
+          "name": "Anglais B2, sous le seuil",
+          "relevance": 2,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SAP",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pdl_a2",
+          "name": "Anglais A2",
+          "relevance": 1,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SAP",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "A2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poste_hybride",
+      "tests": "En hybride, la localisation compte encore mais moins qu'en presentiel. Un profil eloigne reste recevable s'il est meilleur techniquement.",
+      "offer": {
+        "title": "Developpeur hybride",
+        "location": "Rabat",
+        "remote_policy": "hybrid",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "ph_local_bon",
+          "name": "A Rabat, tres bon",
+          "relevance": 3,
+          "years": 8,
+          "education": 5,
+          "location": "Rabat",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ph_loin_excellent",
+          "name": "A Tanger, excellent",
+          "relevance": 3,
+          "years": 12,
+          "education": 5,
+          "location": "Tanger",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ph_local_faible",
+          "name": "A Rabat, deux ans",
+          "relevance": 1,
+          "years": 2,
+          "education": 5,
+          "location": "Rabat",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ph_hors_sujet",
+          "name": "Boulanger a Rabat",
+          "relevance": 0,
+          "years": 12,
+          "education": 2,
+          "location": "Rabat",
+          "skills": [
+            {
+              "name": "Panification",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diplome_au_dela_de_l_exigence",
+      "tests": "Un doctorat ne vaut pas mieux qu'un master quand l'offre demande une licence : au-dela de l'exigence, le diplome ne doit plus departager. Ce sont les competences qui le font.",
+      "offer": {
+        "title": "Developpeur web",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 3,
+        "required_skills": [
+          {
+            "name": "PHP",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "dade_licence_fort",
+          "name": "Licence, huit ans de PHP",
+          "relevance": 3,
+          "years": 8,
+          "education": 3,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "dade_doctorat_fort",
+          "name": "Doctorat, huit ans de PHP",
+          "relevance": 3,
+          "years": 8,
+          "education": 8,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "dade_doctorat_faible",
+          "name": "Doctorat, un an de PHP",
+          "relevance": 1,
+          "years": 1,
+          "education": 8,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 1,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "dade_sans_diplome",
+          "name": "Sans diplome, huit ans de PHP",
+          "relevance": 2,
+          "years": 8,
+          "education": 0,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "certification_exigee",
+      "tests": "Une certification exigee et absente doit peser, sans annuler un profil techniquement solide : elle se passe, une competence s'apprend.",
+      "offer": {
+        "title": "Chef de projet",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Gestion de projet",
+            "weight": 2.0,
+            "min_years": 4
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ],
+        "required_certifications": [
+          "PMP"
+        ]
+      },
+      "candidates": [
+        {
+          "id": "ce_certifie",
+          "name": "Certifie PMP",
+          "relevance": 3,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Gestion de projet",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ],
+          "certifications": [
+            "PMP"
+          ]
+        },
+        {
+          "id": "ce_non_certifie",
+          "name": "Non certifie, tres experimente",
+          "relevance": 2,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Gestion de projet",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ce_certifie_autre",
+          "name": "Certifie PRINCE2",
+          "relevance": 2,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Gestion de projet",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ],
+          "certifications": [
+            "PRINCE2"
+          ]
+        },
+        {
+          "id": "ce_hors_sujet",
+          "name": "Sans experience de gestion",
+          "relevance": 0,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Saisie",
+              "years": 9,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reconversion_recente",
+      "tests": "Cas difficile. Une reconversion : deux ans dans le domaine cible apres dix ans ailleurs. Le recruteur la place devant un profil generaliste sans aucune experience du domaine, mais derriere un specialiste. Le moteur, qui pondere l'anciennete totale, a tendance a surevaluer les dix ans hors sujet. Ce cas existe pour mesurer cet ecart.",
+      "offer": {
+        "title": "Developpeur mobile",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Swift",
+            "weight": 2.0,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "rr_specialiste",
+          "name": "Six ans de Swift",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Swift",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "rr_reconverti",
+          "name": "Deux ans de Swift apres dix ans de compta",
+          "relevance": 2,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Swift",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Excel",
+              "years": 10,
+              "last_used_year": 2020
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "rr_generaliste",
+          "name": "Douze ans de developpement, pas de Swift",
+          "relevance": 1,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Java",
+              "years": 12,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kotlin",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "rr_hors_sujet",
+          "name": "Aucune experience technique",
+          "relevance": 0,
+          "years": 12,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Accueil",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "surqualification",
+      "tests": "Cas difficile. Un profil tres au-dela de l'offre. Le recruteur le classe derriere un profil ajuste : risque de depart rapide, attentes salariales. Le moteur n'a aucune notion de surqualification et le placera en tete. L'ecart est volontairement laisse visible.",
+      "offer": {
+        "title": "Developpeur junior",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 1,
+        "education_level": 3,
+        "required_skills": [
+          {
+            "name": "JavaScript",
+            "weight": 2.0,
+            "min_years": 1
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "sq_ajuste",
+          "name": "Deux ans, correspond au poste",
+          "relevance": 3,
+          "years": 2,
+          "education": 3,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "JavaScript",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "sq_confirme",
+          "name": "Quatre ans",
+          "relevance": 2,
+          "years": 4,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "JavaScript",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "React",
+              "years": 3,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "sq_surqualifie",
+          "name": "Quinze ans, architecte",
+          "relevance": 1,
+          "years": 15,
+          "education": 8,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "JavaScript",
+              "years": 15,
+              "last_used_year": 2026
+            },
+            {
+              "name": "React",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Node",
+              "years": 12,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "sq_hors_sujet",
+          "name": "Aucune experience du web",
+          "relevance": 0,
+          "years": 15,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Mecanique",
+              "years": 15,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profils_identiques",
+      "tests": "Deux profils rigoureusement identiques a l'identite pres. Ils doivent obtenir le meme score : un ecart revelerait une dependance a autre chose que les donnees du profil.",
+      "offer": {
+        "title": "Analyste",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Excel",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "SQL",
+            "weight": 1.5,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "pi_premier",
+          "name": "Profil A",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Excel",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pi_second",
+          "name": "Profil B",
+          "relevance": 3,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Excel",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pi_moindre",
+          "name": "Excel seul",
+          "relevance": 1,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Excel",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pi_hors_sujet",
+          "name": "Sans outil bureautique",
+          "relevance": 0,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Manutention",
+              "years": 5,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ecart_faible_entre_tetes",
+      "tests": "Cas difficile. Trois profils separes par des nuances : une competence souhaitee, un an d'anciennete, un palier de langue. Mesure la finesse du moteur la ou l'ecart reel est mince.",
+      "offer": {
+        "title": "Developpeur backend",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 4
+          },
+          {
+            "name": "Django",
+            "weight": 1.5,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "Redis",
+            "weight": 1.0
+          },
+          {
+            "name": "Docker",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "efet_tete",
+          "name": "Tout, plus Redis et Docker",
+          "relevance": 3,
+          "years": 7,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Redis",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "efet_sans_redis",
+          "name": "Idem sans Redis",
+          "relevance": 2,
+          "years": 7,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "efet_moins_ancien",
+          "name": "Idem, un an de moins",
+          "relevance": 2,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Redis",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "efet_hors_sujet",
+          "name": "Assistant administratif",
+          "relevance": 0,
+          "years": 7,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Bureautique",
+              "years": 7,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aucun_profil_convenable",
+      "tests": "Aucun candidat ne convient. Le classement doit rester coherent et les scores bas : un moteur qui produit un premier de classe flatteur sur un vivier vide induit un recruteur en erreur.",
+      "offer": {
+        "title": "Ingenieur FPGA",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "VHDL",
+            "weight": 2.0,
+            "min_years": 5
+          },
+          {
+            "name": "Verilog",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "apc_proche",
+          "name": "Electronicien sans VHDL",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Electronique",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "apc_lointain",
+          "name": "Developpeur web",
+          "relevance": 0,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "apc_tres_lointain",
+          "name": "Commercial",
+          "relevance": 0,
+          "years": 10,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Vente",
+              "years": 10,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profil_sans_competence_declaree",
+      "tests": "Un CV dont l'extraction n'a rien tire. Le profil doit tomber en bas du classement sans faire tomber le calcul : une donnee manquante n'est pas une erreur, c'est un cas de figure.",
+      "offer": {
+        "title": "Developpeur",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "pscd_complet",
+          "name": "Profil complet",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pscd_partiel",
+          "name": "Une competence voisine",
+          "relevance": 1,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Ruby",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "pscd_vide",
+          "name": "Aucune competence extraite",
+          "relevance": 0,
+          "years": 0,
+          "education": 0,
+          "location": "",
+          "skills": [],
+          "languages": []
+        }
+      ]
+    },
+    {
+      "id": "beaucoup_de_candidats",
+      "tests": "Un vivier de dix profils sur une meme offre, avec des paliers nets. Eprouve la stabilite du classement au-dela des cinq candidats des autres cas — nDCG@5 ne regarde que le haut, le reste doit tenir aussi.",
+      "offer": {
+        "title": "Developpeur Python",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          },
+          {
+            "name": "SQL",
+            "weight": 1.0,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "Django",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "bdc_01",
+          "name": "Expert complet",
+          "relevance": 3,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 8,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 7,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_02",
+          "name": "Expert sans Django",
+          "relevance": 3,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 10,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_03",
+          "name": "Confirme complet",
+          "relevance": 2,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 3,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_04",
+          "name": "Confirme sans SQL",
+          "relevance": 2,
+          "years": 5,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Django",
+              "years": 3,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_05",
+          "name": "Junior complet",
+          "relevance": 1,
+          "years": 2,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 2,
+              "last_used_year": 2026
+            },
+            {
+              "name": "SQL",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_06",
+          "name": "Junior Python seul",
+          "relevance": 1,
+          "years": 2,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_07",
+          "name": "Python perime",
+          "relevance": 1,
+          "years": 10,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 8,
+              "last_used_year": 2017
+            },
+            {
+              "name": "SQL",
+              "years": 8,
+              "last_used_year": 2017
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_08",
+          "name": "Analyste SQL sans Python",
+          "relevance": 1,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "SQL",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_09",
+          "name": "Developpeur autre langage",
+          "relevance": 0,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "PHP",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "bdc_10",
+          "name": "Hors domaine",
+          "relevance": 0,
+          "years": 8,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Logistique",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "teletravail_total_hors_pays",
+      "tests": "Poste en teletravail total : la localisation ne doit pas departager, meme pour un candidat tres eloigne. Le critere est non applicable et son poids redistribue.",
+      "offer": {
+        "title": "Developpeur distribue",
+        "location": "Casablanca",
+        "remote_policy": "remote",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Rust",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "tthp_loin_expert",
+          "name": "Expert, tres eloigne",
+          "relevance": 3,
+          "years": 8,
+          "education": 5,
+          "location": "Dakhla",
+          "skills": [
+            {
+              "name": "Rust",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
+        },
+        {
+          "id": "tthp_proche_expert",
+          "name": "Expert, sur place",
+          "relevance": 3,
+          "years": 8,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Rust",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
+        },
+        {
+          "id": "tthp_proche_faible",
+          "name": "Debutant, sur place",
+          "relevance": 1,
+          "years": 1,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Rust",
+              "years": 1,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
+        },
+        {
+          "id": "tthp_hors_sujet",
+          "name": "Sur place, hors domaine",
+          "relevance": 0,
+          "years": 8,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Comptabilite",
+              "years": 8,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Anglais",
+              "level": "C1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "competences_souhaitees_seules",
+      "tests": "Les competences souhaitees ne doivent jamais compenser une obligatoire manquante : elles departagent a obligatoire egale, rien de plus.",
+      "offer": {
+        "title": "Developpeur",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 0,
+        "education_level": 0,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 2.0,
+            "min_years": 3
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "Docker",
+            "weight": 1.0
+          },
+          {
+            "name": "Redis",
+            "weight": 1.0
+          },
+          {
+            "name": "Kafka",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Francais",
+            "min_level": "C1"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "css_python_plus",
+          "name": "Python et les trois souhaitees",
+          "relevance": 3,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Redis",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kafka",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "css_python_seul",
+          "name": "Python seul",
+          "relevance": 2,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "css_souhaitees_seules",
+          "name": "Les trois souhaitees, pas Python",
+          "relevance": 0,
+          "years": 6,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Docker",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Redis",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kafka",
+              "years": 2,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "css_hors_sujet",
+          "name": "Rien de pertinent",
+          "relevance": 0,
+          "years": 6,
+          "education": 4,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Vente",
+              "years": 6,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "offre_tres_exigeante",
+      "tests": "Six competences obligatoires : presque personne ne les a toutes. Le facteur de recevabilite etant multiplicatif, chaque manque s'accentue, et le classement doit refleter le NOMBRE de manques plus que la force des competences presentes.",
+      "offer": {
+        "title": "Ingenieur plateforme",
+        "location": "Casablanca",
+        "remote_policy": "onsite",
+        "experience_min_years": 5,
+        "education_level": 3,
+        "required_skills": [
+          {
+            "name": "Python",
+            "weight": 1.5,
+            "min_years": 4
+          },
+          {
+            "name": "Kubernetes",
+            "weight": 1.5,
+            "min_years": 3
+          },
+          {
+            "name": "Terraform",
+            "weight": 1.5,
+            "min_years": 2
+          },
+          {
+            "name": "PostgreSQL",
+            "weight": 1.2,
+            "min_years": 3
+          },
+          {
+            "name": "Kafka",
+            "weight": 1.2,
+            "min_years": 2
+          },
+          {
+            "name": "Prometheus",
+            "weight": 1.0,
+            "min_years": 2
+          }
+        ],
+        "preferred_skills": [
+          {
+            "name": "Go",
+            "weight": 1.0
+          }
+        ],
+        "languages": [
+          {
+            "language": "Anglais",
+            "min_level": "B2"
+          }
+        ]
+      },
+      "candidates": [
+        {
+          "id": "ote_complet",
+          "name": "Les six competences",
+          "relevance": 3,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 9,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kubernetes",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Terraform",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kafka",
+              "years": 3,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Prometheus",
+              "years": 3,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ote_un_manque",
+          "name": "Cinq sur six, sans Prometheus",
+          "relevance": 2,
+          "years": 9,
+          "education": 5,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 9,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kubernetes",
+              "years": 5,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Terraform",
+              "years": 4,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 7,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kafka",
+              "years": 3,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ote_trois_manques",
+          "name": "Trois sur six, mais tres pointu",
+          "relevance": 1,
+          "years": 14,
+          "education": 8,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 14,
+              "last_used_year": 2026
+            },
+            {
+              "name": "Kubernetes",
+              "years": 12,
+              "last_used_year": 2026
+            },
+            {
+              "name": "PostgreSQL",
+              "years": 14,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
+          ]
+        },
+        {
+          "id": "ote_une_seule",
+          "name": "Python seul, quinze ans",
+          "relevance": 0,
+          "years": 15,
+          "education": 8,
+          "location": "Casablanca",
+          "skills": [
+            {
+              "name": "Python",
+              "years": 15,
+              "last_used_year": 2026
+            }
+          ],
+          "languages": [
+            {
+              "language": "Francais",
+              "level": "NAT"
+            },
+            {
+              "language": "Anglais",
+              "level": "B2"
+            }
           ]
         }
       ]

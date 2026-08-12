@@ -73,12 +73,25 @@ def pair_accuracy(ranked_relevances: Sequence[int]) -> float:
     return concordant / comparable if comparable else 1.0
 
 
-def spearman(predicted: Sequence[float], expected: Sequence[float]) -> float:
-    """Correlation de rang de Spearman, dans [-1, 1]."""
+def spearman(predicted: Sequence[float], expected: Sequence[float]) -> float | None:
+    """Correlation de rang de Spearman, dans [-1, 1]. `None` si indefinie.
+
+    Elle l'est des qu'un des deux classements n'a aucune variance : quatre
+    candidats de meme pertinence, ou quatre scores identiques. Il n'y a alors
+    aucun ordre a correler, et la question ne se pose pas.
+
+    **Renvoyer 0.0 dans ce cas etait un defaut de mesure.** Zero se lit « aucune
+    correlation », c'est-a-dire un mauvais resultat, et la valeur entrait dans
+    la moyenne : le moteur etait penalise sur des cas ou il n'avait rien fait de
+    mal — parfois meme sur des cas ou l'egalite des scores etait exactement la
+    propriete recherchee. Le defaut est apparu en etoffant le jeu annote, avec
+    un cas ou quatre profils identiques a l'identite pres doivent obtenir le
+    meme score.
+    """
     if len(predicted) != len(expected):
         raise ValueError("Les deux suites doivent avoir la meme longueur.")
     if len(predicted) < 2:
-        return 1.0
+        return None
 
     left, right = _ranks(predicted), _ranks(expected)
     mean_left = sum(left) / len(left)
@@ -91,7 +104,7 @@ def spearman(predicted: Sequence[float], expected: Sequence[float]) -> float:
     variance_right = sum((b - mean_right) ** 2 for b in right)
 
     denominator = math.sqrt(variance_left * variance_right)
-    return covariance / denominator if denominator else 0.0
+    return covariance / denominator if denominator else None
 
 
 def _ranks(values: Sequence[float]) -> list[float]:

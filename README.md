@@ -391,7 +391,7 @@ differant que par un attribut identitaire, puis on rescore.
 ```
 Attribut              Ecart moyen  Ecart max  Rangs modifies  Ratio impact
 prenom_et_nom             0.00000    0.00000         0 / 180         1.000
-localisation              0.03012    0.07900        22 / 108         0.809
+localisation              0.04542    0.13630       119 / 396         0.868
 annee_de_diplome          0.00000    0.00000         0 / 108         1.000
 etablissement             0.00000    0.00000         0 / 108         1.000
 ```
@@ -408,7 +408,7 @@ Ce que ces chiffres etablissent :
   mesurable** — ce n'est pas une intention affichee, c'est verifie a chaque
   execution sur 500 comparaisons ;
 - la **localisation est le seul levier identitaire actif**, avec un ratio de
-  0.809, juste au-dessus du seuil. C'est un critere metier legitime pour un
+  0.868, au-dessus du seuil. C'est un critere metier legitime pour un
   poste sur site, mais aussi un marqueur social. Deux attenuations sont
   prevues : l'exclure en mode aveugle, et remplacer la comparaison textuelle
   par un geocodage.
@@ -431,7 +431,7 @@ milieu et le reseau, sans rien dire de la competence.
 
 ```
 Attribut              Ratio standard  Ratio aveugle     Gain    Rangs modifies
-localisation                   0.809          1.000   +0.191          22 -> 0
+localisation                   0.868          1.000   +0.132         119 -> 0
 prenom_et_nom                  1.000          1.000   +0.000           0 -> 0
 annee_de_diplome               1.000          1.000   +0.000           0 -> 0
 etablissement                  1.000          1.000   +0.000           0 -> 0
@@ -514,17 +514,31 @@ au ratio d'impact.
 **Le resultat qui justifie le module :**
 
 ```
-ponderation                              location  skills   ratio d'impact
-defaut                                      0,100   0,450        0,809
-skills 0,45 -> 0,20, experience 0,20 -> 0,45  0,100   0,200        0,714  ← sous le seuil
+poids skills   poids location   ratio d'impact
+0,45           0,080            0,868
+0,35           0,080            0,857
+0,25           0,080            0,846
+0,20           0,080            0,846
+0,05           0,080            0,846
 ```
 
-Baisser le poids des competences fait passer le systeme **sous le seuil des
-quatre cinquiemes sans toucher au poids de la localisation**. Quand les
-competences cessent de departager les candidats, ce sont les criteres restants
-qui decident, localisation comprise. Un recruteur qui se dirait « je vais
-valoriser l'experience plutot que les competences » franchirait le seuil sans
-le savoir.
+Baisser le poids des competences **degrade le ratio d'impact sans qu'on ait
+touche au poids de la localisation**. Quand les competences cessent de
+departager les candidats, ce sont les criteres restants qui decident,
+localisation comprise. Un recruteur qui se dirait « je vais valoriser
+l'experience plutot que les competences » deplacerait le systeme dans la
+mauvaise direction sans le savoir.
+
+**Cette section affirmait autre chose, et c'etait faux.** Elle annoncait un
+ratio tombant a 0,714, **sous le seuil legal**. C'etait exact sur le jeu annote
+d'alors — sept cas — et ne l'est plus sur trente : le ratio descend a 0,846
+puis se stabilise, sans jamais franchir 0,80. L'effet spectaculaire etait un
+artefact du petit effectif.
+
+C'est le resultat le plus utile de l'etoffement du jeu : **une affirmation
+publiee, reproductible par n'importe qui, s'est revelee dependre de la taille
+de l'echantillon.** Le test qui la verrouillait a ete reecrit pour mesurer la
+degradation, qui tient, et non le franchissement, qui ne tenait pas.
 
 Rien n'est enregistre : la simulation passe par un parametre du moteur, jamais
 par une ecriture temporaire sur l'offre.
@@ -645,23 +659,32 @@ Ce choix est un jugement, pas un resultat : il est en constante, et la page
 autrement.
 
 ```
-Sur 36 profils annotes, dont 22 juges a recevoir :
+Sur 132 profils annotes, dont 69 juges a recevoir :
 
-seuil  retenus  bons  a tort  manques  precision  rappel     F2
-  50 %      28    22       6        0      0.786   1.000  0.948
-  70 %      24    22       2        0      0.917   1.000  0.982
-  85 %      22    22       0        0      1.000   1.000  1.000   <- retenu
-  90 %      17    17       0        5      1.000   0.773  0.809
- 100 %       5     5       0       17      1.000   0.227  0.269
+seuil  precision  rappel     F2  manques  retenus a tort
+  50 %     0.734   1.000  0.932        0              25
+  70 %     0.784   1.000  0.948        0              19
+  73 %     0.821   1.000  0.958        0              15   <- retenu
+  85 %     0.893   0.971  0.954        2               8
+  90 %     0.951   0.841  0.861       11               3
+ 100 %     0.929   0.188  0.224       56               1
 ```
 
-**Le resultat parfait est le point a ne pas croire.** A 85 %, le seuil separe le
-jeu annote sans une erreur — mais sur une marge d'**un seul point** (85–86 %).
-Une separation parfaite sur une marge aussi etroite en dit autant sur la
-facilite du jeu que sur la qualite du moteur. La marge est donc affichee a cote
-du seuil, et le seuil recommande est le **milieu** de l'intervalle optimal, pas
-une de ses bornes : au bord haut, un point de score perdu fait perdre un bon
-profil.
+**Ce tableau disait autre chose il y a peu, et c'etait flatteur.** Sur le jeu a
+sept cas — 36 profils — le seuil retenu etait 85 % et **separait le jeu sans une
+seule erreur** : ni bon profil manque, ni mauvais retenu. Le README avertissait
+deja qu'il ne fallait pas croire un resultat parfait obtenu sur une marge d'un
+point.
+
+L'avertissement etait justifie. Sur 132 profils, la separation parfaite
+disparait : le seuil optimal descend a **73 %**, et il retient encore **15
+profils a tort**. Le moteur n'est pas devenu moins bon — le jeu est devenu assez
+grand pour montrer ce qu'il faisait deja.
+
+La marge, elle, reste d'**un seul point** (73–74 %). Elle est donc toujours
+affichee a cote du seuil, et le seuil recommande est le **milieu** de
+l'intervalle optimal, pas une de ses bornes : au bord haut, un point de score
+perdu fait perdre un bon profil.
 
 Le classement marque cette ligne, il ne l'applique pas : tout ce qui se trouve
 dessous reste consultable et recevable.
@@ -974,7 +997,7 @@ Trois proprietes, et les deux premieres sont le seul interet de la tache :
 - **Elle ne bloque rien**, comme le module qu'elle appelle : elle constate,
   date et signale.
 
-Releve du jour sur le jeu annote : `localisation` 0.809, les trois autres
+Releve du jour sur le jeu annote : `localisation` 0.868, les trois autres
 dimensions a 1.000, aucune alerte. Le premier releve ne peut par construction
 detecter aucune derive — c'est le second passage qui commence a servir.
 
@@ -1446,6 +1469,71 @@ donnerait une interface bilingue par accident, qui se lit plus mal qu'une
 interface monolingue. La mecanique est complete et eprouvee ; y ajouter des
 chaines ne demande que de les marquer et de les traduire.
 
+### Ce que le jeu etoffe a revele
+
+Le jeu annote est passe de **7 a 30 cas**, de 31 a **132 candidats**. Les
+nouveaux cas visent ce que les sept premiers ne touchaient pas : sens des
+implications de l'ontologie, fraicheur d'une competence, recevabilite
+multiplicative, renormalisation des poids, paliers de langue, teletravail,
+certifications, cas limites.
+
+**La regle d'annotation est la seule qui compte : la pertinence est jugee du
+point de vue d'un recruteur, jamais alignee sur ce que produit le moteur.**
+Annoter d'apres la sortie rendrait la mesure circulaire — elle ne mesurerait
+plus que sa propre coherence. Consequence assumee : certains cas font baisser
+les moyennes, et c'est le but.
+
+| | 7 cas | 30 cas |
+|---|---|---|
+| nDCG@5 | 0,997 | **0,995** |
+| P@3 | 1,000 | **0,989** |
+| Paires | 0,984 | **0,980** |
+| Spearman | 0,937 | **0,939** |
+
+Quatre cas mettent le moteur en defaut, et chacun dit quelque chose de precis.
+
+**Le score sature.** Sur un vivier de dix profils, deux candidats differents
+atteignent tous deux 1,000 — un expert de dix ans et un confirme de cinq ans,
+tous deux complets. Au plafond, le moteur ne distingue plus rien et l'ordre y
+devient arbitraire. C'est le defaut le plus structurel des quatre, et il ne se
+voyait pas sur des cas a cinq candidats.
+
+**En hybride, la localisation pese trop.** Un profil local de deux ans passe
+devant un profil eloigne de douze ans (0,931 contre 0,915). Un recruteur ferait
+l'inverse : l'hybride existe justement pour elargir le vivier.
+
+**Le diplome departage encore au-dela de l'exigence.** L'offre demande une
+licence ; un doctorat avec un an de PHP (0,880) passe devant un profil sans
+diplome avec huit ans de PHP (0,867). Le recruteur classe l'inverse.
+
+**L'anciennete totale prime sur l'anciennete utile.** Deja visible sur
+`arbitrage_competences_anciennete`, confirme par `reconversion_recente` et
+`surqualification` : le moteur n'a aucune notion de surqualification, et compte
+dix ans hors sujet comme dix ans.
+
+Ces quatre ecarts **ne sont pas corriges**. Les combler demanderait de retoucher
+la ponderation, et la retoucher pour coller a des annotations que j'ai moi-meme
+posees reviendrait a se noter soi-meme. Le simulateur de ponderation existe pour
+qu'un recruteur arbitre ; ces cas lui donnent de quoi mesurer l'effet de son
+arbitrage.
+
+#### Un defaut trouve dans la mesure, pas dans le moteur
+
+Spearman est **indefini** quand un classement n'a aucune variance — quatre
+pertinences egales, ou quatre scores identiques. La fonction renvoyait `0.0`,
+qui se lit « aucune correlation », et cette valeur entrait dans la moyenne. Le
+moteur etait donc penalise sur des cas ou il n'avait rien fait de mal.
+
+Corrige : une metrique indefinie est **ecartee de sa moyenne** et s'affiche
+« sans objet », jamais zero. L'effet est mesurable — Spearman passe de 0,874 a
+0,939 sur le meme jeu, sans qu'une ligne du moteur ait change.
+
+Le defaut est apparu en ajoutant un cas ou quatre profils identiques a
+l'identite pres devaient obtenir le meme score. Ce cas a d'ailleurs ete
+**retire** ensuite : un jeu de classement ne peut pas exprimer « ces scores
+doivent etre egaux », et son nDCG y valait 1,000 sans rien mesurer. La propriete
+se verifie directement, par un test d'egalite — plus simple et plus fort.
+
 ### Mettre la demonstration en ligne
 
 `render.yaml` decrit le service entier : web Python, base PostgreSQL geree,
@@ -1635,14 +1723,15 @@ tests/             suite pytest
 
 ## Limites assumees
 
-- Le jeu d'evaluation obtient des scores tres eleves sur cinq de ses sept cas.
-  Les deux cas difficiles (`arbitrage_competences_anciennete`,
-  `profils_proches`) ont ete ajoutes pour cette raison, et l'un des deux met
-  effectivement le moteur en defaut. Etoffer le jeu reste le principal levier
-  d'amelioration.
+- Le jeu d'evaluation compte **trente cas et 132 candidats**, contre sept a
+  l'origine. Il met desormais le moteur en defaut sur quatre d'entre eux — voir
+  « Ce que le jeu etoffe a revele ». Il reste petit pour une mesure statistique,
+  et les annotations sont celles d'une seule personne : deux recruteurs
+  differents ne classeraient pas ces profils a l'identique, et le kappa mesure
+  ailleurs dans ce projet montre precisement cet ecart.
 - Le rapprochement des localisations est une comparaison textuelle. Un
   geocodage (distance reelle, temps de trajet) serait plus juste — et
-  reduirait sans doute le ratio d'impact de 0.809 mesure sur ce critere.
+  reduirait sans doute le ratio d'impact de 0.868 mesure sur ce critere.
 - L'audit ne couvre que le moteur deterministe. L'extraction du CV et la
   redaction de l'analyse, toutes deux confiees a un modele de langage, ne sont
   pas auditees : les mesurer demanderait un serveur d'inference en CI.
