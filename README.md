@@ -1550,6 +1550,41 @@ un arbitrage produit — un recruteur peut vouloir qu'un profil parfait soit
 parfait. La commande chiffre l'ampleur pour que cet arbitrage se prenne sur des
 mesures.
 
+#### Faire annoter par quelqu'un d'autre
+
+```
+python manage.py annotate --export annotation.csv
+python manage.py annotate --comparer annotation-remplie.csv
+```
+
+La limite la plus serieuse de ces jeux n'est pas leur taille, c'est qu'**une
+seule personne les a ecrits**. Cette commande ne fait pas apparaitre une
+seconde ; elle enleve ce qui l'empechait d'exister. Jusqu'ici, meme un
+recruteur volontaire n'aurait rien eu a annoter : les cas vivent dans un JSON
+de deux mille lignes melant offres, candidats et notes deja posees.
+
+L'export produit un tableur de 132 lignes — une par candidat, avec ce que
+l'offre exige et ce que le profil apporte — et **la colonne de pertinence
+vide**. Les notes existantes n'y figurent jamais : les montrer ferait du second
+annotateur un relecteur du premier, et l'accord mesure ne vaudrait plus rien.
+
+Au retour, la commande calcule un **kappa de Cohen categoriel** et nomme les
+profils ou les deux divergent.
+
+Trois refus, et ce sont eux qui donnent sa valeur au chiffre :
+
+- **une note illisible arrete la comparaison** au lieu d'etre avalee ;
+- **un kappa sur moins de trente profils n'est pas publie** — un seul desaccord
+  le ferait bouger de 0,2 a 0,8 ;
+- **un annotateur qui met la meme note partout rend le kappa indefini**, et la
+  commande le dit plutot que de rendre 0,0, qui se lirait « aucun accord ».
+
+Une fonction distincte etait necessaire : `agreement.cohen_kappa` est **binaire**
+— retenu ou ecarte — et calcule ses proportions par `sum(a) / total`. Sur des
+entiers de 0 a 3, cette somme additionne les **valeurs** : la proportion depasse
+1 et le resultat perd tout sens. La reutiliser aurait donne un chiffre faux sans
+rien signaler ; un test l'atteste.
+
 #### Qui a annote
 
 Chaque jeu porte desormais sa provenance :
@@ -1659,11 +1694,14 @@ Elles ont maintenant des tests de fumee — la commande tourne sur des donnees
 reelles et produit ce qu'elle annonce. `score_all` et les taches passent de 0 a
 100 %, `purge_expired` a 97 %, `seed_demo` a 94 %.
 
-Deux restent a 0 % et c'est assume : `mock_inference` demarre un serveur, et
-`probe_semantic` exige une couche d'embeddings desactivee par defaut. Les
-commandes lourdes — `evaluate`, `audit_bias` — restent hors de la suite : la CI
-les lance a chaque poussee, les doubler localement couterait plusieurs minutes
-pour rien.
+`mock_inference` et `probe_semantic` ont suivi : la premiere se teste en la
+demarrant sur un port et en l'interrogeant vraiment, la seconde sur son chemin
+par defaut — celui ou la couche d'embeddings est desactivee. Elles passent de
+0 a **100 %** et **98 %**.
+
+Les commandes lourdes — `evaluate`, `audit_bias` — restent hors de la suite :
+la CI les lance a chaque poussee, les doubler localement couterait plusieurs
+minutes pour rien.
 
 ---
 
@@ -1738,6 +1776,7 @@ tests/             suite pytest
 | `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
 | `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
 | `apps/evaluation/saturation.py` | ce que le score ne distingue plus, et la difference entre une egalite juste et une confusion |
+| `apps/evaluation/annotation.py` | faire annoter par quelqu'un d'autre — et les trois refus qui donnent sa valeur au kappa |
 | `apps/evaluation/variance.py` | le modele invente-t-il un chiffre ? la seule faute grave qu'il puisse commettre ici |
 | `apps/candidates/plagiarism.py` | CV distincts au contenu commun, et le retrait du tout-venant qui rend la mesure lisible |
 | `apps/core/management/commands/compile_messages.py` | le format `.mo` ecrit en Python pur, pour ne pas dependre de gettext |
@@ -1798,6 +1837,7 @@ tests/             suite pytest
 - [x] Interface en arabe, de droite a gauche, sans dependre de gettext
 - [x] Jeu annote porte a trente cas, deux affirmations publiees invalidees et corrigees
 - [x] Saturation du score mesuree, provenance des annotations inscrite dans les jeux
+- [x] Second annotateur outille : export a remplir, kappa categoriel au retour
 
 ---
 
