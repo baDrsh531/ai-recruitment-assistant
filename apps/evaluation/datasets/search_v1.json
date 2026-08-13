@@ -3,12 +3,24 @@
   "kind": "search",
   "version": "1.0.0",
   "description": "Jeu d'evaluation de la recherche plein texte. Douze profils et huit requetes formulees comme un recruteur les poserait. La pertinence est etablie par construction : chaque profil est ecrit pour repondre — ou non — a des requetes precises, et l'ensemble attendu est fixe avant toute execution. Les requetes eprouvent des mecanismes distincts : terme rare, terme frequent, vocabulaire du domaine absent de la liste de competences, terme present dans un intitule de poste plutot que dans les competences, et deux requetes pieges dont la reponse attendue est vide ou partielle.",
+  "provenance": {
+    "annotateurs": 1,
+    "annote_par": [
+      "Badr Sahraoui"
+    ],
+    "accord_inter_annotateur": null,
+    "note": "Annote par une seule personne. Deux recruteurs ne classeraient pas ces profils a l'identique : le kappa de Cohen mesure ailleurs dans ce projet un accord de 0,25 entre deux evaluateurs sur des dossiers reels. Aucun accord inter-annotateur n'est donc disponible pour ce jeu, et les chiffres qui en decoulent portent cette limite. `accord_inter_annotateur` reste a null tant qu'une seconde personne n'a pas annote."
+  },
   "candidates": [
     {
       "id": "paiement_senior",
       "name": "Profil paiement senior",
       "headline": "Ingenieur backend, systemes de paiement",
-      "skills": ["Python", "Django", "PostgreSQL"],
+      "skills": [
+        "Python",
+        "Django",
+        "PostgreSQL"
+      ],
       "experiences": [
         {
           "title": "Ingenieur paiement",
@@ -16,14 +28,22 @@
           "description": "Integration SEPA et 3-D Secure, reconciliation bancaire, lutte contre la fraude sur les transactions par carte."
         }
       ],
-      "education": [{"degree": "Master informatique", "institution": "ENSIAS"}],
+      "education": [
+        {
+          "degree": "Master informatique",
+          "institution": "ENSIAS"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "paiement_junior",
       "name": "Profil paiement junior",
       "headline": "Developpeur backend",
-      "skills": ["Python", "Flask"],
+      "skills": [
+        "Python",
+        "Flask"
+      ],
       "experiences": [
         {
           "title": "Developpeur",
@@ -31,14 +51,23 @@
           "description": "Branchement d'une passerelle de paiement Stripe sur un site marchand."
         }
       ],
-      "education": [{"degree": "Licence informatique", "institution": "FSR"}],
+      "education": [
+        {
+          "degree": "Licence informatique",
+          "institution": "FSR"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "donnees_sante",
       "name": "Profil donnees de sante",
       "headline": "Data engineer secteur medical",
-      "skills": ["Python", "SQL", "Airflow"],
+      "skills": [
+        "Python",
+        "SQL",
+        "Airflow"
+      ],
       "experiences": [
         {
           "title": "Data engineer",
@@ -46,14 +75,23 @@
           "description": "Pipelines de donnees hospitalieres, anonymisation des dossiers patients, conformite HDS."
         }
       ],
-      "education": [{"degree": "Master data science", "institution": "INSEA"}],
+      "education": [
+        {
+          "degree": "Master data science",
+          "institution": "INSEA"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "infra_kubernetes",
       "name": "Profil infrastructure",
       "headline": "Ingenieur plateforme",
-      "skills": ["Kubernetes", "Docker", "Terraform"],
+      "skills": [
+        "Kubernetes",
+        "Docker",
+        "Terraform"
+      ],
       "experiences": [
         {
           "title": "Ingenieur plateforme",
@@ -61,14 +99,25 @@
           "description": "Exploitation de clusters Kubernetes multi-region, mise en place de l'observabilite et des budgets d'erreur."
         }
       ],
-      "education": [{"degree": "Ingenieur reseaux", "institution": "INPT"}],
-      "certifications": ["Certified Kubernetes Administrator"]
+      "education": [
+        {
+          "degree": "Ingenieur reseaux",
+          "institution": "INPT"
+        }
+      ],
+      "certifications": [
+        "Certified Kubernetes Administrator"
+      ]
     },
     {
       "id": "frontend_react",
       "name": "Profil frontend",
       "headline": "Developpeuse frontend",
-      "skills": ["React", "TypeScript", "CSS"],
+      "skills": [
+        "React",
+        "TypeScript",
+        "CSS"
+      ],
       "experiences": [
         {
           "title": "Developpeuse frontend",
@@ -76,14 +125,23 @@
           "description": "Interfaces accessibles, refonte d'un tunnel de commande, tests de bout en bout."
         }
       ],
-      "education": [{"degree": "Licence multimedia", "institution": "ISIC"}],
+      "education": [
+        {
+          "degree": "Licence multimedia",
+          "institution": "ISIC"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "ml_recherche",
       "name": "Profil apprentissage automatique",
       "headline": "Ingenieur apprentissage automatique",
-      "skills": ["Python", "PyTorch", "MLOps"],
+      "skills": [
+        "Python",
+        "PyTorch",
+        "MLOps"
+      ],
       "experiences": [
         {
           "title": "Ingenieur ML",
@@ -91,14 +149,22 @@
           "description": "Entrainement et mise en production de modeles de langage, evaluation hors ligne et suivi de derive."
         }
       ],
-      "education": [{"degree": "Doctorat informatique", "institution": "UM6P"}],
+      "education": [
+        {
+          "degree": "Doctorat informatique",
+          "institution": "UM6P"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "compta_hors_sujet",
       "name": "Profil comptabilite",
       "headline": "Comptable",
-      "skills": ["Sage", "Excel"],
+      "skills": [
+        "Sage",
+        "Excel"
+      ],
       "experiences": [
         {
           "title": "Comptable",
@@ -106,14 +172,22 @@
           "description": "Tenue de comptabilite generale, declarations fiscales, rapprochement de comptes clients."
         }
       ],
-      "education": [{"degree": "Licence comptabilite", "institution": "ENCG"}],
+      "education": [
+        {
+          "degree": "Licence comptabilite",
+          "institution": "ENCG"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "boulangerie_hors_sujet",
       "name": "Profil boulangerie",
       "headline": "Boulanger",
-      "skills": ["Panification", "Viennoiserie"],
+      "skills": [
+        "Panification",
+        "Viennoiserie"
+      ],
       "experiences": [
         {
           "title": "Boulanger",
@@ -121,14 +195,22 @@
           "description": "Petrissage, faconnage et cuisson, gestion des stocks de farine."
         }
       ],
-      "education": [{"degree": "CAP boulangerie", "institution": "CFA"}],
+      "education": [
+        {
+          "degree": "CAP boulangerie",
+          "institution": "CFA"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "securite_offensive",
       "name": "Profil securite",
       "headline": "Ingenieur securite applicative",
-      "skills": ["Python", "Burp Suite"],
+      "skills": [
+        "Python",
+        "Burp Suite"
+      ],
       "experiences": [
         {
           "title": "Pentesteur",
@@ -136,14 +218,24 @@
           "description": "Tests d'intrusion applicatifs, revue de code securite, durcissement de chaines de deploiement."
         }
       ],
-      "education": [{"degree": "Master cybersecurite", "institution": "ENSIAS"}],
-      "certifications": ["OSCP"]
+      "education": [
+        {
+          "degree": "Master cybersecurite",
+          "institution": "ENSIAS"
+        }
+      ],
+      "certifications": [
+        "OSCP"
+      ]
     },
     {
       "id": "mobile_flutter",
       "name": "Profil mobile",
       "headline": "Developpeur mobile",
-      "skills": ["Flutter", "Dart"],
+      "skills": [
+        "Flutter",
+        "Dart"
+      ],
       "experiences": [
         {
           "title": "Developpeur mobile",
@@ -151,14 +243,23 @@
           "description": "Application de suivi de livraison, mode hors ligne, notifications."
         }
       ],
-      "education": [{"degree": "Licence informatique", "institution": "FSTM"}],
+      "education": [
+        {
+          "degree": "Licence informatique",
+          "institution": "FSTM"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "backend_django_pur",
       "name": "Profil Django",
       "headline": "Ingenieur backend",
-      "skills": ["Python", "Django", "Celery"],
+      "skills": [
+        "Python",
+        "Django",
+        "Celery"
+      ],
       "experiences": [
         {
           "title": "Ingenieur backend",
@@ -166,14 +267,23 @@
           "description": "APIs internes, taches asynchrones, montee de version d'un monolithe."
         }
       ],
-      "education": [{"degree": "Master genie logiciel", "institution": "ENSA"}],
+      "education": [
+        {
+          "degree": "Master genie logiciel",
+          "institution": "ENSA"
+        }
+      ],
       "certifications": []
     },
     {
       "id": "fraude_donnees",
       "name": "Profil lutte contre la fraude",
       "headline": "Data scientist",
-      "skills": ["Python", "scikit-learn", "SQL"],
+      "skills": [
+        "Python",
+        "scikit-learn",
+        "SQL"
+      ],
       "experiences": [
         {
           "title": "Data scientist",
@@ -181,7 +291,12 @@
           "description": "Detection de fraude sur les transactions par carte, scoring en temps reel."
         }
       ],
-      "education": [{"degree": "Master statistiques", "institution": "INSEA"}],
+      "education": [
+        {
+          "degree": "Master statistiques",
+          "institution": "INSEA"
+        }
+      ],
       "certifications": []
     }
   ],
@@ -190,45 +305,64 @@
       "id": "terme_rare",
       "query": "SEPA",
       "tests": "Terme rare : un seul profil le contient, il doit sortir premier.",
-      "relevant": ["paiement_senior"]
+      "relevant": [
+        "paiement_senior"
+      ]
     },
     {
       "id": "domaine_paiement",
       "query": "systemes de paiement",
       "tests": "Vocabulaire du domaine, absent des listes de competences : la reponse est dans les descriptions d'experience.",
-      "relevant": ["paiement_senior", "paiement_junior"]
+      "relevant": [
+        "paiement_senior",
+        "paiement_junior"
+      ]
     },
     {
       "id": "fraude_transactions",
       "query": "detection de fraude sur les transactions",
       "tests": "Deux profils de metiers differents partagent le sujet.",
-      "relevant": ["fraude_donnees", "paiement_senior"]
+      "relevant": [
+        "fraude_donnees",
+        "paiement_senior"
+      ]
     },
     {
       "id": "kubernetes",
       "query": "Kubernetes clusters",
       "tests": "Terme technique present a la fois en competence et en experience.",
-      "relevant": ["infra_kubernetes"]
+      "relevant": [
+        "infra_kubernetes"
+      ]
     },
     {
       "id": "donnees_medicales",
       "query": "anonymisation de donnees patients",
       "tests": "Sujet exprime en langage courant, jamais en competence declaree.",
-      "relevant": ["donnees_sante"]
+      "relevant": [
+        "donnees_sante"
+      ]
     },
     {
       "id": "securite",
       "query": "tests d'intrusion et revue de code securite",
       "tests": "Intitule de poste absent des competences declarees.",
-      "relevant": ["securite_offensive"]
+      "relevant": [
+        "securite_offensive"
+      ]
     },
     {
       "id": "terme_frequent",
       "query": "Python",
       "tests": "Terme tres frequent : cinq profils le declarent, aucun ne doit ecraser les autres. Piege a precision.",
       "relevant": [
-        "paiement_senior", "paiement_junior", "donnees_sante", "ml_recherche",
-        "securite_offensive", "backend_django_pur", "fraude_donnees"
+        "paiement_senior",
+        "paiement_junior",
+        "donnees_sante",
+        "ml_recherche",
+        "securite_offensive",
+        "backend_django_pur",
+        "fraude_donnees"
       ]
     },
     {

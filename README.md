@@ -1517,6 +1517,62 @@ posees reviendrait a se noter soi-meme. Le simulateur de ponderation existe pour
 qu'un recruteur arbitre ; ces cas lui donnent de quoi mesurer l'effet de son
 arbitrage.
 
+#### Le score sature, et voici de combien
+
+```
+python manage.py measure_saturation
+```
+
+Le moteur ramene chaque critere dans [0, 1] : un profil qui satisfait toutes les
+exigences atteint 1,0, et **plusieurs profils differents peuvent y arriver
+ensemble**. Au plafond, l'ordre ne vient plus du score.
+
+| | |
+|---|---|
+| Candidats au plafond | **38 sur 132 — 28,8 %** |
+| Cas avec au moins deux profils a egalite | 11 sur 30 |
+| Cas ou l'egalite **confond** des profils que l'annotation separe | **4** |
+| Apparait des | **4 candidats** dans un meme vivier |
+
+La distinction qui compte : deux profils que l'annotation tient pour equivalents
+peuvent etre a egalite sans que rien ne soit perdu. Ce qui coute, c'est
+l'egalite qui **efface une difference reelle**. Le pire cas est
+`surqualification`, ou trois profils de pertinence 3, 2 et 1 atteignent tous
+1,000 : le moteur ne distingue pas un profil ajuste d'un surqualifie.
+
+**J'ai d'abord ecrit que ce defaut ne se voyait pas sur des cas a cinq
+candidats. C'est faux.** La mesure le trouve des quatre profils : il etait deja
+present sur les sept cas d'origine, il n'y etait simplement pas cherche. Ce
+qu'on ne compte pas, on ne le voit pas.
+
+**Rien n'est corrige.** Etaler le haut de l'echelle ou revoir la ponderation est
+un arbitrage produit — un recruteur peut vouloir qu'un profil parfait soit
+parfait. La commande chiffre l'ampleur pour que cet arbitrage se prenne sur des
+mesures.
+
+#### Qui a annote
+
+Chaque jeu porte desormais sa provenance :
+
+```json
+"provenance": {
+  "annotateurs": 1,
+  "annote_par": ["Badr Sahraoui"],
+  "accord_inter_annotateur": null,
+  "note": "Annote par une seule personne. ..."
+}
+```
+
+Une verite terrain est l'opinion de qui l'a ecrite. Tant que le jeu ne disait ni
+qui avait annote ni combien de personnes, il se presentait comme un fait alors
+qu'il est un jugement. Ce n'est pas un second annotateur — c'est la mention
+honnete qu'il n'y en a qu'un, et un test echoue si un jeu declare plusieurs
+annotateurs sans publier leur accord.
+
+Le projet mesure par ailleurs un kappa de Cohen de **0,25** entre deux
+evaluateurs sur des dossiers reels. Il n'y a aucune raison de croire que ces
+annotations-ci echapperaient a cet ecart.
+
 #### Un defaut trouve dans la mesure, pas dans le moteur
 
 Spearman est **indefini** quand un classement n'a aucune variance — quatre
@@ -1585,8 +1641,29 @@ ok  /api/                  403      refus explicite, pas une redirection
 ```powershell
 pytest              # suite complete
 pytest -m "not llm" # sans les tests necessitant le serveur d'inference
+pytest --cov=apps   # couverture
 ruff check .
 ```
+
+**Un angle mort trouve en mesurant la couverture : les commandes de gestion
+etaient toutes a 0 %.** Pres de la moitie du code non couvert tenait la —
+`seed_demo`, `score_all`, `score_offer`, `purge_expired`, `check_ai`, et les
+taches Celery.
+
+Ce n'est pas anodin sur ce projet : le README presente ces commandes comme le
+moyen de reproduire chaque mesure. Une commande cassee cassait donc les
+instructions du README **en silence**, et le premier a s'en apercevoir aurait
+ete celui qui clone le depot.
+
+Elles ont maintenant des tests de fumee — la commande tourne sur des donnees
+reelles et produit ce qu'elle annonce. `score_all` et les taches passent de 0 a
+100 %, `purge_expired` a 97 %, `seed_demo` a 94 %.
+
+Deux restent a 0 % et c'est assume : `mock_inference` demarre un serveur, et
+`probe_semantic` exige une couche d'embeddings desactivee par defaut. Les
+commandes lourdes — `evaluate`, `audit_bias` — restent hors de la suite : la CI
+les lance a chaque poussee, les doubler localement couterait plusieurs minutes
+pour rien.
 
 ---
 
@@ -1660,6 +1737,7 @@ tests/             suite pytest
 | `apps/outreach/backends.py` | quels canaux partent vraiment, et lesquels le disent au lieu de le simuler |
 | `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
 | `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
+| `apps/evaluation/saturation.py` | ce que le score ne distingue plus, et la difference entre une egalite juste et une confusion |
 | `apps/evaluation/variance.py` | le modele invente-t-il un chiffre ? la seule faute grave qu'il puisse commettre ici |
 | `apps/candidates/plagiarism.py` | CV distincts au contenu commun, et le retrait du tout-venant qui rend la mesure lisible |
 | `apps/core/management/commands/compile_messages.py` | le format `.mo` ecrit en Python pur, pour ne pas dependre de gettext |
@@ -1718,6 +1796,8 @@ tests/             suite pytest
 - [x] Variance du modele mesuree : le score ne bouge pas, la redaction si
 - [x] CV distincts au contenu commun, tout-venant retire, sans accusation
 - [x] Interface en arabe, de droite a gauche, sans dependre de gettext
+- [x] Jeu annote porte a trente cas, deux affirmations publiees invalidees et corrigees
+- [x] Saturation du score mesuree, provenance des annotations inscrite dans les jeux
 
 ---
 
@@ -1765,6 +1845,11 @@ tests/             suite pytest
   defaut. Django refuse un en-tete pre-encode multi-lignes — son garde-fou
   contre l'injection — ce qui ferme la correction generale sans reecrire
   l'assemblage du message.
+- **Le score sature** : 28,8 % des candidats du jeu annote atteignent le
+  plafond, et quatre cas confondent des profils que l'annotation separe. Le
+  moteur ne distingue alors plus rien, et l'ordre entre eux ne vient pas de
+  lui. Ce n'est pas corrige : etaler le haut de l'echelle est un arbitrage
+  produit, pas un defaut a reparer seul.
 - Le taux de silence se calcule sur les messages que **ce** systeme connait. Un
   recruteur qui repond depuis sa boite personnelle sans rien consigner
   apparaitra comme silencieux. La mesure sous-estime donc les reponses et

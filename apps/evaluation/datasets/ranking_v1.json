@@ -3,6 +3,14 @@
   "kind": "ranking",
   "version": "1.1.0",
   "description": "Jeu d'evaluation du moteur de classement. Cinq offres, 28 candidats. La note de pertinence (0 a 3) est attribuee a la main, en raisonnant comme un recruteur : 3 = a recevoir sans hesitation, 2 = merite un entretien, 1 = profil eloigne mais pas absurde, 0 = hors sujet. Les cas sont choisis pour eprouver des mecanismes precis du moteur : implication dirigee, competences voisines, criteres non applicables, anciennete. Etoffe a trente cas : ontologie dirigee, fraicheur, recevabilite multiplicative, renormalisation, paliers de langue, teletravail, certifications, cas limites et proprietes de non-discrimination. La pertinence est jugee du point de vue d'un recruteur, jamais alignee sur la sortie du moteur — sans quoi la mesure ne mesurerait que sa propre coherence.",
+  "provenance": {
+    "annotateurs": 1,
+    "annote_par": [
+      "Badr Sahraoui"
+    ],
+    "accord_inter_annotateur": null,
+    "note": "Annote par une seule personne. Deux recruteurs ne classeraient pas ces profils a l'identique : le kappa de Cohen mesure ailleurs dans ce projet un accord de 0,25 entre deux evaluateurs sur des dossiers reels. Aucun accord inter-annotateur n'est donc disponible pour ce jeu, et les chiffres qui en decoulent portent cette limite. `accord_inter_annotateur` reste a null tant qu'une seconde personne n'a pas annote."
+  },
   "cases": [
     {
       "id": "backend_python_senior",
