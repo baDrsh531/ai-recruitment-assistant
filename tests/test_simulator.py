@@ -180,12 +180,19 @@ def test_the_engine_accepts_a_weighting_without_touching_the_offer(offre):
 
 
 def test_lowering_the_skills_weight_degrades_the_impact_ratio(db):
-    """Le resultat qui justifie ce module.
+    """Le resultat qui justifie ce module — et ce qu'il ne dit pas.
 
-    Le poids de la localisation ne bouge pas, et le ratio tombe pourtant sous
-    le seuil legal : quand les competences cessent de departager, ce sont les
-    criteres restants qui decident, localisation comprise. Aucun recruteur ne
-    devinerait cela en deplacant un curseur.
+    Le poids de la localisation ne bouge pas, et le ratio baisse pourtant :
+    quand les competences cessent de departager, ce sont les criteres restants
+    qui decident, localisation comprise. Aucun recruteur ne devinerait cela en
+    deplacant un curseur.
+
+    **Ce test affirmait aussi que le ratio passait sous le seuil legal.**
+    C'etait vrai sur le jeu annote a sept cas, ou il tombait a 0,714 ; sur
+    trente cas il descend de 0,868 a 0,846 puis se stabilise, sans jamais
+    franchir 0,80. L'effet spectaculaire etait un artefact du petit effectif.
+    On mesure donc la baisse, qui tient, et non le franchissement, qui ne
+    tenait pas.
     """
     defaut = simulator.normalise(DEFAULT_WEIGHTS)
     affaibli = simulator.normalise(
@@ -198,8 +205,10 @@ def test_lowering_the_skills_weight_degrades_the_impact_ratio(db):
     ratio_affaibli = bias.impact_ratio_for_weights(affaibli)
 
     assert ratio_defaut >= bias.IMPACT_RATIO_THRESHOLD
-    assert ratio_affaibli < ratio_defaut
-    assert ratio_affaibli < bias.IMPACT_RATIO_THRESHOLD
+    assert ratio_affaibli < ratio_defaut, (
+        "affaiblir les competences doit degrader le ratio, "
+        f"or {ratio_affaibli} >= {ratio_defaut}"
+    )
 
 
 def test_removing_location_neutralises_the_ratio(db):
@@ -260,7 +269,14 @@ def test_the_page_accepts_weights_from_the_query(client, offre, recruteur):
     assert reponse.context["simulation"].mouvements > 0
 
 
-def test_the_page_warns_when_the_legal_threshold_is_crossed(client, offre, recruteur):
+def test_the_page_shows_the_ratio_and_its_legal_threshold(client, offre, recruteur):
+    """La page expose le ratio obtenu et le seuil auquel il se compare.
+
+    Elle avertissait autrefois d'un franchissement, que ce reglage produisait
+    sur le jeu a sept cas. Sur trente cas il ne le produit plus : le test porte
+    donc sur ce que la page affiche toujours — le chiffre et sa reference — et
+    non sur un depassement qui dependait de l'effectif.
+    """
     client.force_login(recruteur)
     reponse = client.get(
         reverse("matching:simulator", kwargs={"slug": offre.slug}),
@@ -268,9 +284,29 @@ def test_the_page_warns_when_the_legal_threshold_is_crossed(client, offre, recru
     )
 
     contenu = reponse.content.decode()
-    assert reponse.context["simulation"].impact_ratio < bias.IMPACT_RATIO_THRESHOLD
-    assert "sous le seuil legal" in contenu
+    simulation = reponse.context["simulation"]
+
+    assert 0.0 <= simulation.impact_ratio <= 1.0
     assert "quatre cinquiemes" in contenu
+    assert f"{bias.IMPACT_RATIO_THRESHOLD:.2f}".replace(".", ",") in contenu
+
+
+def test_the_page_warns_only_when_the_ratio_really_crosses(client, offre, recruteur):
+    """L'avertissement doit suivre le chiffre, pas un reglage suppose.
+
+    Un avertissement affiche quand le seuil n'est pas franchi apprendrait a ne
+    plus le lire — c'est le mode de panne d'une alerte qui crie a tort.
+    """
+    client.force_login(recruteur)
+    reponse = client.get(
+        reverse("matching:simulator", kwargs={"slug": offre.slug}),
+        {"poids_skills": "0.20", "poids_experience": "0.45"},
+    )
+
+    simulation = reponse.context["simulation"]
+    avertit = "sous le seuil legal" in reponse.content.decode()
+
+    assert avertit == (simulation.impact_ratio < bias.IMPACT_RATIO_THRESHOLD)
 
 
 def test_a_viewer_may_simulate(client, offre, db, django_user_model):

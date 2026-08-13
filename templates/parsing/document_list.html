@@ -26,12 +26,22 @@
         <tbody>
           {% for document in documents %}
             <tr>
-              <td>{{ document.original_filename }}</td>
               <td>
-                {% if document.candidate %}
-                  <a href="{{ document.candidate.get_absolute_url }}">{{ document.candidate.full_name }}</a>
+                {% if blind %}
+                  <span class="subtle">nom de fichier masque</span>
                 {% else %}
+                  {{ document.original_filename }}
+                {% endif %}
+              </td>
+              <td>
+                {% if not document.candidate %}
                   <span class="subtle">—</span>
+                {% elif blind %}
+                  <a href="{{ document.candidate.get_absolute_url }}">
+                    Candidat {{ document.candidate.pk|stringformat:"s"|slice:":8" }}
+                  </a>
+                {% else %}
+                  <a href="{{ document.candidate.get_absolute_url }}">{{ document.candidate.full_name }}</a>
                 {% endif %}
               </td>
               <td>

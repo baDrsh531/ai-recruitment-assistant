@@ -207,6 +207,54 @@ ASSISTANT_ANSWER = register(
     )
 )
 
+# --------------------------------------------------------------------------
+# Personnalisation d'un message deja redige
+# --------------------------------------------------------------------------
+# Le modele n'ecrit pas le message : il adapte un texte deja valide. Meme parti
+# que pour l'explication du score — le modele met en forme, il ne decide pas du
+# fond. Le pire resultat possible est donc le gabarit generique, jamais un
+# courrier faux envoye a une personne reelle.
+OUTREACH_MESSAGE = register(
+    Prompt(
+        id="outreach_message",
+        version="1.0.0",
+        system=(
+            "Tu personnalises un message destine a un candidat. On te donne un "
+            "TEXTE DE BASE deja valide et une liste d'elements factuels "
+            "verifies. Ton role est de rendre le texte plus personnel sans en "
+            "changer le sens ni la portee.\n"
+            "Regles absolues :\n"
+            "1. N'ajoute aucun fait absent des elements fournis. Aucune "
+            "competence, aucun employeur, aucune date, aucun chiffre qui ne "
+            "soit pas dans la liste.\n"
+            "2. Ne promets rien que le texte de base ne promette pas : ni "
+            "delai, ni salaire, ni suite favorable, ni retour personnalise.\n"
+            "3. Ne justifie jamais une decision negative par des chiffres et "
+            "ne reformule aucun score. Si le texte de base renvoie a une "
+            "explication detaillee, conserve ce renvoi tel quel.\n"
+            "4. N'evoque jamais l'age, le genre, l'origine, la nationalite, la "
+            "religion, la situation familiale ni la sante.\n"
+            "5. Conserve les mentions de procedure du texte de base — droit de "
+            "contester, duree de conservation, role de l'outil de tri. Elles "
+            "sont obligatoires.\n"
+            "6. Ecris en texte simple : aucune syntaxe de mise en forme, ni "
+            "asterisques, ni dieses, ni tirets de liste.\n"
+            "7. Reste dans la meme langue et le meme registre que le texte de "
+            "base, et dans une longueur comparable.\n"
+            "Tu renvoies uniquement le message personnalise, sans commentaire "
+            "ni preambule."
+        ),
+        template=(
+            "Poste : {poste}\n"
+            "Etape du dossier : {etape}\n"
+            "Canal : {canal}\n\n"
+            "Elements factuels utilisables :\n{elements}\n\n"
+            "Texte de base :\n<message>\n{base}\n</message>\n\n"
+            "Renvoie le message personnalise."
+        ),
+    )
+)
+
 SEARCH_TO_FILTERS = register(
     Prompt(
         id="search_to_filters",

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}CV qui se recouvrent{% endblock %}
+{% block heading %}CV qui se recouvrent{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    {{ rapport.documents_compares }} CV compares ·
+    seuil de signalement {{ seuil }}.
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Ce que cette page cherche</h2>
+    {% if rapport.paires %}
+      <span class="badge badge--warn">{{ rapport.paires|length }} paire(s)</span>
+    {% else %}
+      <span class="badge badge--ok">rien a signaler</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      Des candidats <b>differents</b> dont le CV se ressemble : copie, modele
+      partage dans une promotion, agence qui reformate le meme profil pour deux
+      clients. A ne pas confondre avec
+      <a href="{% url 'candidates:duplicates' %}">Doublons</a>, qui cherche une
+      meme personne sous deux dossiers.
+    </p>
+    <p class="mt-4">
+      Le fichier strictement identique est deja traite ailleurs : l'empreinte du
+      contenu est unique, et redeposer le meme octet ne cree rien. Reste le cas
+      difficile — deux fichiers differents dont le texte se recouvre.
+    </p>
+    <p class="alert alert--info mt-4">{{ rapport.lecture }}</p>
+  </div>
+  <p class="card__note">
+    <b>Cette page n'accuse personne.</b> Un fort recouvrement peut venir d'une
+    copie comme d'un modele d'ecole partage entre camarades de promotion. Elle
+    signale des paires a regarder ; un humain tranche, comme partout ailleurs
+    dans ce projet.
+  </p>
+</section>
+
+{% if paires %}
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Paires signalees</h2></div>
+  <div class="card__body stack">
+    {% for paire in paires %}
+      <article class="panel">
+        <p>
+          <span class="badge{% if paire.similarite >= 0.8 %} badge--danger{% else %} badge--warn{% endif %}">
+            {{ paire.pourcentage }} % de recouvrement
+          </span>
+          <span class="badge">{{ paire.gravite }}</span>
+          <span class="muted small">
+            {{ paire.empreintes_communes }} formule(s) en commun
+          </span>
+        </p>
+        <p class="mt-4">
+          {% if blind %}
+            <span class="muted">Identites masquees (screening a l'aveugle)</span>
+          {% else %}
+            {% with noms=paire.candidats %}
+              <b>{{ noms.0 }}</b> et <b>{{ noms.1 }}</b>
+            {% endwith %}
+          {% endif %}
+        </p>
+        {% if not blind %}
+          {% comment %}
+            Un nom de fichier de CV porte presque toujours celui du candidat.
+            L'afficher sous une identite masquee rendrait le masquage decoratif.
+          {% endcomment %}
+          <p class="muted small">
+            {{ paire.document_a.original_filename }} ·
+            {{ paire.document_b.original_filename }}
+          </p>
+        {% endif %}
+        {% if paire.extrait %}
+          <p class="prose mt-4">« {{ paire.extrait }} »</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+  <p class="card__note">
+    Trois paliers, parce qu'ils appellent trois lectures. Au-dela de 80 %, deux
+    textes ne se ressemblent plus : c'est le meme. Entre 55 et 80 %, un fond
+    commun important. En dessous, un recouvrement qui merite un coup d'oeil et
+    rien de plus.
+  </p>
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Comment la mesure evite le tout-venant</h2></div>
+  <div class="card__body">
+    <p>
+      « Experience professionnelle », « Langues : francais, anglais »,
+      « Permis B » se retrouvent dans un CV sur deux. Une mesure naive
+      rapprocherait tout le monde de tout le monde.
+    </p>
+  </div>
+  <div class="grid">
+    {% include "partials/stat_tile.html" with label="Longueur des empreintes" value=taille_empreinte hint="mots consecutifs — une formule banale n'en produit pas" %}
+    {% include "partials/stat_tile.html" with label="Formules retirees" value=rapport.empreintes_retirees hint="presentes dans une large part du corpus" %}
+    {% include "partials/stat_tile.html" with label="CV ignores" value=rapport.documents_ignores hint="texte trop court pour que la mesure signifie quelque chose" %}
+    {% include "partials/stat_tile.html" with label="CV compares" value=rapport.documents_compares %}
+  </div>
+  <p class="card__note">
+    Deux garde-fous. Des empreintes de {{ taille_empreinte }} mots : elles ne se
+    retrouvent identiques que si deux textes partagent une phrase entiere, ce
+    qui est deja un fait et non un hasard. Et le retrait des empreintes
+    presentes dans plus de {{ part_commune }} % du corpus — l'equivalent, au
+    niveau de la phrase, de ce qu'un mot vide est au niveau du mot.
+    La comparaison est quadratique : instantanee sous quelques milliers de CV,
+    elle demanderait un pre-filtrage au-dela. La limite est connue et n'est pas
+    franchie ici.
+  </p>
+</section>
+{% endblock %}

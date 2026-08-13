@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Rejeu des decisions{% endblock %}
+{% block heading %}Rejeu des decisions passees{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Moteur courant {{ rapport.version_courante }} ·
+    {{ rapport.total }} decision(s) rejouee(s).
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Le score est-il reproductible ?</h2>
+    {% if rapport.reproductible %}
+      <span class="badge badge--ok">oui</span>
+    {% else %}
+      <span class="badge badge--danger">non</span>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    <p>
+      Le projet affirme partout que le score est deterministe. Cette page cesse
+      de l'affirmer : elle reprend les dossiers reellement tranches, les
+      recalcule avec le moteur d'aujourd'hui, et compare.
+    </p>
+    <p class="alert alert--info mt-4">{{ rapport.lecture }}</p>
+  </div>
+
+  <div class="grid">
+    {% include "partials/stat_tile.html" with label="Identiques" value=rapport.identiques|length hint="au chiffre pres" %}
+    {% include "partials/stat_tile.html" with label="Ecarts" value=rapport.divergents|length hint="tous imputables a un changement de version" %}
+    {% include "partials/stat_tile.html" with label="Auraient bascule" value=rapport.bascules|length hint="changement de cote du seuil" %}
+    {% include "partials/stat_tile.html" with label="Non concluants" value=rapport.non_concluants|length hint="donnees modifiees depuis" %}
+  </div>
+
+  <p class="card__note">
+    <b>La difficulte n'est pas de recalculer, elle est d'attribuer l'ecart.</b>
+    Un score qui bouge peut venir du moteur — ce qu'on mesure — ou des donnees :
+    CV re-extrait, competence corrigee, ponderation de l'offre revue. Dans ce
+    second cas le moteur est innocent et le rejeu ne prouve rien ; ces dossiers
+    sont comptes a part plutot que melanges au resultat.
+    Deux scores sont tenus pour identiques en deca de
+    {{ tolerance_points }} point : le moteur additionne des flottants, et deux
+    executions peuvent differer sur le dernier bit sans que rien n'ait change.
+  </p>
+</section>
+
+{% if rapport.par_transition %}
+<section class="card">
+  <div class="card__head"><h2 class="card__title">Ce qui a fait bouger les scores</h2></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Version au moment de la decision</th><th>Version aujourd'hui</th>
+          <th class="num">Dossiers</th><th class="num">Bascules</th>
+          <th class="num">Ecart max</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ligne in rapport.par_transition %}
+          <tr>
+            <td>{{ ligne.de }}</td>
+            <td>{{ ligne.vers }}</td>
+            <td class="num">{{ ligne.nombre }}</td>
+            <td class="num{% if ligne.bascules %} danger{% endif %}">{{ ligne.bascules }}</td>
+            <td class="num muted">{{ ligne.ecart_max }} pts</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="card__note">
+    Un auditeur ne demande pas combien de scores ont bouge, mais ce qui les a
+    fait bouger. La reponse tient presque toujours dans un passage de version
+    precis — et une ligne ou les deux versions sont identiques serait un defaut,
+    pas une evolution.
+  </p>
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">Dossiers a regarder</h2>
+    {% if a_regarder %}<span class="badge">{{ a_regarder|length }}</span>{% endif %}
+  </div>
+  {% if a_regarder %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Candidat</th><th>Offre</th><th>Decision</th>
+            <th class="num">Alors</th><th class="num">Aujourd'hui</th>
+            <th class="num">Ecart</th><th>Lecture</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in a_regarder %}
+            <tr>
+              <th scope="row">
+                <a href="{{ item.application.get_absolute_url }}">
+                  {{ item.application.candidate.full_name }}
+                </a>
+              </th>
+              <td class="muted">{{ item.application.offer.title }}</td>
+              <td class="muted small">
+                {{ item.application.get_stage_display }} ·
+                {{ item.application.decided_at|date:"d/m/Y" }}
+              </td>
+              <td class="num">{{ item.score_alors|floatformat:3 }}</td>
+              <td class="num">{{ item.score_maintenant|floatformat:3 }}</td>
+              <td class="num{% if item.bascule %} danger{% endif %}">
+                {% if item.points > 0 %}+{% endif %}{{ item.points }}
+              </td>
+              <td>
+                {% if item.bascule %}
+                  <span class="badge badge--danger">aurait bascule</span>
+                {% elif not item.concluant %}
+                  <span class="badge">donnees modifiees</span>
+                {% elif item.corrige_a_la_main %}
+                  <span class="badge badge--warn">score corrige a la main</span>
+                {% else %}
+                  <span class="badge badge--warn">ecart</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="card__note">
+      Un dossier dont le score avait ete corrige a la main n'a pas ete tranche
+      sur le chiffre du moteur : le rejeu ne l'atteint pas, et le seuil ne s'y
+      appliquait pas. Il est signale sans etre compte comme une bascule.
+    </p>
+  {% else %}
+    {% include "partials/empty.html" with title="Rien a signaler" text="Chaque decision rejouable rend aujourd'hui le meme chiffre qu'au moment ou elle a ete prise." %}
+  {% endif %}
+</section>
+
+{% if rapport.sans_score %}
+<section class="card">
+  <div class="card__body">
+    <p class="muted">
+      {{ rapport.sans_score }} decision(s) ont ete tranchees sans qu'un score
+      ait ete calcule auparavant : il n'y a rien a comparer. Elles sont comptees
+      a part plutot qu'ignorees en silence.
+    </p>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

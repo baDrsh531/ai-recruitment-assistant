@@ -50,7 +50,9 @@ class CaseResult:
     ndcg_at_5: float
     precision_at_3: float
     pair_accuracy: float
-    spearman: float
+    # `None` quand la correlation est indefinie : un classement sans
+    # variance n'a aucun ordre a correler.
+    spearman: float | None
     predicted_order: list[str] = field(default_factory=list)
     relevances: list[int] = field(default_factory=list)
     scores: list[float] = field(default_factory=list)
@@ -238,7 +240,10 @@ def run_case(case: dict) -> CaseResult:
         ndcg_at_5=round(metrics.ndcg_at_k(relevances, 5), 4),
         precision_at_3=round(metrics.precision_at_k(relevances, 3), 4),
         pair_accuracy=round(metrics.pair_accuracy(relevances), 4),
-        spearman=round(metrics.spearman(scores, relevances), 4),
+        spearman=(
+            None if (correlation := metrics.spearman(scores, relevances)) is None
+            else round(correlation, 4)
+        ),
         predicted_order=[identifier for identifier, _, _ in scored],
         relevances=relevances,
         scores=scores,
@@ -252,10 +257,19 @@ def run(dataset_name: str) -> Report:
     if not cases:
         raise ValueError(f"Le jeu {dataset_name} ne contient aucun cas.")
 
-    aggregate = {
-        name: round(sum(getattr(case, name) for case in cases) / len(cases), 4)
-        for name in ("ndcg_at_5", "precision_at_3", "pair_accuracy", "spearman")
-    }
+    # Une metrique indefinie sur un cas est ECARTEE de sa moyenne, pas comptee
+    # pour zero. Spearman est indefini des qu'un classement n'a aucune variance
+    # — quatre pertinences egales, quatre scores identiques — et l'inclure a
+    # zero penalisait le moteur sur des cas ou il n'avait rien fait de mal.
+    aggregate = {}
+    for name in ("ndcg_at_5", "precision_at_3", "pair_accuracy", "spearman"):
+        valeurs = [
+            valeur
+            for valeur in (getattr(case, name) for case in cases)
+            if valeur is not None
+        ]
+        if valeurs:
+            aggregate[name] = round(sum(valeurs) / len(valeurs), 4)
 
     from apps.ai import embeddings
 

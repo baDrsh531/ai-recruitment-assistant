@@ -12,12 +12,26 @@ dist/
 .env
 .env.*
 !.env.example
+# Historique local de VS Code. Il conserve des copies datees de chaque fichier
+# edite, `.env` compris : sans cette ligne, un `git add -A` publie des secrets
+# que `.env` protegeait pourtant. Constate sur ce depot — quatre copies
+# contenaient une cle SMTP et un mot de passe.
+.history/
+# Repertoire ou `outreach_selftest` depose les messages quand aucun SMTP n'est
+# configure. Ils portent de vraies adresses.
+/courriers/
+*.eml
 db.sqlite3
 db.sqlite3-journal
 *.sqlite3
 /media/
 /staticfiles/
 /rapports/
+
+# Catalogues compiles. Le `.po` est la source et vit dans le depot ; le `.mo`
+# est un binaire regenere par `python manage.py compile_messages`, appele au
+# demarrage et a la construction. Le committer inviterait a le laisser diverger.
+*.mo
 
 # === Outils ================================================================
 .pytest_cache/

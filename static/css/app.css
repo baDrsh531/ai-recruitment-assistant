@@ -168,12 +168,14 @@ code {
   display: flex;
   flex-direction: column;
   background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+  border-inline-end: 1px solid var(--sidebar-border);
   color: var(--sidebar-text);
 }
 
 .sidebar__brand {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--sidebar-border);
   color: var(--sidebar-text-strong);
@@ -181,11 +183,21 @@ code {
   letter-spacing: -0.01em;
 }
 
+/* La marque hérite de `color`, donc blanche ici. Le meme fichier sert sur
+   fond clair sans variante a maintenir. */
+.logo {
+  flex: none;
+  display: block;
+}
+
 .sidebar__brand:hover {
   text-decoration: none;
 }
 
-.sidebar__brand span {
+/* Seul le suffixe « .IA » prend la couleur de marque. Le selecteur vise le
+   span interieur : `.sidebar__brand span` teindrait aussi le nom entier,
+   maintenant qu'il est lui-meme enveloppe. */
+.sidebar__brand-nom span {
   color: var(--brand);
 }
 
@@ -226,6 +238,31 @@ code {
   background: var(--sidebar-hover);
   color: var(--sidebar-text-strong);
   box-shadow: inset 2px 0 0 var(--brand);
+}
+
+/* `box-shadow` n'a pas de variante logique : le liseré de l'entrée active
+   resterait a gauche en lecture de droite a gauche, c'est-a-dire du mauvais
+   cote. C'est la seule regle du fichier qui demande une inversion explicite. */
+[dir="rtl"] .nav-link.is-active {
+  box-shadow: inset -2px 0 0 var(--brand);
+}
+
+/* Chaque bloc de texte choisit sa direction d'apres son contenu.
+
+   Sans cette regle, un paragraphe francais pose dans une page arabe herite de
+   la direction de la page et sa ponctuation part en tete : « Vue d'ensemble du
+   pipeline. » s'affiche « .Vue d'ensemble du pipeline ». Le defaut se voit sur
+   toute page dont le contenu n'est pas encore traduit — c'est-a-dire, ici, la
+   plupart.
+
+   `unicode-bidi: plaintext` fait ce que fait `dir="auto"`, mais depuis la
+   feuille de style : la direction se deduit du premier caractere fort de
+   chaque bloc, sans toucher a un seul gabarit. Le francais se lit de gauche a
+   droite avec sa ponctuation en place, l'arabe de droite a gauche, sur la meme
+   page. */
+[dir="rtl"] :is(h1, h2, h3, p, li, td, th, caption, label, option,
+                figcaption, summary, blockquote, dt, dd) {
+  unicode-bidi: plaintext;
 }
 
 .nav-link svg {
@@ -450,7 +487,7 @@ code {
    comparatif. */
 .table thead th {
   padding: var(--space-3) var(--space-5);
-  text-align: left;
+  text-align: start;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -463,7 +500,7 @@ code {
 
 .table tbody th {
   padding: var(--space-3) var(--space-5);
-  text-align: left;
+  text-align: start;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
@@ -499,14 +536,14 @@ code {
 
 .table .num {
   font-variant-numeric: tabular-nums;
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
 }
 
 .table--flush th,
 .table--flush td {
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline-start: 0;
+  padding-inline-end: 0;
 }
 
 /* Badges et pastilles */
@@ -583,9 +620,25 @@ code {
 
 .meter__value {
   width: 3rem;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
+}
+
+/* Les echelles de mesure ne suivent PAS le sens de lecture.
+
+   Une jauge, un intervalle, un axe de graphique portent une grandeur de 0 a
+   100 %, ecrite en chiffres occidentaux. Les retourner en arabe ferait voir
+   les memes donnees en miroir a deux lecteurs de la meme page, et ce sont les
+   donnees qui seraient mal lues. Le texte autour suit la langue ; la geometrie
+   qui porte un nombre reste stable.
+
+   `direction: ltr` fige donc l'interieur de ces composants, et leurs `left`
+   poses en pourcentage gardent le sens qu'ils ont a l'ecriture. */
+.meter,
+.range,
+.chart {
+  direction: ltr;
 }
 
 /* Proportion avec son intervalle de confiance.
@@ -629,7 +682,7 @@ code {
 
 .range__value {
   min-width: 7rem;
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
@@ -663,14 +716,14 @@ code {
 .alert {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--text-subtle);
+  border-inline-start: 3px solid var(--text-subtle);
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
 
-.alert--success { border-left-color: var(--ok); }
-.alert--warning { border-left-color: var(--warn); }
-.alert--error   { border-left-color: var(--danger); }
+.alert--success { border-inline-start-color: var(--ok); }
+.alert--warning { border-inline-start-color: var(--warn); }
+.alert--error   { border-inline-start-color: var(--danger); }
 
 /* Formulaires */
 .field {
@@ -712,6 +765,27 @@ input[type="file"] {
   color: var(--text-muted);
 }
 
+/* Case a cocher et son libelle sur une meme ligne. */
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+}
+
+.check input {
+  width: auto;
+  margin: 0;
+}
+
+/* Bloc autonome a l'interieur d'une carte : un message dans un fil. */
+.panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
 .error {
   font-size: 0.75rem;
   color: var(--danger);
@@ -725,8 +799,8 @@ input[type="file"] {
 }
 
 .timeline__item {
-  padding-left: var(--space-4);
-  border-left: 2px solid var(--border-strong);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-strong);
 }
 
 .timeline__title {
@@ -977,11 +1051,11 @@ input[type="file"] {
 .chart__table td {
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: start;
 }
 .chart__table td.num,
 .chart__table th.num {
-  text-align: right;
+  text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1043,6 +1117,10 @@ input[type="file"] {
 .muted   { color: var(--text-muted); }
 .subtle  { color: var(--text-subtle); }
 .small   { font-size: 0.75rem; }
+/* Utilisee de longue date sur les compteurs d'echecs sans avoir jamais ete
+   definie : la regle etait ecrite dans les gabarits et n'existait pas ici, si
+   bien qu'un chiffre en echec s'affichait comme un chiffre ordinaire. */
+.danger  { color: var(--danger); }
 .num     { font-variant-numeric: tabular-nums; }
 .stack   { display: flex; flex-direction: column; gap: var(--space-3); }
 .row     { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
@@ -1055,5 +1133,5 @@ input[type="file"] {
   .sidebar__nav { flex-direction: row; }
   .sidebar__section, .sidebar__footer { display: none; }
   .grid--main { grid-template-columns: 1fr; }
-  .page-head, .content { padding-left: var(--space-4); padding-right: var(--space-4); }
+  .page-head, .content { padding-inline-start: var(--space-4); padding-inline-end: var(--space-4); }
 }

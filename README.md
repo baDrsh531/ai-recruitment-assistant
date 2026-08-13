@@ -391,7 +391,7 @@ differant que par un attribut identitaire, puis on rescore.
 ```
 Attribut              Ecart moyen  Ecart max  Rangs modifies  Ratio impact
 prenom_et_nom             0.00000    0.00000         0 / 180         1.000
-localisation              0.03012    0.07900        22 / 108         0.809
+localisation              0.04542    0.13630       119 / 396         0.868
 annee_de_diplome          0.00000    0.00000         0 / 108         1.000
 etablissement             0.00000    0.00000         0 / 108         1.000
 ```
@@ -408,7 +408,7 @@ Ce que ces chiffres etablissent :
   mesurable** — ce n'est pas une intention affichee, c'est verifie a chaque
   execution sur 500 comparaisons ;
 - la **localisation est le seul levier identitaire actif**, avec un ratio de
-  0.809, juste au-dessus du seuil. C'est un critere metier legitime pour un
+  0.868, au-dessus du seuil. C'est un critere metier legitime pour un
   poste sur site, mais aussi un marqueur social. Deux attenuations sont
   prevues : l'exclure en mode aveugle, et remplacer la comparaison textuelle
   par un geocodage.
@@ -431,7 +431,7 @@ milieu et le reseau, sans rien dire de la competence.
 
 ```
 Attribut              Ratio standard  Ratio aveugle     Gain    Rangs modifies
-localisation                   0.809          1.000   +0.191          22 -> 0
+localisation                   0.868          1.000   +0.132         119 -> 0
 prenom_et_nom                  1.000          1.000   +0.000           0 -> 0
 annee_de_diplome               1.000          1.000   +0.000           0 -> 0
 etablissement                  1.000          1.000   +0.000           0 -> 0
@@ -514,17 +514,31 @@ au ratio d'impact.
 **Le resultat qui justifie le module :**
 
 ```
-ponderation                              location  skills   ratio d'impact
-defaut                                      0,100   0,450        0,809
-skills 0,45 -> 0,20, experience 0,20 -> 0,45  0,100   0,200        0,714  ← sous le seuil
+poids skills   poids location   ratio d'impact
+0,45           0,080            0,868
+0,35           0,080            0,857
+0,25           0,080            0,846
+0,20           0,080            0,846
+0,05           0,080            0,846
 ```
 
-Baisser le poids des competences fait passer le systeme **sous le seuil des
-quatre cinquiemes sans toucher au poids de la localisation**. Quand les
-competences cessent de departager les candidats, ce sont les criteres restants
-qui decident, localisation comprise. Un recruteur qui se dirait « je vais
-valoriser l'experience plutot que les competences » franchirait le seuil sans
-le savoir.
+Baisser le poids des competences **degrade le ratio d'impact sans qu'on ait
+touche au poids de la localisation**. Quand les competences cessent de
+departager les candidats, ce sont les criteres restants qui decident,
+localisation comprise. Un recruteur qui se dirait « je vais valoriser
+l'experience plutot que les competences » deplacerait le systeme dans la
+mauvaise direction sans le savoir.
+
+**Cette section affirmait autre chose, et c'etait faux.** Elle annoncait un
+ratio tombant a 0,714, **sous le seuil legal**. C'etait exact sur le jeu annote
+d'alors — sept cas — et ne l'est plus sur trente : le ratio descend a 0,846
+puis se stabilise, sans jamais franchir 0,80. L'effet spectaculaire etait un
+artefact du petit effectif.
+
+C'est le resultat le plus utile de l'etoffement du jeu : **une affirmation
+publiee, reproductible par n'importe qui, s'est revelee dependre de la taille
+de l'echantillon.** Le test qui la verrouillait a ete reecrit pour mesurer la
+degradation, qui tient, et non le franchissement, qui ne tenait pas.
 
 Rien n'est enregistre : la simulation passe par un parametre du moteur, jamais
 par une ecriture temporaire sur l'offre.
@@ -645,23 +659,32 @@ Ce choix est un jugement, pas un resultat : il est en constante, et la page
 autrement.
 
 ```
-Sur 36 profils annotes, dont 22 juges a recevoir :
+Sur 132 profils annotes, dont 69 juges a recevoir :
 
-seuil  retenus  bons  a tort  manques  precision  rappel     F2
-  50 %      28    22       6        0      0.786   1.000  0.948
-  70 %      24    22       2        0      0.917   1.000  0.982
-  85 %      22    22       0        0      1.000   1.000  1.000   <- retenu
-  90 %      17    17       0        5      1.000   0.773  0.809
- 100 %       5     5       0       17      1.000   0.227  0.269
+seuil  precision  rappel     F2  manques  retenus a tort
+  50 %     0.734   1.000  0.932        0              25
+  70 %     0.784   1.000  0.948        0              19
+  73 %     0.821   1.000  0.958        0              15   <- retenu
+  85 %     0.893   0.971  0.954        2               8
+  90 %     0.951   0.841  0.861       11               3
+ 100 %     0.929   0.188  0.224       56               1
 ```
 
-**Le resultat parfait est le point a ne pas croire.** A 85 %, le seuil separe le
-jeu annote sans une erreur — mais sur une marge d'**un seul point** (85–86 %).
-Une separation parfaite sur une marge aussi etroite en dit autant sur la
-facilite du jeu que sur la qualite du moteur. La marge est donc affichee a cote
-du seuil, et le seuil recommande est le **milieu** de l'intervalle optimal, pas
-une de ses bornes : au bord haut, un point de score perdu fait perdre un bon
-profil.
+**Ce tableau disait autre chose il y a peu, et c'etait flatteur.** Sur le jeu a
+sept cas — 36 profils — le seuil retenu etait 85 % et **separait le jeu sans une
+seule erreur** : ni bon profil manque, ni mauvais retenu. Le README avertissait
+deja qu'il ne fallait pas croire un resultat parfait obtenu sur une marge d'un
+point.
+
+L'avertissement etait justifie. Sur 132 profils, la separation parfaite
+disparait : le seuil optimal descend a **73 %**, et il retient encore **15
+profils a tort**. Le moteur n'est pas devenu moins bon — le jeu est devenu assez
+grand pour montrer ce qu'il faisait deja.
+
+La marge, elle, reste d'**un seul point** (73–74 %). Elle est donc toujours
+affichee a cote du seuil, et le seuil recommande est le **milieu** de
+l'intervalle optimal, pas une de ses bornes : au bord haut, un point de score
+perdu fait perdre un bon profil.
 
 Le classement marque cette ligne, il ne l'applique pas : tout ce qui se trouve
 dessous reste consultable et recevable.
@@ -974,7 +997,7 @@ Trois proprietes, et les deux premieres sont le seul interet de la tache :
 - **Elle ne bloque rien**, comme le module qu'elle appelle : elle constate,
   date et signale.
 
-Releve du jour sur le jeu annote : `localisation` 0.809, les trois autres
+Releve du jour sur le jeu annote : `localisation` 0.868, les trois autres
 dimensions a 1.000, aucune alerte. Le premier releve ne peut par construction
 detecter aucune derive — c'est le second passage qui commence a servir.
 
@@ -994,6 +1017,613 @@ liste exploitable : s'il ne manque que des etapes appelant le modele, c'est un
 serveur injoignable et la reprise suffira ; s'il manque le **score**, c'est un
 defaut, puisque ce calcul est local et deterministe et n'avait aucune raison
 d'echouer.
+
+### Parler aux candidats — et mesurer quand on ne leur parle pas
+
+E-mail, WhatsApp, SMS, appel : les echanges avec un candidat sont modelises,
+consentis, journalises, et **suggeres par le modele sans jamais partir seuls**.
+
+**Le consentement vient avant le message**, dans la conception comme dans
+l'ordre du code. L'e-mail et l'appel sont presumes ouverts : le candidat a
+donne ces coordonnees *pour cet usage* et attend une reponse. WhatsApp et le
+SMS arrivent sur un telephone personnel, souvent hors des heures de travail, et
+demandent un accord explicite. Un accord tranche dans les deux sens, et c'est
+le second qui compte le plus : **un retrait ferme un canal meme presume** —
+quelqu'un qui demande a ne plus etre appele doit etre entendu, meme si l'appel
+etait justifie par sa candidature. Aucun enregistrement n'ecrase le precedent :
+prouver qu'un accord existait au moment de l'envoi suppose de conserver
+l'historique.
+
+Le consentement se verifie **a l'envoi, pas a la redaction**. Bloquer la
+redaction aurait cache le probleme au lieu de le poser : le brouillon existe,
+le refus explique ce qui manque, et enregistrer l'accord debloque l'envoi sans
+reecrire le texte.
+
+**En cas d'egalite de date, le refus l'emporte.** L'horloge de Windows avance
+par paliers d'environ 15 ms, et la cle primaire est un UUID : deux
+enregistrements poses dans le meme tic ne se departagent pas. Trier sur la
+seule date rendait le resultat aleatoire — un retrait enregistre juste apres un
+accord pouvait ne pas prendre effet, et le systeme aurait ecrit a quelqu'un qui
+venait de demander le contraire. Le defaut a ete revele par un tirage de la
+suite de tests en ordre aleatoire, pas par une relecture.
+
+**Le modele de langage n'ecrit pas le message**, il personnalise un gabarit
+deja valide — meme parti que pour l'explication d'un score. La consequence
+compte plus que le principe : le pire resultat possible est le texte
+generique, jamais un courrier faux envoye a une personne reelle. Un serveur
+injoignable, une reponse tronquee, une sortie qui part en dissertation : dans
+les trois cas le recruteur garde un brouillon correct. Le modele ne voit jamais
+le CV brut, seulement une liste courte de faits deja extraits. **En screening a
+l'aveugle, rien ne fuit par ici non plus** : la formule d'appel reste neutre et
+aucun element identifiant n'est transmis.
+
+Les gabarits sont **versionnes comme les prompts**, et chaque message conserve
+la version appliquee. Ils existent en deux longueurs : coller cinq paragraphes
+d'e-mail dans un WhatsApp produit un message que personne ne lit.
+
+Le refus, lui, **ne paraphrase aucun chiffre**. Un texte redige qui « explique »
+un rejet en reformulant un score se trompe tot ou tard, et cette version-la
+sera la seule que le candidat aura lue. L'explication detaillee existe deja,
+produite par le moteur, avec ses chiffres exacts — la bonne conduite est d'y
+renvoyer. Le refus ne s'envoie ni par SMS ni par WhatsApp : c'est le seul
+message du lot qui merite d'etre lu au calme.
+
+**Trois etats de canal, parce qu'ils appellent trois conduites.**
+
+| Canal | Accord | Expediteur |
+|---|---|---|
+| E-mail | presume | **connecte** (couche courriel de Django) |
+| WhatsApp | explicite | modelise, non connecte |
+| SMS | explicite | modelise, non connecte |
+| Appel | presume | hors logiciel, se consigne |
+
+WhatsApp et le SMS demanderaient un compte WhatsApp Business avec des gabarits
+valides par Meta, et un contrat operateur. Rien de tout cela n'existe ici.
+**Ecrire un faux expediteur qui journalise « envoye » aurait donne une
+demonstration plus flatteuse et un systeme qui ment** : le jour ou les
+identifiants arrivent, personne ne saurait plus quels messages sont reellement
+partis. Ce que le projet apporte pour ces canaux, c'est tout sauf le cable.
+L'appel, lui, ne sera jamais connecte — le ranger avec WhatsApp laisserait
+croire qu'il manque du code a ecrire.
+
+Sur une demonstration publique, **tous** les canaux sont fermes, e-mail
+compris : une instance en ligne qui expedie de vrais courriers a des adresses
+saisies par des inconnus est un incident, pas une fonctionnalite.
+
+#### Ce que le premier essai a produit : « Bonjour EL, »
+
+Le nom du candidat etait « EL AMRANI Sara », et la formule d'appel prenait le
+premier mot. Le message serait parti tel quel.
+
+Le probleme est general : « EL AMRANI Sara » met le nom de famille devant,
+« Sara El Amrani » le met derriere, et rien dans la chaine ne dit lequel on
+lit. Beaucoup de systemes tranchent quand meme et se trompent sur une partie
+de leurs candidats — toujours la meme.
+
+`apps/outreach/salutation.py` **ne devine pas**. Trois signaux permettent de
+conclure : une casse mixte, ou les capitales marquent le nom de famille ; un
+nom d'un seul mot ; une casse uniforme dont le premier mot n'est pas une
+particule (`el`, `ben`, `ait`, `ould`, `van`, `de`...). Hors de ces cas, la
+fonction renvoie une chaine vide et le message commence par « Bonjour, ».
+
+Un nom entierement en capitales sur plusieurs mots — « BADR SAHRAOUI » comme
+« ALAOUI YOUSSEF » — ne porte **aucun** signal d'ordre : les deux s'ecrivent
+pareil et se lisent a l'envers l'un de l'autre. Le module renonce. Se tromper
+de prenom dans un courrier de recrutement est pire que de ne pas en mettre.
+
+#### Verifier que ca part vraiment
+
+```
+python manage.py outreach_selftest --to moi@example.com
+```
+
+Fabrique les trois messages qui comptent — invitation a un entretien, reponse
+positive, reponse negative — et les expedie. **Sans `EMAIL_HOST` dans le `.env`,
+rien ne peut partir** : la commande ecrit alors des fichiers `.eml` complets,
+ouvrables dans Gmail, Outlook ou Thunderbird. Le fichier contient le message tel
+qu'il serait recu, versions texte et HTML et marque liee comprises ; tout est
+eprouve sauf le saut SMTP.
+
+Ecrire un `.eml` plutot qu'annoncer « envoye » sans serveur suit la meme regle
+que le reste du module : on ne simule pas un envoi. La candidature d'essai est
+supprimee a la fin — une adresse reelle n'a rien a faire dans le jeu de
+demonstration une fois le controle passe.
+
+Pour envoyer pour de vrai, il suffit de renseigner `EMAIL_HOST`, `EMAIL_PORT`,
+`EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` et `DEFAULT_FROM_EMAIL`. Aucun code ne
+change : `base.py` bascule seul sur SMTP.
+
+```
+python manage.py check_email
+```
+
+Diagnostique la configuration **sans rien envoyer**, et sans jamais afficher le
+secret — quatre caracteres d'une cle sont quatre caracteres de moins a deviner.
+Chaque cause a son message et sa correction.
+
+La distinction qui compte : **525 n'est pas 535**. Le premier dit « le serveur
+a reconnu vos identifiants et refuse le compte », le second « vos identifiants
+sont faux ». Les confondre fait regenerer en boucle une cle qui etait bonne. Le
+cas s'est presente sur ce projet, sur un compte Brevo neuf en attente de
+validation.
+
+Et un piege trouve en ecrivant la commande elle-meme : sans identifiants,
+Django n'appelle pas `login()`, la connexion s'ouvre, et l'outil annoncait
+« prete » alors que rien n'avait ete verifie. **Un controle qui reussit a vide
+est pire qu'absent** — il refuse desormais.
+
+**Un defaut trouve en relisant les en-tetes produits.** L'objet de la reponse
+positive arrivait precede d'une espace. Cause : un objet contenant un seul
+caractere hors ASCII est encode selon la RFC 2047, et s'il est un peu long il
+est replie sur deux lignes — `Subject:` reste vide et certains clients affichent
+l'espace. Mesure : un objet ASCII de 84 caracteres ne se replie pas, un objet
+non-ASCII de 61 caracteres se replie. Le tiret cadratin des objets est devenu
+deux-points, et un test refuse desormais tout objet non-ASCII.
+
+#### Le silence
+
+La plainte la plus repandue sur le recrutement n'est pas le refus, c'est
+l'absence de reponse. Outiller l'envoi de messages sans mesurer ceux qu'on
+n'envoie pas outillerait surtout le confort du recruteur.
+
+```
+python manage.py outreach_report --strict   # sort en erreur s'il reste un oubli
+```
+
+Deux silences distincts, et les confondre perdrait le plus grave. **Apres une
+decision** : le dossier est ecarte, le motif est ecrit, et personne n'a prevenu
+l'interesse — l'information existe et n'est pas transmise. **Avant toute
+decision** : un dossier ouvert depuis plus de 21 jours sans un seul message, ou
+le candidat ignore meme que sa candidature est arrivee. Le seuil vient du delai
+que les gabarits annoncent eux-memes : promettre une reponse sous quinze jours
+et se taire vingt-et-un jours est un manquement a sa propre promesse.
+
+Un appel consigne compte comme une reponse au meme titre qu'un e-mail expedie —
+la question est « cette personne a-t-elle eu une reponse », pas « le logiciel
+a-t-il expedie quelque chose ». Un message envoye **avant** la decision ne
+compte pas : un accuse de reception ne previent pas d'un rejet decide ensuite.
+
+Releve sur le jeu de demonstration : 1 candidat ecarte sur 2 jamais prevenu
+(50 %), delai median de notification 4,9 jours. La liste nomme les dossiers,
+du plus ancien au plus recent — un taux sans la liste ne se traite pas.
+
+Un message envoye ne se modifie plus : corriger apres coup le texte d'un
+courrier qu'une personne a deja lu transformerait le journal en fiction.
+
+### Une marque, trois sorties
+
+L'ecran, le PDF et le courriel puisent au **meme fichier** — `static/img/mark.svg` —
+via `apps/core/brand.py`. Une identite recopiee a la main dans chaque gabarit
+derive : l'ecran finit par dire une chose, le PDF une autre.
+
+**Le concept vient d'un logo fourni** : deux documents, un CV et une offre,
+relies. Deux choses ont change, et les deux viennent de l'avoir regarde aux
+tailles reelles plutot qu'a 1400 px.
+
+Les mots « CV » et « Offre » ont disparu. Lisibles en grand, ils formaient une
+bouillie a 16 px — la taille a laquelle une favicon passe le plus clair de son
+temps. Et les deux pages, d'abord posees cote a cote avec un connecteur entre
+elles, se lisaient comme des **crochets** : le connecteur mangeait leurs bords
+interieurs. En les faisant se recouvrir, la marque devient une silhouette
+franche a 16 px — et dit quelque chose de juste, puisque l'intersection entre un
+CV et une offre est exactement ce que le moteur calcule.
+
+L'encre suit `currentColor` : un seul fichier sert sur fond clair et sur la
+barre laterale sombre, sans variante a garder d'accord. Le SVG porte sa propre
+regle `prefers-color-scheme`, pour rester lisible sur un onglet sombre.
+
+**Les PNG ne sont pas stockes, ils sont rendus** depuis le SVG a la demande et
+gardes en memoire. Ranger des PNG a cote du SVG aurait cree autant d'occasions
+de les laisser diverger.
+
+#### Ce que le courriel impose
+
+Trois contraintes, et elles expliquent toute la mise en page :
+
+- **Gmail et Outlook retirent les SVG.** La marque part en PNG.
+- **Les images distantes sont bloquees par defaut**, et trahissent l'ouverture
+  du message. La marque voyage donc en piece jointe liee (`cid:`), sans aucune
+  requete sortante — verifie par un test qui refuse tout `http://` dans le HTML.
+- **Les blocs `<style>` sont retires**, et le rendu d'Outlook n'honore que les
+  tableaux. D'ou les styles en ligne et la disposition en tableau, bornee a
+  600 px.
+
+Le texte reste la **version de reference** : c'est lui qui est enregistre, relu
+et journalise. Le HTML n'en est qu'une presentation, construite mecaniquement a
+partir du meme corps — un test verifie qu'aucun mot du texte ne manque au HTML.
+
+Un defaut trouve en regardant le rendu : les gabarits sont replies autour de 75
+caracteres, pour un courriel texte. Transformer chacun de ces retours en `<br>`
+figeait la coupure, et le lecteur voyait « Votre profil a retenu notre
+attention » puis, a la ligne, « pour le poste de Data Engineer », quelle que
+soit la largeur de son ecran. Les paragraphes se recomposent maintenant — mais
+la signature garde ses retours. Le depart se fait sur la longueur de la ligne
+precedente, comme le `format=flowed` du courrier electronique : une ligne pleine
+a ete repliee, une ligne courte a ete voulue courte.
+
+#### Dans les PDF
+
+Bandeau en tete de la premiere page — marque, nom, filet — et **marque en pied
+de chaque page**, pas seulement de la premiere : une page de rapport se
+photocopie, se transfere et s'imprime seule, et doit dire d'ou elle vient sans
+le reste du document. Les trois documents en beneficient : rapport d'evaluation,
+dossier de candidature, explication destinee au candidat.
+
+### Rejouer les decisions passees
+
+Le projet affirme partout que le score est **deterministe et reproductible**.
+Cette page cesse de l'affirmer : elle reprend les dossiers reellement tranches,
+les recalcule avec le moteur d'aujourd'hui, et compare.
+
+```
+python manage.py replay_decisions --strict   # echoue si un score a bouge
+                                             # a version de moteur egale
+```
+
+C'est le seul controle du projet qui eprouve la reproductibilite sur des
+**decisions reelles** plutot que sur un jeu annote.
+
+**La difficulte n'est pas de recalculer, elle est d'attribuer l'ecart.** Un
+score qui change six mois plus tard peut venir de deux causes sans rapport : le
+moteur a change de version — ce qu'on mesure — ou les donnees ont change, CV
+re-extrait, competence corrigee, ponderation revue. Dans ce second cas le
+moteur est innocent et le rejeu ne prouve rien. Chaque dossier porte donc la
+mention `concluant`, et le rapport ne compte comme divergence que ce qui l'est.
+
+Trois decisions de conception, toutes destinees a ne pas mesurer autre chose
+que ce qu'on annonce :
+
+- **On compare moteur a moteur.** Si un recruteur avait corrige le score a la
+  main, confronter ce chiffre humain au chiffre recalcule ferait apparaitre
+  tout dossier corrige comme une divergence du moteur.
+- **On retient le dernier score calcule AVANT la decision**, pas le plus
+  recent : rejouer contre un score posterieur comparerait le moteur a lui-meme.
+- **Une divergence a version egale est un defaut, entre deux versions une
+  evolution.** `reproductible` ne porte que sur la premiere — c'est
+  l'affirmation exacte que le projet fait.
+
+Ce qui interesse un auditeur n'est d'ailleurs pas l'ecart de score mais son
+effet : **la decision aurait-elle bascule ?** Un dossier qui passe de 0,91 a
+0,90 n'a rien change ; un dossier qui passe de 0,86 a 0,84 sous un seuil a 0,85
+a tout change.
+
+Releve sur le jeu de demonstration : 2 decisions rejouables, 1 identique au
+chiffre pres, 1 ecart de 4 points imputable au passage du moteur 1.1.0 a 1.2.0,
+qui aurait fait basculer le dossier. **Aucun ecart a version egale.**
+
+La tolerance est de 0,05 point : le moteur additionne des flottants, et deux
+executions peuvent differer sur le dernier bit sans que rien n'ait change. Elle
+reste tres en dessous de ce qui ferait basculer une decision, et un test le
+verifie.
+
+### Le journal d'audit, enfin consultable
+
+Le modele existait depuis l'origine — immuable, complet, alimente par chaque
+action — et **aucune page ne l'affichait**. Pour un systeme classe a haut
+risque, « montrez-moi tout ce qui est arrive a ce candidat » est la premiere
+demande d'un auditeur comme d'un candidat exercant son droit d'acces. Un
+journal qu'on ne peut pas lire ne prouve rien.
+
+Filtrable par action, par auteur, par objet, par texte — et par **origine** :
+machine ou humain. C'est la distinction qu'un auditeur cherche a etablir en
+premier, et celle sur laquelle repose l'exigence de supervision humaine de
+l'AI Act. Cliquer sur le type d'un objet ramene tout ce qui lui est arrive :
+depot, extraction, scores, consultations, decisions, messages, purge.
+
+Un piege trouve en testant ce filtre : `exclude(metadata__agent=True)` ne rend
+pas « les entrees humaines ». Sur une entree ou la cle est absente, la
+comparaison vaut `NULL`, sa negation vaut `NULL`, et la ligne disparait — le
+filtre « humain seul » ne renvoyait **rien**, c'est-a-dire l'inverse de ce
+qu'il annonce.
+
+### Ce que le modele fait varier, et ce qu'il ne touche jamais
+
+L'argument central du projet tient en une phrase : le modele de langage
+n'attribue aucune note, il commente un chiffre deja calcule. Tant qu'elle reste
+une phrase, elle vaut ce que vaut une phrase.
+
+```
+python manage.py measure_variance --tirages 3
+```
+
+Trois analyses du **meme** score, contre le serveur d'inference reel :
+
+| | Resultat |
+|---|---|
+| Score | **0,8535 sur les trois tirages** |
+| Vocabulaire commun entre deux tirages | 0,404 — **60 % des mots changent** |
+| Longueurs | 290, 387, 361 mots |
+| Amplitude | 97 mots |
+
+Le score ne peut pas bouger : il n'est pas recalcule, il est passe en entree au
+modele, qui ne peut que le mettre en mots. C'est une propriete **structurelle**,
+pas statistique — la mesure ne la decouvre pas, elle la donne a voir.
+
+La mesure qui apprend vraiment quelque chose est ailleurs : **le modele
+invente-t-il des chiffres ?** Une analyse qui ecrirait « 72 % sur les
+competences » quand le moteur a calcule 68 % donnerait au recruteur un chiffre
+faux avec l'autorite d'un chiffre calcule. Tous les pourcentages du texte sont
+donc releves et confrontes au detail du score.
+
+**Et voici le resultat honnete : sur les trois tirages, le modele n'a cite aucun
+pourcentage.** Le controle passe donc sans avoir ete eprouve — un controle qui
+ne se declenche jamais ne prouve rien. Ce sont les tests unitaires, sur des
+textes fabriques pour l'occasion, qui verifient qu'il attrape bien un chiffre
+absent du score.
+
+Le recouvrement de vocabulaire n'est pas une mesure de sens : deux textes
+peuvent dire la meme chose avec d'autres mots, et la mesure les dira differents.
+Il repond a « le modele repete-t-il sa copie ou reformule-t-il », pas a « le
+texte est-il bon ».
+
+La page ne mesure **jamais au chargement**, seulement sur un bouton : chaque
+tirage appelle le modele. Une page qui mesurerait a chaque visite serait une
+facture qui court toute seule.
+
+### CV distincts au contenu commun
+
+A ne pas confondre avec « Doublons », qui cherche une meme personne sous deux
+dossiers. Ici les candidats sont **differents** et le texte se ressemble : un CV
+recopie, un modele partage dans une promotion, une agence qui reformate le meme
+profil pour deux clients.
+
+```
+python manage.py check_plagiarism
+```
+
+Le fichier strictement identique est deja traite ailleurs — l'empreinte du
+contenu est unique. Reste le cas difficile : deux fichiers differents dont le
+texte se recouvre.
+
+**Le tout-venant fausse tout.** « Experience professionnelle », « Langues :
+francais, anglais », « Permis B » se retrouvent dans un CV sur deux ; une mesure
+naive rapproche tout le monde de tout le monde. Deux garde-fous :
+
+- des empreintes de **huit mots consecutifs**, qui ne se retrouvent identiques
+  que si deux textes partagent une phrase entiere — un fait, pas un hasard ;
+- le **retrait des empreintes presentes dans plus de 30 % du corpus**, soit
+  l'equivalent, au niveau de la phrase, de ce qu'un mot vide est au niveau du
+  mot.
+
+Le seuil de signalement est volontairement haut : ici un faux positif porte une
+accusation, un faux negatif ne fait rien perdre.
+
+**Le module n'accuse personne.** Un fort recouvrement peut venir d'une copie
+comme d'un modele d'ecole partage entre camarades de promotion. Il produit une
+liste a regarder ; un humain tranche.
+
+La comparaison est quadratique : instantanee sous quelques milliers de CV, elle
+demanderait un pre-filtrage par empreintes minimales au-dela. La limite est
+connue et n'est pas franchie ici.
+
+**Une fuite trouvee en ecrivant cette page.** Le screening a l'aveugle masquait
+les noms, et la page affichait juste en dessous `Alice Martin.pdf` — un CV
+s'appelle presque toujours du nom de son auteur. La page « CV deposes » faisait
+pire : elle affichait le nom **et** le fichier sans tenir aucun compte du mode
+aveugle. L'attenuation du biais etait annulee par une liste de depots, page en
+apparence anodine.
+
+### L'interface en arabe, de droite a gauche
+
+L'application savait deja **lire** les CV en arabe — normalisation, formes de
+presentation, ordre logique, rapprochement de noms — mais son interface ne le
+parlait pas. Ce n'est pas une affaire de mots : l'ecriture va de droite a
+gauche, et c'est la **mise en page** qui change.
+
+```
+python manage.py compile_messages
+```
+
+**Pas de gettext.** `django-admin compilemessages` appelle `msgfmt`, un binaire
+de la suite GNU gettext, absent d'une machine Windows ordinaire. Demander une
+chaine d'outils C pour afficher une interface en arabe serait disproportionne :
+le format `.mo` tient en quelques dizaines de lignes — un en-tete, deux tables
+de decalages, les chaines a la suite — et il est ecrit ici en Python pur. Meme
+parti que le BM25 ecrit a la main ou les PDF produits par PyMuPDF.
+
+Le controle qui compte n'est pas que notre lecteur relise notre ecriture, mais
+que **le `gettext` de Python** lise ce qu'on a ecrit : un test le verifie.
+
+L'analyseur `.po` est volontairement etroit — ni pluriel, ni contexte, absents
+des catalogues du projet — et il **leve une erreur** sur ce qu'il ne sait pas
+faire, plutot que de l'avaler en silence.
+
+#### Le retournement
+
+Vingt-six declarations directionnelles sur 1096 lignes de CSS : le systeme etait
+deja bati sur flex et grid. Elles sont passees en proprietes logiques —
+`padding-inline-start`, `border-inline-end`, `text-align: start`. Un test
+echoue si une propriete physique revient : elle placerait l'element du mauvais
+cote, **en silence**.
+
+Deux cas ne se convertissent pas mecaniquement, et ce sont les interessants.
+
+`box-shadow` n'a pas de variante logique : le lisere de l'entree active resterait
+a gauche. C'est la seule regle du fichier qui demande une inversion explicite.
+
+Et surtout : **les echelles de mesure ne suivent pas le sens de lecture.** Une
+jauge, un intervalle de confiance, un axe de graphique portent une grandeur de 0
+a 100 % ecrite en chiffres occidentaux. Les retourner ferait voir les memes
+donnees en miroir a deux lecteurs de la meme page, et ce sont les donnees qui
+seraient mal lues. Le texte autour suit la langue ; la geometrie qui porte un
+nombre reste stable.
+
+Un defaut vu **sur une capture d'ecran**, pas devine : un paragraphe francais
+pose dans une page arabe herite de la direction de la page, et sa ponctuation
+part en tete — « Vue d'ensemble du pipeline. » s'affiche « .Vue d'ensemble du
+pipeline ». Il se voit sur toute page dont le contenu n'est pas encore traduit,
+c'est-a-dire la plupart.
+
+`unicode-bidi: plaintext` fait ce que fait `dir="auto"`, mais depuis la feuille
+de style : la direction se deduit du premier caractere fort de chaque bloc, sans
+toucher a un seul gabarit. Le francais se lit de gauche a droite avec sa
+ponctuation en place, l'arabe de droite a gauche, sur la meme page.
+
+#### Ce qui est traduit, et ce qui ne l'est pas
+
+La **coquille** de l'application : navigation, en-tetes, actions communes — 25
+chaines. Le contenu des pages reste en francais.
+
+C'est un choix, pas un oubli. Traduire quelques centaines de chaines a moitie
+donnerait une interface bilingue par accident, qui se lit plus mal qu'une
+interface monolingue. La mecanique est complete et eprouvee ; y ajouter des
+chaines ne demande que de les marquer et de les traduire.
+
+### Ce que le jeu etoffe a revele
+
+Le jeu annote est passe de **7 a 30 cas**, de 31 a **132 candidats**. Les
+nouveaux cas visent ce que les sept premiers ne touchaient pas : sens des
+implications de l'ontologie, fraicheur d'une competence, recevabilite
+multiplicative, renormalisation des poids, paliers de langue, teletravail,
+certifications, cas limites.
+
+**La regle d'annotation est la seule qui compte : la pertinence est jugee du
+point de vue d'un recruteur, jamais alignee sur ce que produit le moteur.**
+Annoter d'apres la sortie rendrait la mesure circulaire — elle ne mesurerait
+plus que sa propre coherence. Consequence assumee : certains cas font baisser
+les moyennes, et c'est le but.
+
+| | 7 cas | 30 cas |
+|---|---|---|
+| nDCG@5 | 0,997 | **0,995** |
+| P@3 | 1,000 | **0,989** |
+| Paires | 0,984 | **0,980** |
+| Spearman | 0,937 | **0,939** |
+
+Quatre cas mettent le moteur en defaut, et chacun dit quelque chose de precis.
+
+**Le score sature.** Sur un vivier de dix profils, deux candidats differents
+atteignent tous deux 1,000 — un expert de dix ans et un confirme de cinq ans,
+tous deux complets. Au plafond, le moteur ne distingue plus rien et l'ordre y
+devient arbitraire. C'est le defaut le plus structurel des quatre, et il ne se
+voyait pas sur des cas a cinq candidats.
+
+**En hybride, la localisation pese trop.** Un profil local de deux ans passe
+devant un profil eloigne de douze ans (0,931 contre 0,915). Un recruteur ferait
+l'inverse : l'hybride existe justement pour elargir le vivier.
+
+**Le diplome departage encore au-dela de l'exigence.** L'offre demande une
+licence ; un doctorat avec un an de PHP (0,880) passe devant un profil sans
+diplome avec huit ans de PHP (0,867). Le recruteur classe l'inverse.
+
+**L'anciennete totale prime sur l'anciennete utile.** Deja visible sur
+`arbitrage_competences_anciennete`, confirme par `reconversion_recente` et
+`surqualification` : le moteur n'a aucune notion de surqualification, et compte
+dix ans hors sujet comme dix ans.
+
+Ces quatre ecarts **ne sont pas corriges**. Les combler demanderait de retoucher
+la ponderation, et la retoucher pour coller a des annotations que j'ai moi-meme
+posees reviendrait a se noter soi-meme. Le simulateur de ponderation existe pour
+qu'un recruteur arbitre ; ces cas lui donnent de quoi mesurer l'effet de son
+arbitrage.
+
+#### Le score sature, et voici de combien
+
+```
+python manage.py measure_saturation
+```
+
+Le moteur ramene chaque critere dans [0, 1] : un profil qui satisfait toutes les
+exigences atteint 1,0, et **plusieurs profils differents peuvent y arriver
+ensemble**. Au plafond, l'ordre ne vient plus du score.
+
+| | |
+|---|---|
+| Candidats au plafond | **38 sur 132 — 28,8 %** |
+| Cas avec au moins deux profils a egalite | 11 sur 30 |
+| Cas ou l'egalite **confond** des profils que l'annotation separe | **4** |
+| Apparait des | **4 candidats** dans un meme vivier |
+
+La distinction qui compte : deux profils que l'annotation tient pour equivalents
+peuvent etre a egalite sans que rien ne soit perdu. Ce qui coute, c'est
+l'egalite qui **efface une difference reelle**. Le pire cas est
+`surqualification`, ou trois profils de pertinence 3, 2 et 1 atteignent tous
+1,000 : le moteur ne distingue pas un profil ajuste d'un surqualifie.
+
+**J'ai d'abord ecrit que ce defaut ne se voyait pas sur des cas a cinq
+candidats. C'est faux.** La mesure le trouve des quatre profils : il etait deja
+present sur les sept cas d'origine, il n'y etait simplement pas cherche. Ce
+qu'on ne compte pas, on ne le voit pas.
+
+**Rien n'est corrige.** Etaler le haut de l'echelle ou revoir la ponderation est
+un arbitrage produit — un recruteur peut vouloir qu'un profil parfait soit
+parfait. La commande chiffre l'ampleur pour que cet arbitrage se prenne sur des
+mesures.
+
+#### Faire annoter par quelqu'un d'autre
+
+```
+python manage.py annotate --export annotation.csv
+python manage.py annotate --comparer annotation-remplie.csv
+```
+
+La limite la plus serieuse de ces jeux n'est pas leur taille, c'est qu'**une
+seule personne les a ecrits**. Cette commande ne fait pas apparaitre une
+seconde ; elle enleve ce qui l'empechait d'exister. Jusqu'ici, meme un
+recruteur volontaire n'aurait rien eu a annoter : les cas vivent dans un JSON
+de deux mille lignes melant offres, candidats et notes deja posees.
+
+L'export produit un tableur de 132 lignes — une par candidat, avec ce que
+l'offre exige et ce que le profil apporte — et **la colonne de pertinence
+vide**. Les notes existantes n'y figurent jamais : les montrer ferait du second
+annotateur un relecteur du premier, et l'accord mesure ne vaudrait plus rien.
+
+Au retour, la commande calcule un **kappa de Cohen categoriel** et nomme les
+profils ou les deux divergent.
+
+Trois refus, et ce sont eux qui donnent sa valeur au chiffre :
+
+- **une note illisible arrete la comparaison** au lieu d'etre avalee ;
+- **un kappa sur moins de trente profils n'est pas publie** — un seul desaccord
+  le ferait bouger de 0,2 a 0,8 ;
+- **un annotateur qui met la meme note partout rend le kappa indefini**, et la
+  commande le dit plutot que de rendre 0,0, qui se lirait « aucun accord ».
+
+Une fonction distincte etait necessaire : `agreement.cohen_kappa` est **binaire**
+— retenu ou ecarte — et calcule ses proportions par `sum(a) / total`. Sur des
+entiers de 0 a 3, cette somme additionne les **valeurs** : la proportion depasse
+1 et le resultat perd tout sens. La reutiliser aurait donne un chiffre faux sans
+rien signaler ; un test l'atteste.
+
+#### Qui a annote
+
+Chaque jeu porte desormais sa provenance :
+
+```json
+"provenance": {
+  "annotateurs": 1,
+  "annote_par": ["Badr Sahraoui"],
+  "accord_inter_annotateur": null,
+  "note": "Annote par une seule personne. ..."
+}
+```
+
+Une verite terrain est l'opinion de qui l'a ecrite. Tant que le jeu ne disait ni
+qui avait annote ni combien de personnes, il se presentait comme un fait alors
+qu'il est un jugement. Ce n'est pas un second annotateur — c'est la mention
+honnete qu'il n'y en a qu'un, et un test echoue si un jeu declare plusieurs
+annotateurs sans publier leur accord.
+
+Le projet mesure par ailleurs un kappa de Cohen de **0,25** entre deux
+evaluateurs sur des dossiers reels. Il n'y a aucune raison de croire que ces
+annotations-ci echapperaient a cet ecart.
+
+#### Un defaut trouve dans la mesure, pas dans le moteur
+
+Spearman est **indefini** quand un classement n'a aucune variance — quatre
+pertinences egales, ou quatre scores identiques. La fonction renvoyait `0.0`,
+qui se lit « aucune correlation », et cette valeur entrait dans la moyenne. Le
+moteur etait donc penalise sur des cas ou il n'avait rien fait de mal.
+
+Corrige : une metrique indefinie est **ecartee de sa moyenne** et s'affiche
+« sans objet », jamais zero. L'effet est mesurable — Spearman passe de 0,874 a
+0,939 sur le meme jeu, sans qu'une ligne du moteur ait change.
+
+Le defaut est apparu en ajoutant un cas ou quatre profils identiques a
+l'identite pres devaient obtenir le meme score. Ce cas a d'ailleurs ete
+**retire** ensuite : un jeu de classement ne peut pas exprimer « ces scores
+doivent etre egaux », et son nDCG y valait 1,000 sans rien mesurer. La propriete
+se verifie directement, par un test d'egalite — plus simple et plus fort.
 
 ### Mettre la demonstration en ligne
 
@@ -1046,8 +1676,32 @@ ok  /api/                  403      refus explicite, pas une redirection
 ```powershell
 pytest              # suite complete
 pytest -m "not llm" # sans les tests necessitant le serveur d'inference
+pytest --cov=apps   # couverture
 ruff check .
 ```
+
+**Un angle mort trouve en mesurant la couverture : les commandes de gestion
+etaient toutes a 0 %.** Pres de la moitie du code non couvert tenait la —
+`seed_demo`, `score_all`, `score_offer`, `purge_expired`, `check_ai`, et les
+taches Celery.
+
+Ce n'est pas anodin sur ce projet : le README presente ces commandes comme le
+moyen de reproduire chaque mesure. Une commande cassee cassait donc les
+instructions du README **en silence**, et le premier a s'en apercevoir aurait
+ete celui qui clone le depot.
+
+Elles ont maintenant des tests de fumee — la commande tourne sur des donnees
+reelles et produit ce qu'elle annonce. `score_all` et les taches passent de 0 a
+100 %, `purge_expired` a 97 %, `seed_demo` a 94 %.
+
+`mock_inference` et `probe_semantic` ont suivi : la premiere se teste en la
+demarrant sur un port et en l'interrogeant vraiment, la seconde sur son chemin
+par defaut — celui ou la couche d'embeddings est desactivee. Elles passent de
+0 a **100 %** et **98 %**.
+
+Les commandes lourdes — `evaluate`, `audit_bias` — restent hors de la suite :
+la CI les lance a chaque poussee, les doubler localement couterait plusieurs
+minutes pour rien.
 
 ---
 
@@ -1064,8 +1718,11 @@ Tout passe par le `.env` (voir `.env.example`).
 | `EMBEDDING_PROVIDER` | `local` (fastembed ONNX) ou `server` (`/v1/embeddings`) |
 | `AGENT_ENABLED` | interrupteur de l'agent d'orchestration, coupe par defaut |
 | `AGENT_DAILY_TOKEN_BUDGET` | plafond glissant sur 24 h, mesure sur les appels passes |
+| `OUTREACH_ORGANISATION` | nom qui signe les messages aux candidats |
+| `OUTREACH_RESPONSE_DAYS` | delai de reponse annonce — et mesure ensuite |
 | `DATA_RETENTION_DAYS` | duree de conservation des donnees candidat (RGPD) |
 | `BLIND_SCREENING_DEFAULT` | masquage des attributs identitaires par defaut |
+| `LANGUAGES` | francais et arabe ; la bascule est dans la barre laterale |
 
 Le projet tourne **sans Docker, sans PostgreSQL et sans Redis** en
 developpement. Ces composants ne deviennent necessaires qu'en production.
@@ -1086,6 +1743,7 @@ apps/
   matching/        ontologie de competences, moteur de score, classement
   evaluation/      metriques, jeux annotes, harnais de non-regression
   agent/           orchestration : prepare un dossier, propose, ne decide pas
+  outreach/        echanges avec les candidats : consentement, gabarits, silence
 templates/         interface — composants partages dans partials/
 static/css/        systeme de design, sans dependance externe
 tests/             suite pytest
@@ -1112,6 +1770,18 @@ tests/             suite pytest
 | `apps/agent/budget.py` | plafond de tokens mesure sur les appels reels, pas estime |
 | `apps/agent/adoption.py` | taux de contradiction et intervalle de Wilson : la mesure qui separe une supervision reelle d'un tampon |
 | `apps/agent/watch.py` | veille sans token, qui tourne meme quand l'agent est coupe |
+| `apps/outreach/silence.py` | ce qu'on n'a pas dit aux candidats — la mesure qui manque a la plupart des ATS |
+| `apps/outreach/salutation.py` | par quel prenom appeler quelqu'un, ou renoncer plutot que de se tromper |
+| `apps/outreach/backends.py` | quels canaux partent vraiment, et lesquels le disent au lieu de le simuler |
+| `apps/core/brand.py` | la marque, source unique de l'ecran, du PDF et du courriel |
+| `apps/evaluation/replay.py` | rejeu des decisions reelles — et l'attribution d'un ecart, qui est le vrai sujet |
+| `apps/evaluation/saturation.py` | ce que le score ne distingue plus, et la difference entre une egalite juste et une confusion |
+| `apps/evaluation/annotation.py` | faire annoter par quelqu'un d'autre — et les trois refus qui donnent sa valeur au kappa |
+| `apps/evaluation/variance.py` | le modele invente-t-il un chiffre ? la seule faute grave qu'il puisse commettre ici |
+| `apps/candidates/plagiarism.py` | CV distincts au contenu commun, et le retrait du tout-venant qui rend la mesure lisible |
+| `apps/core/management/commands/compile_messages.py` | le format `.mo` ecrit en Python pur, pour ne pas dependre de gettext |
+| `locale/ar/LC_MESSAGES/django.po` | l'interface en arabe, et la portee assumee de la traduction |
+| `static/img/mark.svg` | le dessin, et pourquoi il ne porte plus de texte |
 | `apps/evaluation/harness.py` | reconstruit les cas annotes, mesure, puis annule tout |
 | `apps/evaluation/bias.py` | audit par contrefactuels, ratio d'impact, proprietes verifiees |
 | `apps/evaluation/cv_factory.py` | genere des CV dont la verite terrain est connue par construction |
@@ -1157,19 +1827,31 @@ tests/             suite pytest
 - [x] Agent d'orchestration : prepare un dossier, propose, sans le droit de decider
 - [x] Taux de contradiction avec intervalle de Wilson : mesurer la supervision, pas la supposer
 - [x] Veille de biais sans token, qui survit a la coupure de l'agent
+- [x] Echanges avec les candidats : consentement par canal, gabarits versionnes, suggestion IA
+- [x] Mesure du silence : les candidats ecartes que personne n'a prevenus
+- [x] Identite visuelle unique : ecran, PDF et courriel rendus depuis un seul SVG
+- [x] Rejeu des decisions passees : la reproductibilite verifiee, plus seulement affirmee
+- [x] Journal d'audit consultable et filtrable, machine separee de l'humain
+- [x] Variance du modele mesuree : le score ne bouge pas, la redaction si
+- [x] CV distincts au contenu commun, tout-venant retire, sans accusation
+- [x] Interface en arabe, de droite a gauche, sans dependre de gettext
+- [x] Jeu annote porte a trente cas, deux affirmations publiees invalidees et corrigees
+- [x] Saturation du score mesuree, provenance des annotations inscrite dans les jeux
+- [x] Second annotateur outille : export a remplir, kappa categoriel au retour
 
 ---
 
 ## Limites assumees
 
-- Le jeu d'evaluation obtient des scores tres eleves sur cinq de ses sept cas.
-  Les deux cas difficiles (`arbitrage_competences_anciennete`,
-  `profils_proches`) ont ete ajoutes pour cette raison, et l'un des deux met
-  effectivement le moteur en defaut. Etoffer le jeu reste le principal levier
-  d'amelioration.
+- Le jeu d'evaluation compte **trente cas et 132 candidats**, contre sept a
+  l'origine. Il met desormais le moteur en defaut sur quatre d'entre eux — voir
+  « Ce que le jeu etoffe a revele ». Il reste petit pour une mesure statistique,
+  et les annotations sont celles d'une seule personne : deux recruteurs
+  differents ne classeraient pas ces profils a l'identique, et le kappa mesure
+  ailleurs dans ce projet montre precisement cet ecart.
 - Le rapprochement des localisations est une comparaison textuelle. Un
   geocodage (distance reelle, temps de trajet) serait plus juste — et
-  reduirait sans doute le ratio d'impact de 0.809 mesure sur ce critere.
+  reduirait sans doute le ratio d'impact de 0.868 mesure sur ce critere.
 - L'audit ne couvre que le moteur deterministe. L'extraction du CV et la
   redaction de l'analyse, toutes deux confiees a un modele de langage, ne sont
   pas auditees : les mesurer demanderait un serveur d'inference en CI.
@@ -1191,6 +1873,32 @@ tests/             suite pytest
   chiffres affiches en demonstration proviennent d'un historique **genere**,
   pas d'un usage reel. La mesure est eprouvee, la valeur ne l'est pas : elle
   dira quelque chose sur un vrai service, pas ici.
+- Deux canaux sur quatre ne sont pas connectes. WhatsApp et le SMS sont
+  modelises, consentis, journalises et redigeables, sans fournisseur derriere.
+  Le modele de donnees et l'interface d'expedition sont ecrits ; y brancher un
+  fournisseur est l'affaire d'une classe. Tant que ce n'est pas fait, ces
+  canaux ne sont pas une fonctionnalite livree.
+- Les objets de courriel ecrits par le projet sont en ASCII, ce qui evite le
+  repliement RFC 2047 et l'espace parasite qu'il laisse en tete du titre. Mais
+  l'**intitule du poste** est injecte dedans, et ce module ne le choisit pas :
+  une offre dont le nom porte un accent, dans un objet long, reproduira le
+  defaut. Django refuse un en-tete pre-encode multi-lignes — son garde-fou
+  contre l'injection — ce qui ferme la correction generale sans reecrire
+  l'assemblage du message.
+- **Le score sature** : 28,8 % des candidats du jeu annote atteignent le
+  plafond, et quatre cas confondent des profils que l'annotation separe. Le
+  moteur ne distingue alors plus rien, et l'ordre entre eux ne vient pas de
+  lui. Ce n'est pas corrige : etaler le haut de l'echelle est un arbitrage
+  produit, pas un defaut a reparer seul.
+- Le taux de silence se calcule sur les messages que **ce** systeme connait. Un
+  recruteur qui repond depuis sa boite personnelle sans rien consigner
+  apparaitra comme silencieux. La mesure sous-estime donc les reponses et
+  surestime le silence — c'est le sens d'erreur le moins dangereux des deux,
+  mais c'en est un.
+- La formule d'appel renonce a nommer les candidats dont le nom est
+  entierement en capitales, ce qui est frequent en tete de CV. Ces personnes
+  recoivent « Bonjour, » plutot que leur prenom. C'est un choix : l'alternative
+  etait de tirer a pile ou face sur l'ordre du nom.
 - Le taux de contradiction ne distingue pas un recruteur qui contredit apres
   avoir lu d'un recruteur qui contredit par principe. Le delai median de
   decision est affiche a cote, mais il est domine par le moment ou le

@@ -1,0 +1,92 @@
+# Interface en arabe.
+#
+# Catalogue tenu a la main : `xgettext` n'est pas installe sur les machines de
+# developpement du projet, et `python manage.py compile_messages` compile ce
+# fichier en Python pur (voir apps/core/management/commands/compile_messages.py).
+#
+# Portee assumee : la coquille de l'application — navigation, en-tetes,
+# actions communes. Le contenu des pages reste en francais, et le README le
+# dit. Traduire quelques centaines de chaines a moitie donnerait une interface
+# bilingue par accident, ce qui se lit plus mal qu'une interface monolingue.
+msgid ""
+msgstr ""
+"Project-Id-Version: recrutement-ia\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Assistant IA de recrutement"
+msgstr "مساعد التوظيف بالذكاء الاصطناعي"
+
+msgid "Tableau de bord"
+msgstr "لوحة القيادة"
+
+msgid "Recrutement"
+msgstr "التوظيف"
+
+msgid "Offres d'emploi"
+msgstr "عروض العمل"
+
+msgid "Candidats"
+msgstr "المترشحون"
+
+msgid "Doublons"
+msgstr "الملفات المكررة"
+
+msgid "CV similaires"
+msgstr "سير ذاتية متشابهة"
+
+msgid "Echanges"
+msgstr "المراسلات"
+
+msgid "Documents"
+msgstr "الوثائق"
+
+msgid "Deposer un CV"
+msgstr "إيداع سيرة ذاتية"
+
+msgid "CV deposes"
+msgstr "السير الذاتية المودعة"
+
+msgid "Systeme"
+msgstr "النظام"
+
+msgid "Appels modele"
+msgstr "استدعاءات النموذج"
+
+msgid "Transparence"
+msgstr "الشفافية"
+
+msgid "Seuil de tri"
+msgstr "عتبة الفرز"
+
+msgid "Accord recruteurs"
+msgstr "توافق المسؤولين عن التوظيف"
+
+msgid "Rejeu des decisions"
+msgstr "إعادة تشغيل القرارات"
+
+msgid "Variance du modele"
+msgstr "تباين النموذج"
+
+msgid "Journal d'audit"
+msgstr "سجل التدقيق"
+
+msgid "Agent"
+msgstr "الوكيل"
+
+msgid "Administration"
+msgstr "الإدارة"
+
+msgid "Screening a l'aveugle"
+msgstr "الفرز دون كشف الهوية"
+
+msgid "Langue"
+msgstr "اللغة"
+
+msgid "Changer"
+msgstr "تغيير"
+
+msgid "Se deconnecter"
+msgstr "تسجيل الخروج"

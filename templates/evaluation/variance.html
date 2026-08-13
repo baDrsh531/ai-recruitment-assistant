@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Variance du modele{% endblock %}
+{% block heading %}Ce que le modele fait varier{% endblock %}
+{% block meta %}
+  <p class="page-head__meta">
+    Le score n'est pas recalcule entre deux tirages : il est passe en entree.
+  </p>
+{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <div class="card__head"><h2 class="card__title">L'affirmation, et sa mesure</h2></div>
+  <div class="card__body">
+    <p>
+      L'argument central du projet tient en une phrase : <b>le modele de langage
+      n'attribue aucune note, il commente un chiffre deja calcule</b>. Tant
+      qu'elle reste une phrase, elle vaut ce que vaut une phrase.
+    </p>
+    <p class="mt-4">
+      Cette page demande plusieurs fois l'analyse du <b>meme</b> score et
+      regarde ce qui bouge. La redaction bouge — c'est un modele de langage. Le
+      score, lui, ne peut pas bouger : il n'est pas recalcule.
+    </p>
+    <p class="mt-4">
+      La mesure qui apprend vraiment quelque chose est ailleurs : <b>le modele
+      invente-t-il des chiffres ?</b> Une analyse qui ecrirait « 72 % sur les
+      competences » quand le moteur a calcule 68 % donnerait au recruteur un
+      chiffre faux avec l'autorite d'un chiffre calcule.
+    </p>
+  </div>
+
+  <div class="card__body">
+    <form method="post" action="{% url 'evaluation:run_variance' %}" class="stack">
+      {% csrf_token %}
+      <div class="field">
+        <label class="label" for="candidature">Dossier</label>
+        <select class="select" id="candidature" name="candidature">
+          {% for item in candidatures %}
+            <option value="{{ item.pk }}">
+              {{ item.candidate.full_name }} — {{ item.offer.title }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="tirages">Nombre de tirages</label>
+        <input class="input" id="tirages" name="tirages" type="number"
+               value="3" min="2" max="5">
+      </div>
+      <button type="submit" class="btn btn--primary">Mesurer</button>
+    </form>
+  </div>
+  <p class="card__note">
+    La mesure <b>ne part jamais au chargement</b> de la page, seulement sur ce
+    bouton : chaque tirage appelle le modele et consomme des tokens. Une page
+    qui mesurerait a chaque visite serait une facture qui court toute seule.
+  </p>
+</section>
+
+{% if mesure %}
+<section class="card">
+  <div class="card__head">
+    <h2 class="card__title">{{ mesure.candidat }} — {{ mesure.offre }}</h2>
+    {% if mesure.indisponible %}
+      <span class="badge badge--warn">mesure impossible</span>
+    {% elif mesure.fidele %}
+      <span class="badge badge--ok">aucun chiffre invente</span>
+    {% else %}
+      <span class="badge badge--danger">chiffre invente</span>
+    {% endif %}
+  </div>
+
+  {% if mesure.indisponible %}
+    <div class="card__body"><p class="alert alert--warn">{{ mesure.indisponible }}</p></div>
+  {% else %}
+    <div class="grid">
+      {% include "partials/stat_tile.html" with label="Score" value=mesure.score hint="identique sur tous les tirages, par construction" %}
+      {% include "partials/stat_tile.html" with label="Tirages" value=mesure.nombre %}
+      {% include "partials/stat_tile.html" with label="Vocabulaire commun" value=mesure.recouvrement hint="part des mots partages entre deux tirages" %}
+      {% include "partials/stat_tile.html" with label="Amplitude" value=mesure.amplitude hint="mots d'ecart entre le plus court et le plus long" %}
+    </div>
+
+    <div class="card__body">
+      <p class="alert alert--info">{{ mesure.lecture }}</p>
+
+      <p class="mt-4"><b>Chiffres autorises par le score</b></p>
+      <p class="muted small">{{ mesure.attendus|join:" · " }} %</p>
+
+      <p class="mt-4"><b>Chiffres cites par le modele</b></p>
+      {% for cites in mesure.cites %}
+        <p class="muted small">tirage {{ forloop.counter }} :
+          {% if cites %}{{ cites|join:" · " }} %{% else %}aucun{% endif %}
+        </p>
+      {% endfor %}
+
+      {% if mesure.inventes %}
+        <div class="alert alert--danger mt-4">
+          {% for faute in mesure.inventes %}
+            <p>Tirage {{ faute.0 }} : « {{ faute.1 }} % » ne correspond a aucun
+              chiffre du score.</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card__body stack">
+      {% for texte in mesure.textes %}
+        <article class="panel">
+          <p class="muted small">Tirage {{ forloop.counter }}</p>
+          <p class="prose">{{ texte }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <p class="card__note">
+    Le recouvrement de vocabulaire <b>n'est pas une mesure de sens</b> : deux
+    textes peuvent dire la meme chose avec d'autres mots, et la mesure les dira
+    differents. Elle repond a « le modele repete-t-il sa copie ou
+    reformule-t-il », pas a « le texte est-il bon ».
+  </p>
+</section>
+{% endif %}
+{% endblock %}

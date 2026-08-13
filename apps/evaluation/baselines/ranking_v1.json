@@ -1,13 +1,13 @@
 {
   "dataset": "ranking_v1",
-  "dataset_version": "1.0.0",
+  "dataset_version": "1.1.0",
   "engine_version": "1.2.0",
   "semantic_used": false,
   "aggregate": {
-    "ndcg_at_5": 0.997,
-    "precision_at_3": 1.0,
-    "pair_accuracy": 0.9841,
-    "spearman": 0.937
+    "ndcg_at_5": 0.9947,
+    "precision_at_3": 0.9889,
+    "pair_accuracy": 0.9802,
+    "spearman": 0.9386
   },
   "cases": [
     {
@@ -207,6 +207,593 @@
         0.9412,
         0.929,
         0.8402
+      ]
+    },
+    {
+      "id": "implication_transitive",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "it_deux_explicites",
+        "it_django_seul",
+        "it_python_seul",
+        "it_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9406,
+        0.8367,
+        0.0615
+      ]
+    },
+    {
+      "id": "implication_non_reversible",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9487,
+      "predicted_order": [
+        "inr_postgres",
+        "inr_mysql",
+        "inr_sql_generique",
+        "inr_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        1,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.8614,
+        0.5696,
+        0.0615
+      ]
+    },
+    {
+      "id": "intitules_synonymes",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "is_complet",
+        "is_sigle",
+        "is_django_seul",
+        "is_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.5696,
+        0.0615
+      ]
+    },
+    {
+      "id": "competence_perimee",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "cp_recente",
+        "cp_intermediaire",
+        "cp_ancienne",
+        "cp_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9692,
+        0.8614,
+        0.0615
+      ]
+    },
+    {
+      "id": "obligatoire_absente",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "oa_complet",
+        "oa_sans_terraform",
+        "oa_sans_aws",
+        "oa_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        1,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.7482,
+        0.7482,
+        0.0615
+      ]
+    },
+    {
+      "id": "deux_ecarts_obligatoires",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "deo_complet",
+        "deo_un_manque",
+        "deo_deux_manquent",
+        "deo_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.7482,
+        0.3159,
+        0.0615
+      ]
+    },
+    {
+      "id": "annees_minimum_non_atteintes",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "amna_experimente",
+        "amna_limite",
+        "amna_insuffisant",
+        "amna_absent"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.8753,
+        0.0615
+      ]
+    },
+    {
+      "id": "offre_sans_exigence_de_langue",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "osel_fort",
+        "osel_fort_polyglotte",
+        "osel_faible",
+        "osel_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        1.0,
+        1.0,
+        0.4716,
+        0.0364
+      ]
+    },
+    {
+      "id": "offre_minimale",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "om_expert",
+        "om_go_seul",
+        "om_debutant",
+        "om_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0,
+        0.85,
+        0.7225,
+        0.0
+      ]
+    },
+    {
+      "id": "palier_de_langue",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "pdl_c2",
+        "pdl_c1",
+        "pdl_b2",
+        "pdl_a2"
+      ],
+      "relevances": [
+        3,
+        3,
+        2,
+        1
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.9614,
+        0.8845
+      ]
+    },
+    {
+      "id": "poste_hybride",
+      "ndcg_at_5": 0.9514,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 0.8,
+      "spearman": 0.6325,
+      "predicted_order": [
+        "ph_local_bon",
+        "ph_local_faible",
+        "ph_loin_excellent",
+        "ph_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        1,
+        3,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9307,
+        0.9153,
+        0.0615
+      ]
+    },
+    {
+      "id": "diplome_au_dela_de_l_exigence",
+      "ndcg_at_5": 0.989,
+      "precision_at_3": 0.6667,
+      "pair_accuracy": 0.8,
+      "spearman": 0.7778,
+      "predicted_order": [
+        "dade_licence_fort",
+        "dade_doctorat_fort",
+        "dade_doctorat_faible",
+        "dade_sans_diplome"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        2
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.8799,
+        0.8666
+      ]
+    },
+    {
+      "id": "certification_exigee",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "ce_certifie",
+        "ce_non_certifie",
+        "ce_certifie_autre",
+        "ce_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        2,
+        0
+      ],
+      "scores": [
+        1.0001,
+        0.9287,
+        0.9287,
+        0.0572
+      ]
+    },
+    {
+      "id": "reconversion_recente",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.8944,
+      "predicted_order": [
+        "rr_specialiste",
+        "rr_reconverti",
+        "rr_generaliste",
+        "rr_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.0615,
+        0.0615
+      ]
+    },
+    {
+      "id": "surqualification",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.7746,
+      "predicted_order": [
+        "sq_ajuste",
+        "sq_confirme",
+        "sq_surqualifie",
+        "sq_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        1.0001,
+        1.0001,
+        1.0001,
+        0.1053
+      ]
+    },
+    {
+      "id": "profils_identiques",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "pi_premier",
+        "pi_second",
+        "pi_moindre",
+        "pi_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.7032,
+        0.0615
+      ]
+    },
+    {
+      "id": "ecart_faible_entre_tetes",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.8333,
+      "predicted_order": [
+        "efet_tete",
+        "efet_moins_ancien",
+        "efet_sans_redis",
+        "efet_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        2,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.948,
+        0.0615
+      ]
+    },
+    {
+      "id": "aucun_profil_convenable",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": null,
+      "predicted_order": [
+        "apc_proche",
+        "apc_lointain",
+        "apc_tres_lointain"
+      ],
+      "relevances": [
+        1,
+        0,
+        0
+      ],
+      "scores": [
+        0.0538,
+        0.0538,
+        0.0538
+      ]
+    },
+    {
+      "id": "profil_sans_competence_declaree",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "pscd_complet",
+        "pscd_partiel",
+        "pscd_vide"
+      ],
+      "relevances": [
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.0615,
+        0.0
+      ]
+    },
+    {
+      "id": "beaucoup_de_candidats",
+      "ndcg_at_5": 0.9214,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 0.9167,
+      "spearman": 0.8513,
+      "predicted_order": [
+        "bdc_01",
+        "bdc_03",
+        "bdc_02",
+        "bdc_05",
+        "bdc_07",
+        "bdc_04",
+        "bdc_06",
+        "bdc_08",
+        "bdc_09",
+        "bdc_10"
+      ],
+      "relevances": [
+        3,
+        2,
+        3,
+        1,
+        1,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.9999,
+        0.9428,
+        0.9035,
+        0.8157,
+        0.8038,
+        0.7074,
+        0.3694,
+        0.0615,
+        0.0615
+      ]
+    },
+    {
+      "id": "teletravail_total_hors_pays",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "tthp_loin_expert",
+        "tthp_proche_expert",
+        "tthp_proche_faible",
+        "tthp_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        3,
+        1,
+        0
+      ],
+      "scores": [
+        1.0,
+        1.0,
+        0.8364,
+        0.0364
+      ]
+    },
+    {
+      "id": "competences_souhaitees_seules",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 0.9487,
+      "predicted_order": [
+        "css_python_plus",
+        "css_python_seul",
+        "css_souhaitees_seules",
+        "css_hors_sujet"
+      ],
+      "relevances": [
+        3,
+        2,
+        0,
+        0
+      ],
+      "scores": [
+        0.9999,
+        0.8961,
+        0.0823,
+        0.0615
+      ]
+    },
+    {
+      "id": "offre_tres_exigeante",
+      "ndcg_at_5": 1.0,
+      "precision_at_3": 1.0,
+      "pair_accuracy": 1.0,
+      "spearman": 1.0,
+      "predicted_order": [
+        "ote_complet",
+        "ote_un_manque",
+        "ote_trois_manques",
+        "ote_une_seule"
+      ],
+      "relevances": [
+        3,
+        2,
+        1,
+        0
+      ],
+      "scores": [
+        0.929,
+        0.8781,
+        0.7405,
+        0.3037
       ]
     }
   ]

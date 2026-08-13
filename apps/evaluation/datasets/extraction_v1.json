@@ -3,6 +3,14 @@
   "kind": "extraction",
   "version": "1.0.0",
   "description": "Jeu d'evaluation de l'extraction des CV. Chaque cas part d'un profil structure, mis en page par apps/evaluation/cv_factory.py : la verite terrain est exacte par construction, sans annotation manuelle. Les quatre mises en page eprouvent des voies differentes du pipeline - texte natif, detection multi-colonnes, extraction depuis un tableau, et bascule vers le modele vision sur un document sans couche texte. Limite assumee : ces CV sont plus propres que les vrais, les scores obtenus sont donc optimistes.",
+  "provenance": {
+    "annotateurs": 1,
+    "annote_par": [
+      "Badr Sahraoui"
+    ],
+    "accord_inter_annotateur": null,
+    "note": "Annote par une seule personne. Deux recruteurs ne classeraient pas ces profils a l'identique : le kappa de Cohen mesure ailleurs dans ce projet un accord de 0,25 entre deux evaluateurs sur des dossiers reels. Aucun accord inter-annotateur n'est donc disponible pour ce jeu, et les chiffres qui en decoulent portent cette limite. `accord_inter_annotateur` reste a null tant qu'une seconde personne n'a pas annote."
+  },
   "cases": [
     {
       "id": "backend_python",
@@ -16,11 +24,27 @@
         "location": "Casablanca",
         "linkedin": "linkedin.com/in/karimbenjelloun",
         "github": "github.com/kbenjelloun",
-        "skills": ["Python", "Django", "PostgreSQL", "Docker", "Redis", "Git"],
+        "skills": [
+          "Python",
+          "Django",
+          "PostgreSQL",
+          "Docker",
+          "Redis",
+          "Git"
+        ],
         "languages": [
-          {"language": "Francais", "level": "NAT"},
-          {"language": "Anglais", "level": "C1"},
-          {"language": "Arabe", "level": "NAT"}
+          {
+            "language": "Francais",
+            "level": "NAT"
+          },
+          {
+            "language": "Anglais",
+            "level": "C1"
+          },
+          {
+            "language": "Arabe",
+            "level": "NAT"
+          }
         ],
         "experiences": [
           {
@@ -41,11 +65,15 @@
           }
         ],
         "education": [
-          {"degree": "Master en genie logiciel", "institution": "Universite Hassan II", "year": 2019, "level": 5}
+          {
+            "degree": "Master en genie logiciel",
+            "institution": "Universite Hassan II",
+            "year": 2019,
+            "level": 5
+          }
         ]
       }
     },
-
     {
       "id": "data_engineer_colonnes",
       "layout": "deux_colonnes",
@@ -58,10 +86,23 @@
         "location": "Rabat",
         "linkedin": "linkedin.com/in/leilafassi",
         "github": "",
-        "skills": ["Python", "SQL", "Airflow", "Spark", "dbt", "PostgreSQL"],
+        "skills": [
+          "Python",
+          "SQL",
+          "Airflow",
+          "Spark",
+          "dbt",
+          "PostgreSQL"
+        ],
         "languages": [
-          {"language": "Francais", "level": "C2"},
-          {"language": "Anglais", "level": "B2"}
+          {
+            "language": "Francais",
+            "level": "C2"
+          },
+          {
+            "language": "Anglais",
+            "level": "B2"
+          }
         ],
         "experiences": [
           {
@@ -82,11 +123,15 @@
           }
         ],
         "education": [
-          {"degree": "Master en science des donnees", "institution": "ENSIAS", "year": 2019, "level": 5}
+          {
+            "degree": "Master en science des donnees",
+            "institution": "ENSIAS",
+            "year": 2019,
+            "level": 5
+          }
         ]
       }
     },
-
     {
       "id": "frontend_tableau",
       "layout": "tableau",
@@ -99,11 +144,27 @@
         "location": "Marrakech",
         "linkedin": "",
         "github": "github.com/yalaoui",
-        "skills": ["JavaScript", "TypeScript", "React", "Next.js", "CSS", "Git"],
+        "skills": [
+          "JavaScript",
+          "TypeScript",
+          "React",
+          "Next.js",
+          "CSS",
+          "Git"
+        ],
         "languages": [
-          {"language": "Francais", "level": "NAT"},
-          {"language": "Anglais", "level": "B2"},
-          {"language": "Espagnol", "level": "B1"}
+          {
+            "language": "Francais",
+            "level": "NAT"
+          },
+          {
+            "language": "Anglais",
+            "level": "B2"
+          },
+          {
+            "language": "Espagnol",
+            "level": "B1"
+          }
         ],
         "experiences": [
           {
@@ -124,11 +185,15 @@
           }
         ],
         "education": [
-          {"degree": "Licence en informatique", "institution": "Universite Cadi Ayyad", "year": 2020, "level": 3}
+          {
+            "degree": "Licence en informatique",
+            "institution": "Universite Cadi Ayyad",
+            "year": 2020,
+            "level": 3
+          }
         ]
       }
     },
-
     {
       "id": "ml_engineer_scanne",
       "layout": "scanne",
@@ -141,10 +206,23 @@
         "location": "Casablanca",
         "linkedin": "linkedin.com/in/sanaaidrissi",
         "github": "",
-        "skills": ["Python", "PyTorch", "Transformers", "LLM", "RAG", "Docker"],
+        "skills": [
+          "Python",
+          "PyTorch",
+          "Transformers",
+          "LLM",
+          "RAG",
+          "Docker"
+        ],
         "languages": [
-          {"language": "Francais", "level": "NAT"},
-          {"language": "Anglais", "level": "C1"}
+          {
+            "language": "Francais",
+            "level": "NAT"
+          },
+          {
+            "language": "Anglais",
+            "level": "C1"
+          }
         ],
         "experiences": [
           {
@@ -165,11 +243,15 @@
           }
         ],
         "education": [
-          {"degree": "Doctorat en informatique", "institution": "Universite Mohammed V", "year": 2019, "level": 8}
+          {
+            "degree": "Doctorat en informatique",
+            "institution": "Universite Mohammed V",
+            "year": 2019,
+            "level": 8
+          }
         ]
       }
     },
-
     {
       "id": "devops_colonnes",
       "layout": "deux_colonnes",
@@ -182,10 +264,24 @@
         "location": "Tanger",
         "linkedin": "linkedin.com/in/omartazi",
         "github": "github.com/otazi",
-        "skills": ["Kubernetes", "Docker", "Terraform", "Ansible", "AWS", "Linux", "Bash"],
+        "skills": [
+          "Kubernetes",
+          "Docker",
+          "Terraform",
+          "Ansible",
+          "AWS",
+          "Linux",
+          "Bash"
+        ],
         "languages": [
-          {"language": "Francais", "level": "C1"},
-          {"language": "Anglais", "level": "C1"}
+          {
+            "language": "Francais",
+            "level": "C1"
+          },
+          {
+            "language": "Anglais",
+            "level": "C1"
+          }
         ],
         "experiences": [
           {
@@ -206,7 +302,12 @@
           }
         ],
         "education": [
-          {"degree": "Diplome d'ingenieur en reseaux", "institution": "INPT", "year": 2018, "level": 5}
+          {
+            "degree": "Diplome d'ingenieur en reseaux",
+            "institution": "INPT",
+            "year": 2018,
+            "level": 5
+          }
         ]
       }
     }

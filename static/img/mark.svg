@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img"
+     aria-label="Recrutement.IA">
+  <title>Recrutement.IA</title>
+  <!--
+    Deux pages qui se recouvrent — un CV, une offre — et l'intersection porte
+    la couleur. C'est le sens de l'application : ce qui est commun aux deux
+    fait le score.
+
+    Le concept vient du logo d'origine. Deux choses ont change, et les deux
+    viennent de l'avoir regarde aux tailles reelles plutot qu'a 1400 px.
+
+    Les mots « CV » et « Offre » ont disparu : lisibles en grand, ils formaient
+    une bouillie a 16 px, taille a laquelle une favicon passe le plus clair de
+    son temps. Et les deux pages, d'abord posees cote a cote avec un
+    connecteur entre elles, se lisaient comme des crochets — le connecteur
+    mangeait leurs bords interieurs. En les faisant se recouvrir, la marque
+    devient une silhouette franche a 16 px et dit quelque chose de juste.
+
+    L'encre suit `currentColor` : encre sur fond clair, blanche sur la barre
+    laterale sombre, sans deux fichiers a garder d'accord. Seule
+    l'intersection garde sa couleur propre.
+  -->
+  <style>
+    :root { color: #131922; }
+    @media (prefers-color-scheme: dark) { :root { color: #ffffff; } }
+  </style>
+  <rect x="26" y="10" width="12" height="44" fill="#4f46e5" />
+  <g fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round">
+    <path d="M6 10h32v44H6z" />
+    <path d="M26 10h32v44H26z" />
+  </g>
+</svg>

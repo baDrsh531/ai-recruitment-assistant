@@ -61,6 +61,12 @@ STYLE = f"""
 """
 
 
+def _couleur(hexa: str) -> tuple[float, float, float]:
+    """« #4F46E5 » vers le triplet 0–1 attendu par PyMuPDF."""
+    valeur = hexa.lstrip("#")
+    return tuple(int(valeur[i:i + 2], 16) / 255 for i in (0, 2, 4))
+
+
 @dataclass
 class Sources:
     """Ce que le rapport agrege, et d'ou cela vient."""
@@ -81,11 +87,57 @@ class _Redacteur:
     pire facon de perdre un chiffre dans un document de conformite.
     """
 
+    # Hauteur du bandeau de marque, et cote de la marque elle-meme.
+    BANDEAU = 34.0
+    MARQUE = 18.0
+
     def __init__(self, document: fitz.Document) -> None:
         self.document = document
         self.page = None
         self.y = 0.0
         self._nouvelle_page()
+
+    def bandeau_de_marque(self) -> None:
+        """Marque et nom en tete de la premiere page, puis un filet.
+
+        Ecrit avec `insert_image` et `insert_text` plutot qu'en HTML : le
+        moteur de rendu de `insert_htmlbox` ne charge pas d'image externe, et
+        encoder le PNG en base64 dans le HTML gonflerait chaque document pour
+        un resultat identique.
+        """
+        from apps.core import brand
+
+        page = self.page
+        haut = self.y
+        page.insert_image(
+            fitz.Rect(MARGE, haut, MARGE + self.MARQUE, haut + self.MARQUE),
+            stream=brand.marque_png(taille=192, encre=brand.ENCRE),
+        )
+        page.insert_text(
+            (MARGE + self.MARQUE + 8, haut + self.MARQUE - 4),
+            brand.NOM_RACINE,
+            fontsize=11.5,
+            fontname="hebo",
+            color=fitz.utils.getColor("black"),
+        )
+        largeur_racine = fitz.get_text_length(
+            brand.NOM_RACINE, fontname="hebo", fontsize=11.5
+        )
+        page.insert_text(
+            (MARGE + self.MARQUE + 8 + largeur_racine, haut + self.MARQUE - 4),
+            brand.NOM_SUFFIXE,
+            fontsize=11.5,
+            fontname="hebo",
+            color=_couleur(ACCENT),
+        )
+        filet = haut + self.BANDEAU - 8
+        page.draw_line(
+            fitz.Point(MARGE, filet),
+            fitz.Point(MARGE + LARGEUR, filet),
+            color=_couleur("#E2E8F0"),
+            width=0.8,
+        )
+        self.y = haut + self.BANDEAU
 
     def _nouvelle_page(self) -> None:
         self.page = self.document.new_page(width=PAGE.width, height=PAGE.height)
@@ -112,10 +164,20 @@ class _Redacteur:
         self.y += hauteur + espace
 
     def pieds_de_page(self, mention: str) -> None:
+        from apps.core import brand
+
         total = self.document.page_count
+        marque = brand.marque_png(taille=96, encre="#94A3B8")
         for numero, page in enumerate(self.document, start=1):
+            bas = PAGE.height - MARGE
+            # La marque en pied de CHAQUE page, pas seulement de la premiere :
+            # une page de rapport se photocopie, se transfere et s'imprime
+            # seule, et doit dire d'ou elle vient sans le reste du document.
+            page.insert_image(
+                fitz.Rect(MARGE, bas - 1, MARGE + 9, bas + 8), stream=marque
+            )
             page.insert_textbox(
-                fitz.Rect(MARGE, PAGE.height - MARGE, MARGE + LARGEUR, PAGE.height - 18),
+                fitz.Rect(MARGE, bas, MARGE + LARGEUR, PAGE.height - 18),
                 f"{mention}    ·    page {numero} / {total}",
                 fontsize=7.5,
                 color=fitz.utils.getColor("gray"),
@@ -356,6 +418,7 @@ def build(sources: Sources, *, author: str = "", today: dt.date | None = None) -
 
     document = fitz.open()
     redacteur = _Redacteur(document)
+    redacteur.bandeau_de_marque()
     redacteur.bloc(_entete(auteur, aujourdhui), espace=18)
     redacteur.bloc(_section_qualite(sources.quality))
     redacteur.bloc(_section_biais(sources.bias, sources.mitigations, IMPACT_RATIO_THRESHOLD))
@@ -535,6 +598,7 @@ def build_application(
 
     document = fitz.open()
     redacteur = _Redacteur(document)
+    redacteur.bandeau_de_marque()
     redacteur.bloc(
         _dossier_entete(application, auteur, aujourdhui, blind=blind), espace=18
     )
@@ -781,6 +845,7 @@ def build_candidate_explanation(
 
     document = fitz.open()
     redacteur = _Redacteur(document)
+    redacteur.bandeau_de_marque()
     redacteur.bloc(_candidat_entete(application, aujourdhui), espace=18)
     redacteur.bloc(_candidat_donnees(candidat))
     preuves = _candidat_preuves(candidat)

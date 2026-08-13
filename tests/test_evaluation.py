@@ -91,6 +91,34 @@ def test_dataset_is_available():
     assert "ranking_v1" in harness.available_datasets()
 
 
+def test_identity_alone_never_moves_the_score(db):
+    """Quatre profils identiques a l'identite pres doivent obtenir le meme score.
+
+    Cette propriete ne peut pas se verifier dans le jeu de classement : quatre
+    pertinences egales y donnent un nDCG de 1,000 sans rien mesurer. Elle se
+    verifie ici, directement, par une egalite de scores — ce qui est a la fois
+    plus simple et plus fort.
+    """
+    from apps.candidates.models import Candidate, CandidateSkill
+    from apps.jobs.models import JobOffer, JobSkill
+    from apps.matching import engine
+
+    offre = JobOffer.objects.create(title="Backend", description="x", status="open")
+    JobSkill.objects.create(offer=offre, name="Python", requirement="required")
+
+    scores = []
+    for nom in ("Amina Benali", "Marc Dupont", "Youssef El Idrissi", "Sofia Rossi"):
+        candidat = Candidate.objects.create(
+            full_name=nom, total_experience_years=6, location="Casablanca"
+        )
+        CandidateSkill.objects.create(
+            candidate=candidat, name="Python", years=6, last_used_year=2026
+        )
+        scores.append(engine.score(candidat, offre).overall)
+
+    assert len(set(scores)) == 1, f"le nom a change le score : {scores}"
+
+
 def test_dataset_is_well_formed():
     dataset = harness.load_dataset("ranking_v1")
     assert dataset["cases"]

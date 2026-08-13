@@ -58,3 +58,12 @@ class CVDocumentListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return CVDocument.objects.select_related("candidate").order_by("-created_at")
+
+    def get_context_data(self, **kwargs):
+        # Cette page affichait le nom du candidat et le nom du fichier sans
+        # tenir compte du screening a l'aveugle. Or un CV s'appelle presque
+        # toujours « Prenom Nom.pdf » : l'attenuation du biais etait annulee
+        # par la liste des depots, une page en apparence anodine.
+        context = super().get_context_data(**kwargs)
+        context["blind"] = self.request.user.blind_screening
+        return context
